@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Confirmation and error pages carry no search value
+Disallow: /thanks/
+
+Sitemap: https://yourspace-jabalpur.example/sitemap-index.xml
