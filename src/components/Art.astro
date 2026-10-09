@@ -1,0 +1,7 @@
+---
+/** The CSS-drawn marks used across the programme. One light source, six shapes. */
+import type { ArtKey } from '../data/booking';
+interface Props { art: ArtKey }
+const { art } = Astro.props;
+---
+<span class={`art art-${art}`}></span>

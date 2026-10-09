@@ -1,0 +1,57 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Notice from '../components/Notice.astro';
+const updated = '7 October 2026';
+---
+<Base title="Cancellations & Refunds — YourSpace Jabalpur"
+      description="How to reschedule or cancel a session at YourSpace Jabalpur, and how refunds work.">
+  <PageHead crumb="Cancellations" beam={false}>
+    <h1 class="headline">Plans <em>change</em>.</h1>
+    <p class="standfirst">How to move a booking, how to cancel one, and what happens to anything you've paid.</p>
+  </PageHead>
+
+  <section class="band">
+    <div class="shell narrow prose">
+      <Notice label="Draft">
+        A working draft. The notice periods and refund percentages below are placeholders — set the ones you can actually honour, then have this reviewed before launch. Whatever you publish here is what customers will hold you to.
+      </Notice>
+
+      <p class="fine" style="margin-top:0">Last updated: {updated}</p>
+
+      <h2>If you only pre-booked</h2>
+      <p>Nothing to cancel. A pre-booking made on this site takes no payment and no card details, and doesn't become a booking until we've spoken. If you change your mind before that call, you can ignore us or tell us — either is fine, and you owe nothing.</p>
+
+      <h2>Moving a confirmed booking</h2>
+      <ul>
+        <li><strong>More than 48 hours before your slot:</strong> we'll move you to any free slot at no charge.</li>
+        <li><strong>24 to 48 hours before:</strong> we'll move you once if a slot is free.</li>
+        <li><strong>Less than 24 hours before:</strong> we'll try, but we can't promise — the slot may already be held for you and turned away from others.</li>
+      </ul>
+      <p>Ask as early as you can. The earlier you tell us, the more we can do.</p>
+
+      <h2>Cancelling a confirmed booking</h2>
+      <ul>
+        <li><strong>More than 48 hours before your slot:</strong> full refund of anything paid.</li>
+        <li><strong>24 to 48 hours before:</strong> 50% refund.</li>
+        <li><strong>Less than 24 hours before, or not turning up:</strong> no refund.</li>
+      </ul>
+      <p>Where decor, cake, flowers or a photographer have already been arranged for you, we may have to deduct what we've already spent. We'll tell you the amount and why.</p>
+
+      <h2>If we cancel</h2>
+      <p>If we have to cancel or move your session for any reason, you get the choice of the next available slot or a full refund of everything you've paid. No deductions.</p>
+
+      <h2>Arriving late</h2>
+      <p>Your session ends at its scheduled time regardless of when you arrive, because another booking may follow yours. If the room is free afterwards we'll do what we can. No refund is due for time you didn't use.</p>
+
+      <h2>How refunds are paid</h2>
+      <p>Back to the same method you paid with, wherever possible.</p>
+
+      <h2>Something went wrong on the night</h2>
+      <p>Tell us while you're still there if you can — most things we can fix on the spot. If we couldn't give you what you booked, say so and we'll put it right.</p>
+
+      <h2>Get in touch</h2>
+      <p>To move or cancel a booking, <a href="/contact/">contact us</a> or call us directly. Please have your booking date and the name it was made under.</p>
+    </div>
+  </section>
+</Base>

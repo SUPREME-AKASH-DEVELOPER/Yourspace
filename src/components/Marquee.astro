@@ -1,0 +1,18 @@
+---
+/**
+ * The letterboard. Rendered server-side and duplicated once, so the -50%
+ * loop is seamless and the strip has its full height in the first paint
+ * (injecting this from JS cost a visible layout shift).
+ */
+const items = [
+  'Watch parties', 'Karaoke nights', 'Date nights', 'Proposals',
+  'Candlelight dinners', 'Stand-up evenings', 'Birthdays',
+  'Anniversaries', 'The whole room, just your group',
+];
+const doubled = [...items, ...items];
+---
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    {doubled.map((t) => <span>{t}</span>)}
+  </div>
+</div>

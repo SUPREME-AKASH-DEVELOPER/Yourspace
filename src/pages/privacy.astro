@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Notice from '../components/Notice.astro';
+const updated = '7 October 2026';
+---
+<Base title="Privacy — YourSpace Jabalpur"
+      description="What we collect when you pre-book, why we collect it, and what we do with it.">
+  <PageHead crumb="Privacy" beam={false}>
+    <h1 class="headline">What we <em>keep</em>, and why.</h1>
+    <p class="standfirst">Short version: your name, your number, and what you asked us to set up. We use it to call you back. That's it.</p>
+  </PageHead>
+
+  <section class="band">
+    <div class="shell narrow prose">
+      <Notice label="Draft">
+        A working draft prepared alongside the website. Before launch it needs the registered business details and a review against India's Digital Personal Data Protection Act, 2023.
+      </Notice>
+
+      <p class="fine" style="margin-top:0">Last updated: {updated}</p>
+
+      <h2>1. What we collect</h2>
+      <p>When you pre-book or send us a message through this site, we collect what you type into the form:</p>
+      <ul>
+        <li>Your name</li>
+        <li>Your phone number, and your email address if you give one</li>
+        <li>What you'd like to book — the occasion, date, group size and any extras</li>
+        <li>Anything you write in the notes or message box</li>
+      </ul>
+      <p>We don't ask for card or payment details on this website, and we don't take payments through it.</p>
+
+      <h2>2. Where it goes right now</h2>
+      <p>This website has no server of its own. When you submit a form, the details are saved <strong>in your own browser</strong> and handed to us over WhatsApp or a form, depending on how you choose to send them. That means the information travels through whichever service you use to send it, under that service's own privacy policy.</p>
+      <p>Anything saved in your browser stays on your device. Clearing your browser data removes it.</p>
+
+      <h2>3. Why we use it</h2>
+      <p>To call you back, confirm your booking, and set the room up the way you asked. Nothing else. We don't sell it, we don't rent it, and we don't add you to a marketing list you didn't ask for.</p>
+
+      <h2>4. How long we keep it</h2>
+      <p>For as long as we need it to handle your booking and our records of it. If you ask us to delete your details and we're not required to keep them, we will.</p>
+
+      <h2>5. Who else sees it</h2>
+      <p>Our own team, and the messaging service you used to reach us. We don't share your details with anyone else unless the law requires it.</p>
+
+      <h2>6. Cookies and tracking</h2>
+      <p>This site sets <strong>no cookies</strong> and runs no analytics or advertising trackers. It stores your unfinished booking in your browser's local storage so you don't lose it if you close the tab — that never leaves your device and we can't read it.</p>
+      <p>Fonts are served from this site itself, so loading a page makes <strong>no request to any third party</strong>. Nothing about your visit reaches another company.</p>
+
+      <h2>7. Your rights</h2>
+      <p>You can ask us what we hold about you, ask us to correct it, or ask us to delete it. <a href="/contact/">Contact us</a> and we'll deal with it.</p>
+
+      <h2>8. Children</h2>
+      <p>This site isn't aimed at children, and we don't knowingly collect their details. Bookings should be made by an adult.</p>
+
+      <h2>9. Changes</h2>
+      <p>If this policy changes we'll update the date at the top of the page.</p>
+    </div>
+  </section>
+</Base>

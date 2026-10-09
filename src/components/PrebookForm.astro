@@ -1,0 +1,43 @@
+---
+import { experiences, OTHER } from '../data/booking';
+---
+<form class="bookform reveal" id="prebookForm" data-form="prebook" novalidate>
+  <div class="field">
+    <label for="pName">Your name</label>
+    <input id="pName" name="name" data-label="your name" data-req type="text" autocomplete="name" placeholder="Who should we ask for?" />
+  </div>
+  <div class="field">
+    <label for="pPhone">Phone number</label>
+    <input id="pPhone" name="phone" data-label="your phone number" data-req data-phone type="tel" autocomplete="tel" inputmode="tel" placeholder="10-digit mobile number" />
+  </div>
+  <div class="field-row">
+    <div class="field">
+      <label for="pExperience">Occasion</label>
+      <select id="pExperience" name="experience" data-label="an occasion" data-req>
+        <option value="">Choose…</option>
+        {experiences.map((e) => <option>{e.name}</option>)}
+        <option value={OTHER.id}>{OTHER.name}…</option>
+        <option>Not sure yet</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="pGuests">Guests</label>
+      <input id="pGuests" name="guests" type="number" min="1" max="12" value="2" inputmode="numeric" />
+    </div>
+  </div>
+  <div class="field" id="pCustomField" hidden>
+    <label for="pCustom">{OTHER.prompt}</label>
+    <input id="pCustom" name="custom" data-label="what you're planning" type="text" maxlength="200"
+           placeholder="A farewell, a reveal, a surprise…" />
+  </div>
+  <div class="field">
+    <label for="pDate">Preferred date</label>
+    <input id="pDate" name="date" data-label="a preferred date" data-req type="date" />
+  </div>
+  <div class="field">
+    <label for="pNotes">Anything we should set up? <span class="opt">Optional</span></label>
+    <textarea id="pNotes" name="notes" rows="3" placeholder="Birthday cake, proposal setup, a specific time…"></textarea>
+  </div>
+  <button class="btn btn-key full btn-lg" type="submit">Pre-book — no payment<span aria-hidden="true">→</span></button>
+  <p class="form-note" role="status"></p>
+</form>

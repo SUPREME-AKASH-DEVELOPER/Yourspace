@@ -1,0 +1,30 @@
+---
+/**
+ * The mark: a room with the light on.
+ * Each instance gets its own gradient ids, so several logos can sit on one
+ * page without their <defs> colliding.
+ */
+interface Props { class?: string; id?: string }
+const { class: cls = '', id } = Astro.props;
+const uid = Math.random().toString(36).slice(2, 8);
+---
+<span class={`brand-mark ${cls}`} id={id} aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" focusable="false">
+    <defs>
+      <radialGradient id={`lamp-${uid}`} cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#F6C878" stop-opacity=".95" />
+        <stop offset="1" stop-color="#E0A542" stop-opacity="0" />
+      </radialGradient>
+      <linearGradient id={`spill-${uid}`} x1="20" y1="15" x2="20" y2="36" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#E0A542" stop-opacity=".5" />
+        <stop offset="1" stop-color="#E0A542" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+    <circle class="ys-glow" cx="20" cy="15.5" r="15" fill={`url(#lamp-${uid})`} opacity=".45" />
+    <path class="ys-beam" d="M20 15.5 10.5 35.5h19z" fill={`url(#spill-${uid})`} />
+    <path class="ys-arch" pathLength="1" d="M5.6 35.5V17.8a14.4 14.4 0 0 1 28.8 0v17.7"
+          fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+    <path class="ys-floor" d="M3 35.5h34" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" opacity=".45" />
+    <circle class="ys-light" cx="20" cy="15.5" r="4.2" fill="#F2B855" />
+  </svg>
+</span>

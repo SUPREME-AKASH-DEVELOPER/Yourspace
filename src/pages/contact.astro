@@ -1,0 +1,106 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Notice from '../components/Notice.astro';
+import { site } from '../data/site';
+---
+<Base title="Contact — YourSpace Jabalpur"
+      description="Call, message or write to YourSpace Jabalpur. We answer questions before you book.">
+  <PageHead crumb="Contact">
+    <h1 class="headline">Talk to a <em>person</em>.</h1>
+    <p class="standfirst">Ask us anything before you book — whether the room fits your group, whether we can set up what you're planning, or whether a date is free. We'd rather answer first than have you book the wrong thing.</p>
+  </PageHead>
+
+  <section class="band">
+    <div class="shell contact-grid">
+      <div class="reveal">
+        <p class="rule-label"><i>Box office</i><span>How to reach us</span></p>
+        <dl class="infolist">
+          <div>
+            <dt>Phone</dt>
+            <dd><a data-call href="#" data-phone-text></a></dd>
+          </div>
+          <div data-phone-alt-wrap>
+            <dt>Second line</dt>
+            <dd><a data-phone-alt href="#"></a></dd>
+          </div>
+          <div><dt>WhatsApp</dt><dd><a data-wa href="#">Message us on WhatsApp</a></dd></div>
+          <div><dt>Email</dt><dd><a data-email href="#">Email coming soon</a></dd></div>
+          <div>
+            <dt>Where</dt>
+            <dd>{site.city}, {site.region}<br />
+              <span class="fine" style="margin:0">{site.address || 'Full address shared when we confirm your booking'}</span>
+            </dd>
+          </div>
+          <div><dt>Hours</dt><dd>{site.hours}</dd></div>
+        </dl>
+
+        <div style="margin-top:30px">
+          <Notice label="Note">
+            We're not open yet, so there's nothing to visit at the moment. Everything on this page reaches us now, and we answer as quickly as we can.
+          </Notice>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <p class="rule-label"><i>Or</i><span>Send us a message</span></p>
+        <form class="bookform" id="contactForm" data-form="contact" novalidate>
+          <div class="field">
+            <label for="cName">Your name</label>
+            <input id="cName" name="name" data-label="your name" data-req type="text" autocomplete="name" placeholder="Who are we talking to?" />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="cPhone">Phone number</label>
+              <input id="cPhone" name="phone" data-label="your phone number" data-req data-phone type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number" />
+            </div>
+            <div class="field">
+              <label for="cEmail">Email <span class="opt">Optional</span></label>
+              <input id="cEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="cTopic">What's this about?</label>
+            <select id="cTopic" name="topic" data-label="what this is about" data-req>
+              <option value="">Choose…</option>
+              <option>Booking a session</option>
+              <option>A date that isn't listed</option>
+              <option>A big group</option>
+              <option>Something we could set up</option>
+              <option>Working together</option>
+              <option>Something else</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="cMessage">Your message</label>
+            <textarea id="cMessage" name="message" data-label="a message" data-req rows="4" placeholder="Tell us what you're planning and we'll tell you honestly whether the room suits it."></textarea>
+          </div>
+          <button class="btn btn-key full btn-lg" type="submit">Send message<span aria-hidden="true">→</span></button>
+          <p class="form-note" role="status"></p>
+          <p class="fine">We reply on the number you give us. We don't add you to any list.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="band band-paper">
+    <div class="shell narrow">
+      <p class="rule-label"><i>Quicker</i><span>Just want a call back?</span></p>
+      <h2 class="title">Leave your number. We'll <em>call you</em>.</h2>
+      <form class="bookform" id="callbackForm" data-form="callback" novalidate style="max-width:520px;margin-top:26px">
+        <div class="field-row">
+          <div class="field">
+            <label for="kName">Name</label>
+            <input id="kName" name="name" data-label="your name" data-req type="text" autocomplete="name" placeholder="Your name" />
+          </div>
+          <div class="field">
+            <label for="kPhone">Number</label>
+            <input id="kPhone" name="phone" data-label="your phone number" data-req data-phone type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile" />
+          </div>
+        </div>
+        <button class="btn btn-key full" type="submit">Request a call back<span aria-hidden="true">→</span></button>
+        <p class="form-note" role="status"></p>
+      </form>
+    </div>
+  </section>
+</Base>

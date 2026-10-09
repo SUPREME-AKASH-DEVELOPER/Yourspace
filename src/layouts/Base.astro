@@ -1,0 +1,83 @@
+---
+import '../styles/global.css';
+import Masthead from '../components/Masthead.astro';
+import Menu from '../components/Menu.astro';
+import Colophon from '../components/Colophon.astro';
+import Schema from '../components/Schema.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Confirmation and error pages should not be indexed. */
+  noindex?: boolean;
+}
+const { title, description, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const ogImage = new URL('/og.png', Astro.site).href;
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script is:inline>
+    // Set before first paint: the house warms and cools with the hour, and
+    // the day is used for the suggestion in the hero.
+    (function () {
+      var d = new Date(), h = d.getHours();
+      var part = h < 5 ? 'night' : h < 12 ? 'morning' : h < 16 ? 'afternoon' : h < 20 ? 'evening' : 'night';
+      var el = document.documentElement;
+      el.classList.add('js');
+      el.setAttribute('data-daypart', part);
+      el.setAttribute('data-day', String(d.getDay()));
+    })();
+  </script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta name="theme-color" content="#0C0B09" />
+  <link rel="canonical" href={canonical} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:site_name" content="YourSpace Jabalpur" />
+  <meta property="og:locale" content="en_IN" />
+  <meta property="og:image" content={ogImage} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="YourSpace Jabalpur — the whole room, just your people" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content={ogImage} />
+  {noindex && <meta name="robots" content="noindex, follow" />}
+  <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="preload" href="/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="/fonts/dm-mono-400.woff2" as="font" type="font/woff2" crossorigin />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- 35mm grain. The room is dark; the picture has texture. -->
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+
+  <Schema />
+
+  <Masthead />
+  <Menu />
+
+  <main id="main">
+    <slot />
+  </main>
+
+  <Colophon />
+
+  <div class="sticky-cta">
+    <button class="btn btn-key full" data-book>Pre-book a slot<span aria-hidden="true">→</span></button>
+  </div>
+
+  <script>import '../scripts/app';</script>
+</body>
+</html>

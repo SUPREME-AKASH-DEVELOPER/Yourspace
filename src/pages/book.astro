@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+---
+<Base title="Book a Slot — YourSpace Jabalpur"
+      description="Pre-book a private session at YourSpace Jabalpur. Pick your occasion, date, seats and setup. No payment today.">
+  <PageHead crumb="Book">
+    <h1 class="headline">Let's build your <em>night</em>.</h1>
+    <p class="standfirst">Six short steps: the occasion, the date and seats, the time, the setup, any extras, and where to reach you. Nothing is charged at the end of it — we call you to confirm the slot first.</p>
+  </PageHead>
+
+  <section class="band" style="padding-top:clamp(30px,4vw,54px)">
+    <div class="shell">
+      <!-- the booking flow mounts here, inline instead of as a modal -->
+      <div id="bookMount"></div>
+    </div>
+  </section>
+
+  <section class="band band-paper">
+    <div class="shell narrow">
+      <p class="rule-label"><i>Reassurance</i><span>Before you worry about it</span></p>
+      <h2 class="title">You are not paying for anything <em>yet</em>.</h2>
+      <ul class="stub-list" style="margin-bottom:26px">
+        <li>No payment and no card details are taken on this site.</li>
+        <li>We call you to confirm the date, the time and your group size.</li>
+        <li>Prices shown are indicative while we set up, and we confirm the final amount on that call.</li>
+        <li>If you change your mind before we speak, nothing happens — there's nothing to cancel.</li>
+      </ul>
+      <p class="fine">Questions first? <a href="/faq/">Read the common ones</a> or <a href="/contact/">talk to us</a>.</p>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Notice from '../components/Notice.astro';
+import { BASE_GUESTS } from '../data/booking';
+const updated = '7 October 2026';
+---
+<Base title="Terms of Booking — YourSpace Jabalpur"
+      description="The terms that apply when you book a session at YourSpace Jabalpur.">
+  <PageHead crumb="Terms of booking" beam={false}>
+    <h1 class="headline">Terms of <em>booking</em>.</h1>
+    <p class="standfirst">The rules that apply when you book a session with us. Written to be read, not to be skipped.</p>
+  </PageHead>
+
+  <section class="band">
+    <div class="shell narrow prose">
+      <Notice label="Draft">
+        This is a working draft prepared alongside the website. Before launch it needs the registered business details filled in and a review by someone qualified in Indian consumer and contract law. Do not publish it as final until that's done.
+      </Notice>
+
+      <p class="fine" style="margin-top:0">Last updated: {updated} · Operated by YourSpace, Jabalpur, Madhya Pradesh</p>
+
+      <h2>1. What these terms cover</h2>
+      <p>These terms apply when you book, or pre-book, a session at YourSpace in Jabalpur. By making a booking you agree to them. If you don't agree with something here, tell us before you book and we'll sort it out or decline the booking.</p>
+
+      <h2>2. Pre-booking is not a confirmed booking</h2>
+      <p>A pre-booking made through this website is a <strong>request</strong>. It takes no payment and no card details. It does not reserve the room until we have spoken to you and confirmed the date, time and group size. We'll tell you the final price, including taxes and any extras, on that call.</p>
+
+      <h2>3. Your session</h2>
+      <ul>
+        <li>A standard session is <strong>2 hours 30 minutes</strong>, from the start time of your slot.</li>
+        <li>The base price covers up to <strong>{BASE_GUESTS} guests</strong>. Additional guests are charged per the <a href="/tickets/">tickets page</a>, up to the room's capacity.</li>
+        <li>The room is reserved for your group alone for the length of your session.</li>
+        <li>Please arrive on time. Your slot has a fixed end time because of the booking after yours, and arriving late doesn't extend it.</li>
+      </ul>
+
+      <h2>4. Guests and conduct</h2>
+      <p>You're responsible for the people you bring. We may end a session without refund if guests damage the room or equipment, behave in a way that is unsafe or abusive to our staff or other guests, or bring more people than the booking allows after being asked not to.</p>
+      <p>Smoking inside the room is not permitted. Anything involving open flame must be agreed with us beforehand.</p>
+
+      <h2>5. What you bring</h2>
+      <p>You're welcome to bring your own content to play, your own cake, and in most cases your own decor — check with us first. You are responsible for having the right to play any film, show, music or other content you bring. We don't provide content and we don't licence it to you.</p>
+
+      <h2>6. Damage</h2>
+      <p>If the room, furniture or equipment is damaged during your session beyond normal use, we may charge you the reasonable cost of repair or replacement. We'll tell you the amount and why.</p>
+
+      <h2>7. Changes and cancellation</h2>
+      <p>Rescheduling, cancellation and refunds are covered on our <a href="/refunds/">cancellations and refunds page</a>, which forms part of these terms.</p>
+
+      <h2>8. If we have to cancel</h2>
+      <p>Occasionally we may need to cancel or move a session — equipment failure, power loss, something unsafe, or circumstances outside our control. If that happens we'll offer you the next available slot or a full refund of anything you've paid. We're not liable beyond that.</p>
+
+      <h2>9. Our liability</h2>
+      <p>We take reasonable care of the space and the equipment in it. We aren't responsible for personal belongings left behind, or for losses that we could not reasonably have foreseen. Nothing in these terms limits liability that cannot be limited by law, including liability for death or personal injury caused by negligence.</p>
+
+      <h2>10. Photographs</h2>
+      <p>You're free to photograph and film your own group. We will not photograph your session or use images of you for marketing without asking you first and getting your agreement.</p>
+
+      <h2>11. Privacy</h2>
+      <p>What we collect and why is set out on our <a href="/privacy/">privacy page</a>.</p>
+
+      <h2>12. Changes to these terms</h2>
+      <p>We may update these terms. The version that applies to your booking is the one published when you made it. Material changes will be dated at the top of this page.</p>
+
+      <h2>13. Law</h2>
+      <p>These terms are governed by the laws of India, and the courts at Jabalpur, Madhya Pradesh have jurisdiction.</p>
+
+      <h2>14. Contact</h2>
+      <p>Questions about these terms: <a href="/contact/">contact us</a>.</p>
+    </div>
+  </section>
+</Base>

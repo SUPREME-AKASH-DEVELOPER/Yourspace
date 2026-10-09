@@ -1,0 +1,40 @@
+---
+import Base from '../layouts/Base.astro';
+import { primaryNav } from '../data/nav';
+import HeroEnquiry from '../components/HeroEnquiry.astro';
+---
+<Base title="Page not found — YourSpace Jabalpur"
+      description="That page isn't here. Try the programme, the tickets, or get in touch."
+      noindex>
+  <section class="band" style="padding-top:clamp(60px,9vw,120px)">
+    <div class="shell">
+      <div class="done-wrap">
+        <p class="rule-label" style="justify-content:center"><i>404</i><span>Nothing showing here</span></p>
+        <h1 class="headline">This page isn't <em>here</em>.</h1>
+        <p class="standfirst" style="margin-inline:auto">It may have moved, or the link may be slightly wrong. Everything else is still where you left it.</p>
+        <div class="hero-actions" style="justify-content:center">
+          <a class="btn btn-key btn-lg" href="/">Back to home<span aria-hidden="true">→</span></a>
+          <button class="btn btn-line btn-lg" data-book>Pre-book a slot</button>
+        </div>
+        <div style="margin-top:clamp(28px,4vw,44px);text-align:left">
+          <HeroEnquiry />
+        </div>
+      </div>
+
+      <nav class="shell narrow" aria-label="Main pages" style="margin-top:clamp(44px,6vw,72px)">
+        <p class="rule-label"><i>Try</i><span>These pages</span></p>
+        <ul class="leaders" style="list-style:none;padding:0;border-top:1px solid var(--rule)">
+          {primaryNav.map((item) => (
+            <li style="border-bottom:1px solid var(--rule)">
+              <span><a href={item.href}>{item.label}</a></span>
+              <b class="num">{item.n}</b>
+            </li>
+          ))}
+          <li style="border-bottom:1px solid var(--rule)">
+            <span><a href="/contact/">Contact</a></span><b class="num">05</b>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,29 @@
+---
+import { ROOM_BASE, BASE_GUESTS, EXTRA_GUEST, RUNTIME } from '../data/booking';
+const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
+---
+<div class="stub reveal">
+  <div class="stub-main">
+    <p class="stub-kicker">Private session</p>
+    <p class="stub-amount">
+      <span class="cur">₹</span><span class="num">{ROOM_BASE.toLocaleString('en-IN')}</span>
+    </p>
+    <p class="stub-sub">per session · admits up to {BASE_GUESTS}</p>
+    <ul class="stub-list">
+      <li>The room reserved for your group alone</li>
+      <li>Screen, sound and seating included</li>
+      <li>Any of the six experiences</li>
+      <li>{rupee(EXTRA_GUEST)} per additional guest, within capacity</li>
+    </ul>
+  </div>
+  <div class="stub-tear" aria-hidden="true"></div>
+  <div class="stub-end">
+    <dl class="stub-meta">
+      <div><dt>Runtime</dt><dd class="num">{RUNTIME}</dd></div>
+      <div><dt>Admits</dt><dd class="num">{BASE_GUESTS}</dd></div>
+      <div><dt>Due today</dt><dd class="num">₹0</dd></div>
+    </dl>
+    <button class="btn btn-key full" data-book>Pre-book a slot<span aria-hidden="true">→</span></button>
+    <p class="fine center">Extras, taxes and applicable charges are additional</p>
+  </div>
+</div>

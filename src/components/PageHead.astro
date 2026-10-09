@@ -1,0 +1,19 @@
+---
+import HeroEnquiry from './HeroEnquiry.astro';
+
+interface Props {
+  crumb: string;
+  beam?: boolean;
+  /** Set false where a second form would just be in the way. */
+  enquiry?: boolean;
+}
+const { crumb, beam = true, enquiry = true } = Astro.props;
+---
+<section class="pagehead">
+  {beam && <div class="beam" id="beam" aria-hidden="true"></div>}
+  <div class="shell">
+    <p class="crumbs"><a href="/">Home</a><i>/</i><span>{crumb}</span></p>
+    <slot />
+    {enquiry && <HeroEnquiry />}
+  </div>
+</section>

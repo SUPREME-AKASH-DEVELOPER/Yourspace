@@ -1,0 +1,29 @@
+---
+import Logo from './Logo.astro';
+import { primaryNav } from '../data/nav';
+const path = Astro.url.pathname;
+---
+<header class="masthead" id="head">
+  <div class="shell masthead-row">
+    <a class="brand" href="/">
+      <Logo />
+      <span class="brand-name">YourSpace<em>Jabalpur</em></span>
+    </a>
+
+    <nav class="nav" aria-label="Primary">
+      {primaryNav.map((item) => (
+        <a href={item.href} class={path === item.href ? 'is-active' : undefined}
+           aria-current={path === item.href ? 'page' : undefined}>
+          <i>{item.n}</i>{item.label}
+        </a>
+      ))}
+    </nav>
+
+    <div class="masthead-end">
+      <a class="plate" data-call href="#"><span class="plate-dot" aria-hidden="true"></span><span data-phone-text>Call us</span></a>
+      <button class="btn btn-key" data-book>Pre-book<span aria-hidden="true">→</span></button>
+      <button class="btn btn-line menu-btn" id="menuOpen" aria-expanded="false" aria-controls="menu">Menu</button>
+    </div>
+  </div>
+  <div class="sprocket" aria-hidden="true"></div>
+</header>

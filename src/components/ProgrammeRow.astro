@@ -1,0 +1,32 @@
+---
+import Art from './Art.astro';
+import type { Experience } from '../data/booking';
+import { RUNTIME, ROOM_BASE } from '../data/booking';
+
+interface Props {
+  exp: Experience;
+  index: number;
+  detailed?: boolean;
+  /** h2 when the list is the page's top-level section, h3 when it sits under one. */
+  as?: 'h2' | 'h3';
+}
+const { exp, index, detailed = false, as: Heading = 'h3' } = Astro.props;
+const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
+---
+<li class="prog reveal" id={exp.id}>
+  <p class="prog-no num">{String(index + 1).padStart(2, '0')}</p>
+  <div class="prog-art" aria-hidden="true"><Art art={exp.art} /></div>
+  <div class="prog-main">
+    <Heading>{exp.name}</Heading>
+    <p>{detailed ? exp.blurb : exp.blurb.split('. ')[0] + '.'}</p>
+    <dl class="prog-meta">
+      <div><dt>Best for</dt><dd>{exp.bestFor}</dd></div>
+      <div><dt>Runtime</dt><dd>{RUNTIME}</dd></div>
+      <div><dt>Set-up</dt><dd>{exp.setUp}</dd></div>
+      {detailed && <div><dt>From</dt><dd class="num">{rupee(ROOM_BASE)}</dd></div>}
+    </dl>
+  </div>
+  <button class="prog-cta" data-book data-exp={exp.name}>
+    <span>{exp.cta}</span><i aria-hidden="true">→</i>
+  </button>
+</li>

@@ -1,0 +1,17 @@
+---
+/** Reads the same data the booking flow charges from, so the two can't drift. */
+import { priceList } from '../data/booking';
+
+interface Props { as?: 'h2' | 'h3' }
+const { as: Heading = 'h3' } = Astro.props;
+---
+<div class="pricelist reveal">
+  <Heading class="pricelist-head">Add-ons</Heading>
+  <p class="standfirst">Nothing is added by default. You pick what goes in, and the total updates as you go.</p>
+  <ul class="leaders">
+    {priceList.map((item) => (
+      <li><span>{item.name}</span><b class="num">₹{item.price.toLocaleString('en-IN')}</b></li>
+    ))}
+  </ul>
+  <p class="fine">Prices shown before taxes and applicable charges.</p>
+</div>

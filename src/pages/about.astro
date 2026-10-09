@@ -1,0 +1,50 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Notice from '../components/Notice.astro';
+---
+<Base title="About — YourSpace Jabalpur"
+      description="Why we built a private room in Jabalpur, and how we think about running it.">
+  <PageHead crumb="About">
+    <h1 class="headline">A room in Jabalpur,<br />and one <em>simple</em> idea.</h1>
+    <p class="standfirst">That the best nights are the ones where you're not performing for a room full of strangers.</p>
+  </PageHead>
+
+  <section class="band">
+    <div class="shell narrow prose">
+      <h2>Why we're building this</h2>
+      <p>There are plenty of places in Jabalpur to sit in a room with other people. There are very few where the room is <strong>yours</strong> — where you can put on the thing you actually want to watch, sing badly, propose, or just sit with your people without someone clearing the table around you.</p>
+      <p>So that's what we're building. One private space you book by the session. The room doesn't change; what we put in it does. You tell us what the night is, we set it up before you arrive, and then we get out of the way.</p>
+
+      <h2>How we want to run it</h2>
+      <p>A few things we've decided up front, because they're easier to hold to if we say them out loud:</p>
+      <ul>
+        <li><strong>Price it once, honestly.</strong> Everything we charge for is on the <a href="/tickets/">tickets page</a>. If it isn't listed there, we don't charge for it.</li>
+        <li><strong>One booking at a time.</strong> We won't sell two groups into the same room and call it private.</li>
+        <li><strong>Say no when it won't work.</strong> If the room doesn't suit what you're planning, we'd rather tell you that than take the booking.</li>
+        <li><strong>No invented numbers.</strong> You won't find a review count or a "10,000 celebrations hosted" on this site, because we haven't opened yet. When we have real numbers, we'll show real numbers.</li>
+      </ul>
+
+      <h2>Where we are right now</h2>
+      <p>Setting up. The room is being finished, the equipment is being sorted, and we're taking pre-bookings so we know which nights people actually want. Pre-booking costs nothing and commits you to nothing — it just tells us you're interested, and puts you near the front when we open.</p>
+
+      <Notice label="To do">
+        Who we are, how YourSpace started, and photographs of the room go here before launch. We'd rather leave this honest and unfinished than fill it with something invented.
+      </Notice>
+
+      <h2>Talk to us</h2>
+      <p>If you're planning something and you're not sure the room fits, ask. If you want to work with us, or you're a local act who wants a room for a night, ask that too. <a href="/contact/">Contact us here</a>.</p>
+    </div>
+  </section>
+
+  <section class="band band-paper">
+    <div class="shell narrow">
+      <h2 class="title">Be in the room <em>first</em>.</h2>
+      <p class="standfirst">Pre-book a slot and we'll call you before we open to everyone.</p>
+      <div class="hero-actions">
+        <button class="btn btn-key btn-lg" data-book>Pre-book a slot<span aria-hidden="true">→</span></button>
+        <a class="btn btn-line btn-lg" href="/programme/">See the programme</a>
+      </div>
+    </div>
+  </section>
+</Base>

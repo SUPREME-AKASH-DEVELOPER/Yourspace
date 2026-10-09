@@ -1,0 +1,45 @@
+---
+/**
+ * LocalBusiness structured data.
+ * Only facts we can actually stand behind go in here — no ratings, no review
+ * counts, no opening hours until they are real. Fields fill themselves in as
+ * src/data/site.ts is completed.
+ */
+import { site, phoneNumbers } from '../data/site';
+import { ROOM_BASE, experiences } from '../data/booking';
+
+const origin = Astro.site?.origin ?? '';
+
+const schema: Record<string, unknown> = {
+  '@context': 'https://schema.org',
+  '@type': 'EntertainmentBusiness',
+  '@id': `${origin}/#business`,
+  name: `${site.name} ${site.city}`,
+  description:
+    'A private screening room in Jabalpur booked by the session — for watch parties, karaoke, date nights, proposals, candlelight dinners and stand-up evenings.',
+  url: origin || undefined,
+  address: {
+    '@type': 'PostalAddress',
+    ...(site.address ? { streetAddress: site.address } : {}),
+    addressLocality: site.city,
+    addressRegion: site.region,
+    addressCountry: 'IN',
+  },
+  areaServed: { '@type': 'City', name: site.city },
+  priceRange: '₹₹',
+  currenciesAccepted: 'INR',
+  makesOffer: experiences.map((e) => ({
+    '@type': 'Offer',
+    name: e.name,
+    price: ROOM_BASE,
+    priceCurrency: 'INR',
+    availability: 'https://schema.org/PreOrder',
+  })),
+};
+
+if (phoneNumbers.length === 1) schema.telephone = phoneNumbers[0].raw;
+else if (phoneNumbers.length > 1) schema.telephone = phoneNumbers.map((p) => p.raw);
+if (site.email) schema.email = site.email;
+if (site.mapsUrl) schema.hasMap = site.mapsUrl;
+---
+<script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />

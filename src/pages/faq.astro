@@ -1,0 +1,42 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Faq from '../components/Faq.astro';
+import { faqSections } from '../data/faq';
+
+let counter = 1;
+const sections = faqSections.map((s) => {
+  const startAt = counter;
+  counter += s.items.length;
+  return { ...s, startAt };
+});
+---
+<Base title="Questions — YourSpace Jabalpur"
+      description="What the price includes, how many people fit, what you can bring, and how pre-booking works.">
+  <PageHead crumb="Questions">
+    <h1 class="headline">Answered <em>plainly</em>.</h1>
+    <p class="standfirst">If something here is still unclear, that's our fault — <a href="/contact/" style="color:var(--amber)">ask us</a> and we'll fix the wording.</p>
+  </PageHead>
+
+  <section class="band">
+    <div class="shell narrow">
+      {sections.map((s, i) => (
+        <div style="margin-bottom:clamp(40px,6vw,76px)">
+          <p class="rule-label"><i>{s.n}</i><span>{s.label}</span></p>
+          <Faq items={s.items} startAt={s.startAt} openFirst={i === 0} />
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="band band-paper">
+    <div class="shell narrow">
+      <h2 class="title">Still <em>stuck</em>?</h2>
+      <p class="standfirst">Ask us directly. A real person reads it.</p>
+      <div class="hero-actions">
+        <a class="btn btn-key btn-lg" href="/contact/">Ask a question<span aria-hidden="true">→</span></a>
+        <button class="btn btn-line btn-lg" data-book>Pre-book a slot</button>
+      </div>
+    </div>
+  </section>
+</Base>

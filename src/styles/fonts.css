@@ -1,0 +1,95 @@
+/* =============================================================
+   Fonts — self-hosted, latin subset only.
+
+   The site uses two characters outside the latin range: ₹ (U+20B9)
+   and → (U+2192). Shipping the full latin-ext files for them cost
+   103 KB, so the rupee is cut into a 1.6 KB face matched by
+   unicode-range instead.
+
+   DM Mono contains no rupee glyph in any subset, so prices set in
+   mono were falling back to whatever the reader's OS supplied. That
+   one glyph is borrowed from Archivo inside the 'DM Mono' family
+   below, which makes the symbol identical on every machine.
+
+   No shipped font has → ; it comes from the system stack, which
+   carries it universally.
+
+   Licences (SIL OFL) ship alongside in /fonts/.
+   ============================================================= */
+
+/* ---- Archivo Variable (wght + wdth) ---- */
+@font-face {
+  font-family: 'Archivo Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url('/fonts/archivo-latin.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'Archivo Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  src: url('/fonts/archivo-extras.woff2') format('woff2-variations');
+  unicode-range: U+20B9;
+}
+
+/* ---- DM Mono ---- */
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/dm-mono-400.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  /* the rupee, borrowed from Archivo — DM Mono has no glyph for it */
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/archivo-extras.woff2') format('woff2-variations');
+  unicode-range: U+20B9;
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/dm-mono-500.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 500;
+  src: url('/fonts/archivo-extras.woff2') format('woff2-variations');
+  unicode-range: U+20B9;
+}
+
+/* ---- Instrument Serif (italic only — it is used for emphasis alone) ---- */
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/instrument-serif-italic.woff2') format('woff2');
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+/* ---- Devanagari, subset to the city name alone (जबलपुर) ----
+   Jabalpur written in its own script, used as a quiet mark of place beside
+   the wordmark. Subset to six glyphs, so it costs under 2 KB. ---- */
+@font-face {
+  font-family: 'Tiro Devanagari';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400;
+  src: url('/fonts/devanagari-jabalpur.woff2') format('woff2');
+  unicode-range: U+0900-097F;
+}

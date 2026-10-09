@@ -1,0 +1,17 @@
+---
+import { packages, BASE_GUESTS, EXTRA_GUEST, SESSION_LABEL } from '../data/booking';
+const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
+---
+<div class="pkgs">
+  {packages.map((p) => (
+    <div class="pkg reveal">
+      {p.tag && <span class="pkg-tag">{p.tag}</span>}
+      <span class="pkg-top">
+        <strong>{p.name}</strong><span class="pkg-price num">{rupee(p.price)}</span>
+      </span>
+      <p>{p.desc}</p>
+      <ul>{p.includes.map((i) => <li>{i}</li>)}</ul>
+      <p class="pkg-fine">Up to {BASE_GUESTS} guests · {SESSION_LABEL} · +{rupee(EXTRA_GUEST)} per extra seat</p>
+    </div>
+  ))}
+</div>

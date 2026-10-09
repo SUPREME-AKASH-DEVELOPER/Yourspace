@@ -1,0 +1,30 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import PrebookForm from '../components/PrebookForm.astro';
+---
+<Base title="Pre-book — YourSpace Jabalpur"
+      description="Tell us what you would book and when. No payment and no card details — we call you to confirm.">
+  <PageHead crumb="Pre-book">
+    <h1 class="headline">Get in <em>before</em> we open.</h1>
+    <p class="standfirst">We're opening soon in Jabalpur. Tell us what you'd book and when, and we'll call you to lock your slot before we open to everyone.</p>
+  </PageHead>
+
+  <section class="band">
+    <div class="shell book-grid">
+      <div class="reveal">
+        <p class="rule-label"><i>Plainly</i><span>What this is</span></p>
+        <h2 class="title">A place in the <em>queue</em>, not a payment.</h2>
+        <ul class="stub-list">
+          <li>No payment now, and no card details</li>
+          <li>We call you to confirm your date and group size</li>
+          <li>First slots go to people who pre-book</li>
+          <li>If you change your mind, there is nothing to cancel</li>
+        </ul>
+        <p class="fine">Want to choose a package, seats and extras instead? <a href="/book/">Use the full booking flow</a>.</p>
+        <p class="fine">Prefer to talk? <a data-call href="#">Call us</a> or <a data-wa href="#">message us on WhatsApp</a>.</p>
+      </div>
+      <PrebookForm />
+    </div>
+  </section>
+</Base>

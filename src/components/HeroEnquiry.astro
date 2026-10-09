@@ -1,0 +1,33 @@
+---
+/**
+ * The short enquiry that sits in every page's hero.
+ * Two fields and a button — anything longer belongs on /contact/.
+ * Ids are generated per instance so the form can appear more than once
+ * on a page without colliding.
+ */
+const uid = Math.random().toString(36).slice(2, 8);
+const nameId = `enq-name-${uid}`;
+const phoneId = `enq-phone-${uid}`;
+---
+<form class="hero-enquiry" data-form="enquiry" novalidate>
+  <p class="hero-enquiry-head">
+    <span class="hero-enquiry-title">Ask us anything</span>
+    <span class="fine">Leave your number and we'll call you back.</span>
+  </p>
+
+  <div class="hero-enquiry-row">
+    <label class="tfield" for={nameId}>
+      <span class="tlabel">Your name</span>
+      <input id={nameId} name="name" data-label="your name" data-req type="text"
+             autocomplete="name" placeholder="Your name" />
+    </label>
+    <label class="tfield" for={phoneId}>
+      <span class="tlabel">Phone</span>
+      <input id={phoneId} name="phone" data-label="your phone number" data-req data-phone
+             type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile" />
+    </label>
+    <button class="btn btn-key" type="submit">Call me back<span aria-hidden="true">→</span></button>
+  </div>
+
+  <p class="form-note" role="status"></p>
+</form>

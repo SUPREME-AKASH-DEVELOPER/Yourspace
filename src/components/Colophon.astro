@@ -1,0 +1,53 @@
+---
+import Logo from './Logo.astro';
+import { experiences } from '../data/booking';
+import { site } from '../data/site';
+const year = new Date().getFullYear();
+---
+<footer class="colophon">
+  <div class="shell">
+    <div class="colophon-grid">
+      <div>
+        <p class="brand"><Logo /><span class="brand-name">YourSpace<em>Jabalpur</em></span></p>
+        <p class="standfirst">One private room in Jabalpur for watch parties, karaoke, date nights, proposals, candlelight dinners and stand-up evenings.</p>
+      </div>
+      <div>
+        <p class="col-head">Programme</p>
+        {experiences.map((e) => <a href={`/programme/#${e.id}`}>{e.name}</a>)}
+      </div>
+      <div>
+        <p class="col-head">The house</p>
+        <a href="/room/">The room</a>
+        <a href="/tickets/">Tickets</a>
+        <a href="/about/">About</a>
+        <a href="/faq/">Questions</a>
+        <a href="/book/">Book a slot</a>
+      </div>
+      <div>
+        <p class="col-head">Box office</p>
+        <a data-call href="#" data-phone-text></a>
+        <a data-phone-alt href="#"></a>
+        <a data-wa href="#">WhatsApp</a>
+        <a href="/contact/">Contact</a>
+        <p class="fine">{site.city}, {site.region}<br />{site.address || site.hours}</p>
+      </div>
+    </div>
+  </div>
+  <!-- Set as SVG with an explicit textLength so the whole word always fits the
+       page, at any width, instead of being cropped by the viewport edge. -->
+  <div class="jaali-rule" aria-hidden="true"></div>
+
+  <div class="wordmark" aria-hidden="true">
+    <svg viewBox="0 0 1000 150" preserveAspectRatio="xMidYMid meet" role="presentation" focusable="false">
+      <text x="500" y="118" text-anchor="middle" textLength="972" lengthAdjust="spacingAndGlyphs">YourSpace</text>
+    </svg>
+  </div>
+  <div class="wordmark-row">
+    <p class="fine" style="margin:0">A private screening room in {site.city}</p>
+    <p class="devanagari" lang="hi">जबलपुर</p>
+  </div>
+
+  <div class="shell">
+    <p class="legal">© {year} YourSpace, {site.city} · <a href="/terms/">Terms</a> · <a href="/privacy/">Privacy</a> · <a href="/refunds/">Cancellations</a></p>
+  </div>
+</footer>

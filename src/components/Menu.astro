@@ -1,0 +1,21 @@
+---
+import Logo from './Logo.astro';
+import { primaryNav, menuExtra } from '../data/nav';
+const items = [...primaryNav, ...menuExtra];
+---
+<div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+  <div class="shell menu-top">
+    <span class="brand"><Logo /><span class="brand-name">YourSpace<em>Jabalpur</em></span></span>
+    <button class="btn btn-line" id="menuClose">Close</button>
+  </div>
+  <nav class="menu-links shell" aria-label="Mobile">
+    {items.map((item) => (
+      <a href={item.href}><i>{item.n}</i><span>{item.label}</span><em>{item.blurb}</em></a>
+    ))}
+  </nav>
+  <div class="shell menu-foot">
+    <button class="btn btn-key full" data-book>Pre-book a slot</button>
+    <a class="btn btn-line full" data-call href="#">Call us</a>
+    <p class="fine" data-phone-text></p>
+  </div>
+</div>
