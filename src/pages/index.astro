@@ -6,6 +6,7 @@ import PriceList from '../components/PriceList.astro';
 import Faq from '../components/Faq.astro';
 import PrebookForm from '../components/PrebookForm.astro';
 import Marquee from '../components/Marquee.astro';
+import Reel from '../components/Reel.astro';
 import { experiences, OTHER, ROOM_BASE, RUNTIME, BASE_GUESTS } from '../data/booking';
 import { homeFaq } from '../data/faq';
 ---
@@ -78,6 +79,18 @@ import { homeFaq } from '../data/faq';
 </section>
 
 <Marquee />
+
+<section class="band" id="decor-preview">
+  <div class="shell">
+    <header class="sec-head">
+      <p class="rule-label"><i>The room</i><span>Dressed three ways</span></p>
+      <h2 class="title">This is what you're <em>walking into</em>.</h2>
+      <p class="standfirst">Three decoration setups, built before you arrive. Pull the strip along, or tap a frame to see it full size.</p>
+    </header>
+    <Reel />
+    <p class="fine"><a href="/tickets/#decorations">See all three, with prices →</a></p>
+  </div>
+</section>
 
 <section class="band" id="experiences">
   <div class="shell">

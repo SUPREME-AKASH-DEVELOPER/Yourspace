@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
 import Notice from '../components/Notice.astro';
+import Reel from '../components/Reel.astro';
 import { BASE_GUESTS, MAX_GUESTS, ROOM_BASE } from '../data/booking';
 ---
 <Base title="The Room — YourSpace Jabalpur"
@@ -66,9 +67,22 @@ import { BASE_GUESTS, MAX_GUESTS, ROOM_BASE } from '../data/booking';
   </section>
 
   <section class="band">
+    <div class="shell">
+      <header class="sec-head">
+        <p class="rule-label"><i>In the room</i><span>Set up three different ways</span></p>
+        <h2 class="title">Three ways we <em>dress</em> the room.</h2>
+        <p class="standfirst">These photographs show the decoration setups you can choose from. Pull the strip along, or see all three with prices on the <a href="/tickets/#decorations">tickets page</a>.</p>
+      </header>
+      <Reel />
+    </div>
+  </section>
+
+  <section class="band">
     <div class="shell narrow">
-      <Notice label="Photos">
-        We haven't photographed the room yet — it's still being finished. We'd rather show you nothing than show you someone else's room, so this page gets real pictures the week we open.
+      <Notice label="Note">
+        The pictures above show the decoration setups. We'll add photographs of the room
+        itself — empty, in daylight — as soon as it is finished, so you can see the space
+        as well as the dressing.
       </Notice>
       <h2 class="title">Want to see it <em>first</em>?</h2>
       <p class="standfirst">Pre-book a slot and we'll call you before we open. If you'd rather see the space before you commit, say so on the call and we'll arrange it.</p>

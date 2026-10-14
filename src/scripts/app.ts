@@ -1,7 +1,8 @@
 import { $, $$, stash } from './dom';
 import { site, phoneIsSet, phoneAltIsSet, prettyPhone, prettyPhoneAlt, waLink } from '../data/site';
-import { mountBooking, openBooking, prefillBooking } from './booking';
+import { mountBooking, openBooking, prefillBooking, prefillDecor } from './booking';
 import { experiences, OTHER } from '../data/booking';
+import { decorations } from '../data/decorations';
 
 /* ---------- contact links ---------- */
 function wireContact() {
@@ -122,6 +123,230 @@ function wireOtherFields() {
   });
 }
 
+/* ---------- the deck ----------
+   The pointer tilts each card and drags a band of light across it; clicking
+   turns it over. All of it is decoration on top of a plain button, so the
+   keyboard path is just "focus, press, it flips".                          */
+function wireDeck() {
+  const cards = $$<HTMLButtonElement>('[data-card]');
+  if (!cards.length) return;
+
+  const fine = window.matchMedia('(pointer:fine)').matches;
+  const still = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  cards.forEach((card) => {
+    const inner = card.querySelector<HTMLElement>('.card-inner');
+
+    card.addEventListener('click', () => {
+      const open = card.getAttribute('aria-expanded') === 'true';
+      card.setAttribute('aria-expanded', String(!open));
+      // the hidden face must leave the tab order and the screen-reader tree
+      card.querySelector('.card-front')?.toggleAttribute('inert', !open);
+      card.querySelector('.card-back')?.toggleAttribute('inert', open);
+    });
+
+    // the back starts hidden
+    card.querySelector('.card-back')?.setAttribute('inert', '');
+
+    if (!fine || still || !inner) return;
+
+    let frame = 0;
+    card.addEventListener('pointermove', (e) => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width;
+        const y = (e.clientY - r.top) / r.height;
+        inner.style.setProperty('--ry', `${(x - 0.5) * 13}deg`);
+        inner.style.setProperty('--rx', `${(0.5 - y) * 11}deg`);
+        card.style.setProperty('--sheen', String(x));
+      });
+    });
+    card.addEventListener('pointerleave', () => {
+      inner.style.setProperty('--ry', '0deg');
+      inner.style.setProperty('--rx', '0deg');
+    });
+  });
+}
+
+/* ---------- the reel ----------
+   A horizontal strip you can drag, flick, or step through with the arrows. */
+function wireReel() {
+  $$('[data-reel]').forEach((reel) => {
+    const track = $<HTMLElement>('[data-reel-track]', reel);
+    const prev = $<HTMLButtonElement>('[data-reel-prev]', reel);
+    const next = $<HTMLButtonElement>('[data-reel-next]', reel);
+    if (!track) return;
+
+    const frameWidth = () => track.querySelector('.reel-frame')?.getBoundingClientRect().width ?? 240;
+    const page = () => Math.max(1, Math.floor(track.clientWidth / frameWidth())) * frameWidth();
+
+    const sync = () => {
+      const max = track.scrollWidth - track.clientWidth - 2;
+      prev?.toggleAttribute('disabled', track.scrollLeft <= 2);
+      next?.toggleAttribute('disabled', track.scrollLeft >= max);
+    };
+    track.addEventListener('scroll', sync, { passive: true });
+    sync();
+
+    // The arrows are enabled from the track's scrollable width. Until the
+    // photographs have laid out, that width is too small and both arrows end
+    // up disabled with nothing to re-enable them, so re-check as the strip
+    // grows and whenever the window changes size.
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(() => sync());
+      ro.observe(track);
+      track.querySelectorAll('img').forEach((img) => ro.observe(img));
+    }
+    track.querySelectorAll('img').forEach((img) => {
+      if (!img.complete) img.addEventListener('load', sync, { once: true });
+    });
+    window.addEventListener('resize', sync, { passive: true });
+
+    prev?.addEventListener('click', () => track.scrollBy({ left: -page(), behavior: 'smooth' }));
+    next?.addEventListener('click', () => track.scrollBy({ left: page(), behavior: 'smooth' }));
+
+    // drag to pull the strip along
+    let down = false;
+    let startX = 0;
+    let startLeft = 0;
+    let moved = 0;
+
+    track.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      down = true;
+      moved = 0;
+      startX = e.clientX;
+      startLeft = track.scrollLeft;
+      track.classList.add('is-dragging');
+    });
+    track.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      const dx = e.clientX - startX;
+      moved = Math.max(moved, Math.abs(dx));
+      track.scrollLeft = startLeft - dx;
+    });
+    const release = () => {
+      if (!down) return;
+      down = false;
+      track.classList.remove('is-dragging');
+      sync();
+    };
+    track.addEventListener('pointerup', release);
+    track.addEventListener('pointercancel', release);
+    track.addEventListener('pointerleave', release);
+
+    // a drag should not also open the photograph it finished on
+    track.addEventListener('click', (e) => {
+      if (moved > 6) { e.preventDefault(); e.stopPropagation(); moved = 0; }
+    }, true);
+
+    // arrow keys when the strip itself has focus
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); track.scrollBy({ left: page(), behavior: 'smooth' }); }
+      if (e.key === 'ArrowLeft')  { e.preventDefault(); track.scrollBy({ left: -page(), behavior: 'smooth' }); }
+    });
+
+    /* ---- it runs on its own ----
+       The frames are rendered twice, so when the first copy has passed we can
+       jump back by exactly one copy and the loop is seamless. It stops while
+       you are touching it, reading it, or looking at a photograph full size. */
+    const still = window.matchMedia('(prefers-reduced-motion:reduce)');
+    const playBtn = $<HTMLButtonElement>('[data-reel-play]', reel);
+    const playLabel = $('[data-reel-play-label]', reel);
+
+    let wanted = !still.matches;      // what the visitor asked for
+    let held = 0;                     // reasons to hold still right now
+    let last = 0;
+    const SPEED = 22;                 // pixels a second — a drift, not a ride
+
+    const half = () => track.scrollWidth / 2;
+
+    // scrollLeft is rounded to whole pixels, so a fraction of a pixel per frame
+    // would never accumulate. Keep the true position here and write it across.
+    let pos = track.scrollLeft;
+    track.addEventListener('scroll', () => {
+      // if anything else moved the strip, take its word for where we are
+      if (Math.abs(track.scrollLeft - pos) > 2) pos = track.scrollLeft;
+    }, { passive: true });
+
+    const tick = (now: number) => {
+      if (!last) last = now;
+      const dt = Math.min((now - last) / 1000, 0.1);
+      last = now;
+      if (wanted && !held && !down && document.visibilityState === 'visible') {
+        pos += SPEED * dt;
+        if (pos >= half()) pos -= half();
+        track.scrollLeft = pos;
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    const hold = () => { held++; };
+    const release2 = () => { held = Math.max(0, held - 1); };
+    ['pointerenter', 'focusin'].forEach((ev) => reel.addEventListener(ev, hold));
+    ['pointerleave', 'focusout'].forEach((ev) => reel.addEventListener(ev, release2));
+    // a photograph open full size should stop the strip behind it
+    document.addEventListener('ys:lightbox', (e) => {
+      if ((e as CustomEvent).detail) hold(); else release2();
+    });
+
+    const paint = () => {
+      playBtn?.setAttribute('aria-pressed', String(wanted));
+      if (playLabel) playLabel.textContent = wanted ? 'Pause' : 'Play';
+    };
+    playBtn?.addEventListener('click', () => { wanted = !wanted; paint(); });
+    paint();
+    still.addEventListener?.('change', (e) => { wanted = !e.matches; paint(); });
+
+    // captions on or off
+    const ccBtn = $<HTMLButtonElement>('[data-reel-cc]', reel);
+    ccBtn?.addEventListener('click', () => {
+      const on = ccBtn.getAttribute('aria-pressed') !== 'true';
+      ccBtn.setAttribute('aria-pressed', String(on));
+      reel.classList.toggle('cc-off', !on);
+    });
+  });
+}
+
+/* ---------- photographs open at full size ----------
+   <dialog> gives us focus handling and Escape for free; this only fills it
+   in, opens it, and puts focus back where it was.                        */
+function wireLightbox() {
+  const box = $<HTMLDialogElement>('#lightbox');
+  const img = $<HTMLImageElement>('#lightboxImg');
+  const cap = $('#lightboxCap');
+  if (!box || !img || !cap || typeof box.showModal !== 'function') return;
+
+  let opener: HTMLElement | null = null;
+
+  document.addEventListener('click', (e) => {
+    const trigger = (e.target as HTMLElement).closest<HTMLElement>('[data-lightbox]');
+    if (!trigger) return;
+    e.preventDefault();
+    opener = trigger;
+    img.src = trigger.dataset.lightbox ?? '';
+    img.alt = trigger.dataset.caption ?? '';
+    cap.textContent = trigger.dataset.caption ?? '';
+    box.showModal();
+    document.dispatchEvent(new CustomEvent('ys:lightbox', { detail: true }));
+  });
+
+  box.addEventListener('click', (e) => {
+    // clicking the backdrop, or the close button, shuts it
+    if ((e.target as HTMLElement).closest('[data-lightbox-close]') || e.target === box) box.close();
+  });
+  box.addEventListener('close', () => {
+    document.dispatchEvent(new CustomEvent('ys:lightbox', { detail: false }));
+    img.removeAttribute('src');      // not src = '', which re-requests the page
+    img.alt = '';
+    opener?.focus();
+    opener = null;
+  });
+}
+
 /* ---------- mobile menu ---------- */
 function wireMenu() {
   const menu = $('#menu');
@@ -201,6 +426,9 @@ function boot() {
   wireContact();
   wireChrome();
   wireMenu();
+  wireDeck();
+  wireReel();
+  wireLightbox();
   wireOtherFields();
   wireForms();
   mountBooking();
@@ -209,6 +437,11 @@ function boot() {
     const trigger = (e.target as HTMLElement).closest('[data-book]');
     if (!trigger) return;
     e.preventDefault();
+    const decorId = trigger.getAttribute('data-decor');
+    if (decorId) {
+      const decor = decorations.find((d) => d.id === decorId);
+      if (decor) prefillDecor(decor.name);
+    }
     openBooking(trigger.getAttribute('data-exp') ?? '');
   });
 

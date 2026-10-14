@@ -4,6 +4,7 @@ import PageHead from '../components/PageHead.astro';
 import TicketStub from '../components/TicketStub.astro';
 import PriceList from '../components/PriceList.astro';
 import PackageCards from '../components/PackageCards.astro';
+import DecorDeck from '../components/DecorDeck.astro';
 import { EXTRA_GUEST, BASE_GUESTS } from '../data/booking';
 ---
 <Base title="Tickets & Add-ons — YourSpace Jabalpur"
@@ -19,6 +20,17 @@ import { EXTRA_GUEST, BASE_GUESTS } from '../data/booking';
         <TicketStub />
         <PriceList as="h2" />
       </div>
+    </div>
+  </section>
+
+  <section class="band" id="decorations">
+    <div class="shell">
+      <header class="sec-head">
+        <p class="rule-label"><i>Decoration</i><span>Three ways to dress the room</span></p>
+        <h2 class="title">Pick how the room <em>looks</em>.</h2>
+        <p class="standfirst">Three setups, each built before you arrive so you walk into it finished. Turn a card over for what's in it.</p>
+      </header>
+      <DecorDeck />
     </div>
   </section>
 

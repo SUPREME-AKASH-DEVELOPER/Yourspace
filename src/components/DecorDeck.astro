@@ -1,0 +1,71 @@
+---
+/**
+ * The three setups as a hand of cards.
+ * Front is the photograph; flipping turns it over to the details and price.
+ * The card is a button, so it works from the keyboard and announces its state.
+ */
+import { Image } from 'astro:assets';
+import { decorations } from '../data/decorations';
+---
+<div class="deck" data-deck>
+  {decorations.map((decor, i) => {
+    const [lead] = decor.photos;
+    const faceId = `deck-face-${decor.id}`;
+    return (
+      <div class="card-seat" style={`--seat:${i - 1}`}>
+        <button class="card" type="button"
+                data-card id={decor.id}
+                aria-expanded="false" aria-controls={faceId}>
+          <span class="card-inner">
+
+            <span class="card-face card-front">
+              <Image src={lead.src} alt={lead.alt} widths={[380, 760]}
+                     sizes="(max-width: 860px) 86vw, 30vw"
+                     loading={i === 0 ? 'eager' : 'lazy'} />
+              <span class="card-sheen" aria-hidden="true"></span>
+              <span class="card-grain" aria-hidden="true"></span>
+              <span class="card-plate">
+                <span class="card-no num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="card-name">{decor.name}</span>
+                <span class="card-tag">{decor.tagline}</span>
+              </span>
+              <span class="card-price-chip num">
+                {decor.price !== null ? `₹${decor.price.toLocaleString('en-IN')}` : 'On request'}
+              </span>
+              <span class="card-turn" aria-hidden="true">Turn over</span>
+            </span>
+
+            <span class="card-face card-back" id={faceId}>
+              <span class="card-back-head">
+                <span class="card-no num">{String(i + 1).padStart(2, '0')}</span>
+                <span class="card-name">{decor.name}</span>
+              </span>
+              <span class="card-blurb">{decor.blurb}</span>
+              <span class="card-list">
+                {decor.includes.map((item) => <span class="card-list-item">{item}</span>)}
+              </span>
+              <span class="card-foot">
+                <span class="card-price">
+                  {decor.price !== null
+                    ? <><span class="cur">₹</span>{decor.price.toLocaleString('en-IN')}</>
+                    : <span class="card-ask">Price on request</span>}
+                </span>
+                <span class="card-turn" aria-hidden="true">Turn back</span>
+              </span>
+            </span>
+
+          </span>
+        </button>
+
+        <div class="card-actions">
+          <button class="btn btn-key" data-book data-decor={decor.id}>
+            Book this setup<span aria-hidden="true">→</span>
+          </button>
+          <button class="btn btn-line" type="button" data-lightbox={lead.src.src} data-caption={lead.alt}>
+            See it bigger
+          </button>
+        </div>
+      </div>
+    );
+  })}
+</div>

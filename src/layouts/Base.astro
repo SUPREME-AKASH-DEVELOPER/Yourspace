@@ -4,6 +4,7 @@ import Masthead from '../components/Masthead.astro';
 import Menu from '../components/Menu.astro';
 import Colophon from '../components/Colophon.astro';
 import Schema from '../components/Schema.astro';
+import Lightbox from '../components/Lightbox.astro';
 
 interface Props {
   title: string;
@@ -73,6 +74,8 @@ const ogImage = new URL('/og.png', Astro.site).href;
   </main>
 
   <Colophon />
+
+  <Lightbox />
 
   <div class="sticky-cta">
     <button class="btn btn-key full" data-book>Pre-book a slot<span aria-hidden="true">→</span></button>

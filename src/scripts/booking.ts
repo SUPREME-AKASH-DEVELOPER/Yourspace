@@ -147,6 +147,16 @@ function trap(e: KeyboardEvent) {
   else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 }
 
+/** Note the decoration they picked, so it reaches us with the booking. */
+export function prefillDecor(name: string) {
+  const line = `Decoration: ${name}`;
+  const existing = S.notes.trim();
+  if (!existing.includes(line)) {
+    S.notes = existing ? `${line}\n${existing}` : line;
+    save();
+  }
+}
+
 /** Used by the hero ticket: carry what they already chose into the flow. */
 export function prefillBooking(opts: { exp?: string; custom?: string; date?: string; guests?: number }) {
   const hit = experiences.find((e) => e.name.toLowerCase() === (opts.exp ?? '').toLowerCase());

@@ -1,0 +1,13 @@
+---
+/**
+ * Opens a photograph at full size. Built on <dialog> so the browser handles
+ * focus and Escape; the script only fills it in and opens it.
+ */
+---
+<dialog class="lightbox" id="lightbox" aria-label="Photograph">
+  <button class="lightbox-close" type="button" data-lightbox-close aria-label="Close photograph">&times;</button>
+  <figure class="lightbox-figure">
+    <img id="lightboxImg" alt="" />
+    <figcaption class="fine" id="lightboxCap"></figcaption>
+  </figure>
+</dialog>

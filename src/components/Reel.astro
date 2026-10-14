@@ -1,0 +1,72 @@
+---
+/**
+ * A strip of 35mm film: the photographs run through a gate with real
+ * perforations above and below. Drag it, flick it, or use the arrows.
+ */
+import { Image } from 'astro:assets';
+import { decorations } from '../data/decorations';
+
+interface Props { label?: string }
+const { label = 'Photographs of the decoration setups' } = Astro.props;
+
+/** Which setup each frame belongs to, so the strip can caption itself. */
+const frames = decorations.flatMap((d) =>
+  d.photos.map((p) => ({
+    ...p,
+    setup: d.name,
+    id: d.id,
+    /** A short line for the subtitle bar — the long alt text is for readers. */
+    caption: p.alt.split(/[,.]/)[0].trim(),
+  })));
+
+/** Run the strip twice so the loop has somewhere to go without a jump. */
+const looped = [...frames, ...frames];
+---
+<div class="reel" data-reel>
+  <div class="reel-rail reel-rail-top" aria-hidden="true"></div>
+
+  <div class="reel-track" data-reel-track tabindex="0" role="group" aria-label={label}>
+    {looped.map((f, i) => {
+      const n = i % frames.length;
+      const copy = i >= frames.length;
+      return (
+        <figure class="reel-frame" aria-hidden={copy ? 'true' : undefined} data-copy={copy ? '' : undefined}>
+          <button class="reel-shot" type="button"
+                  data-lightbox={f.src.src} data-caption={f.alt}
+                  tabindex={copy ? -1 : undefined}
+                  aria-label={`See a larger view: ${f.alt}`}>
+            <Image src={f.src} alt={copy ? '' : f.alt} widths={[320, 640]}
+                   sizes="(max-width: 860px) 60vw, 23vw"
+                   loading={i < 3 ? 'eager' : 'lazy'} />
+            <span class="reel-grade" aria-hidden="true"></span>
+            <span class="reel-cc" aria-hidden="true">{f.caption}</span>
+          </button>
+          <figcaption class="reel-cap">
+            <span class="num">{String(n + 1).padStart(2, '0')}</span>
+            <span>{f.setup}</span>
+          </figcaption>
+        </figure>
+      );
+    })}
+  </div>
+
+  <div class="reel-rail reel-rail-bottom" aria-hidden="true"></div>
+
+  <div class="reel-controls">
+    <button class="reel-btn" type="button" data-reel-prev aria-label="Previous photographs">‹</button>
+
+    <div class="reel-switches">
+      <button class="reel-toggle" type="button" data-reel-play aria-pressed="true">
+        <span class="reel-toggle-dot" aria-hidden="true"></span>
+        <span data-reel-play-label>Pause</span>
+      </button>
+      <button class="reel-toggle reel-cc-btn" type="button" data-reel-cc aria-pressed="true">
+        <span class="reel-cc-mark" aria-hidden="true">CC</span>
+        <span class="sr-only">Captions</span>
+      </button>
+    </div>
+
+    <button class="reel-btn" type="button" data-reel-next aria-label="More photographs">›</button>
+  </div>
+  <p class="reel-hint fine">It runs on its own — drag the strip, or tap a frame to see it larger.</p>
+</div>
