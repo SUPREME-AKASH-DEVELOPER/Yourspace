@@ -32,31 +32,23 @@ export const site = {
   googleForm: '',
 
   /**
-   * Where form submissions are actually delivered.
+   * WHO GETS THE FORMS
    *
-   * This is FormSubmit, which needs no account: it posts the form to the
-   * address in the URL. The FIRST submission sends that address a one-time
-   * confirmation email — click the link in it, and every submission after
-   * that arrives straight in the inbox.
+   * notifyPrimary is the inbox FormSubmit needs confirmed. The very first
+   * submission sends that address a one-time link; until someone clicks it,
+   * nothing is delivered to anyone. Make it an inbox YOU can open, so you are
+   * not waiting on someone else to switch the site on.
    *
-   * TODO (Akash/Tanishk):
-   *   1. Submit the form once and click the confirmation link Google sends to
-   *      tanishkofficial27@gmail.com. Nothing is delivered until you do.
-   *   2. Then swap this for the hashed URL FormSubmit gives you
-   *      (https://formsubmit.co/ajax/<random-string>), so the address is not
-   *      sitting in the page source for scrapers to read.
-   *   3. If you would rather have the entries in a spreadsheet, put a Google
-   *      Form URL in googleForm above and leave this empty.
-   *
-   * Empty string = no delivery; the site falls back to a WhatsApp draft.
+   * notifyCc rides along on every submission and needs no confirmation of
+   * its own — so Tanishk and Badal start receiving the moment you click.
    */
-  formEndpoint: 'https://formsubmit.co/ajax/tanishkofficial27@gmail.com',
-
-  /** Shown to visitors when a submission could not be delivered. */
-  notifyEmail: 'tanishkofficial27@gmail.com',
+  notifyPrimary: 'akash@ethixweb.com',          // ← the inbox you will confirm from
 
   /** Copied in on every submission. Comma-separated for more than one. */
-  notifyCc: 'badalakki11@gmail.com',
+  notifyCc: 'tanishkofficial27@gmail.com, badalakki11@gmail.com',
+
+  /** Offered to visitors if a submission could not be delivered at all. */
+  notifyEmail: 'tanishkofficial27@gmail.com',
 } as const;
 
 /** A real Indian mobile, and not the placeholder we ship with. */
@@ -80,5 +72,18 @@ export const phoneNumbers = [
 export const waLink = (text: string) =>
   `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`;
 
+/**
+ * Where submissions are posted. Built from notifyPrimary so the address and
+ * the endpoint can never disagree.
+ *
+ * TODO (Akash): once FormSubmit is confirmed it offers a hashed URL
+ * (https://formsubmit.co/ajax/<random-string>). Put that here instead and
+ * delete the line below — the repo is public, and this leaves the address
+ * in the page source for scrapers to read.
+ */
+export const formEndpoint = site.notifyPrimary
+  ? `https://formsubmit.co/ajax/${site.notifyPrimary}`
+  : '';
+
 /** The origin we post submissions to, so the CSP can allow exactly that one. */
-export const formOrigin = site.formEndpoint ? new URL(site.formEndpoint).origin : '';
+export const formOrigin = formEndpoint ? new URL(formEndpoint).origin : '';

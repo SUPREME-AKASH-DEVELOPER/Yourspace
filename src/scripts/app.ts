@@ -1,5 +1,5 @@
 import { $, $$, stash } from './dom';
-import { site, phoneIsSet, phoneAltIsSet, prettyPhone, prettyPhoneAlt, waLink } from '../data/site';
+import { site, formEndpoint, phoneIsSet, phoneAltIsSet, prettyPhone, prettyPhoneAlt, waLink } from '../data/site';
 import { mountBooking, openBooking, prefillBooking, prefillDecor } from './booking';
 import { experiences, OTHER } from '../data/booking';
 import { decorations } from '../data/decorations';
@@ -374,7 +374,7 @@ function wireMenu() {
    One validator serves them all: fields declare data-req / data-phone.   */
 /* ---------- the standalone forms (pre-book, contact, callback, enquiry) ----------
    One validator serves them all: fields declare data-req / data-phone.
-   A valid submission is POSTed to site.formEndpoint so it reaches a real
+   A valid submission is POSTed to formEndpoint so it reaches a real
    inbox. The visitor's own copy is kept in their browser either way, and if
    the network refuses we hand them a WhatsApp draft rather than losing it.  */
 
@@ -425,11 +425,11 @@ function thankYou(who: string, titled: string, data: Record<string, string>): st
 
 /** Deliver one submission. Resolves true when the service accepted it. */
 async function deliver(payload: Record<string, string>): Promise<boolean> {
-  if (!site.formEndpoint) return false;
+  if (!formEndpoint) return false;
   const ctl = new AbortController();
   const bail = setTimeout(() => ctl.abort(), 12_000);
   try {
-    const res = await fetch(site.formEndpoint, {
+    const res = await fetch(formEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),

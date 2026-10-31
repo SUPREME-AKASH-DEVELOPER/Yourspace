@@ -194,7 +194,8 @@ test.describe('submissions actually go somewhere', () => {
     await expect(page.locator('#callbackForm .form-note')).toContainText('Thanks');
 
     const body = sent[0] as Record<string, string>;
-    expect(body._cc, 'second recipient copied').toContain('badalakki11@gmail.com');
+    expect(body._cc, 'Tanishk copied').toContain('tanishkofficial27@gmail.com');
+    expect(body._cc, 'Badal copied').toContain('badalakki11@gmail.com');
     expect(body._replyto, 'replying reaches the visitor').toBe('akash@example.com');
   });
 
