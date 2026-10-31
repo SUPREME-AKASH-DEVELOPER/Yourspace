@@ -1,4 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
+import { mockDelivery } from './helpers';
 
 const STORY = 'A surprise farewell for my sister before she moves to Pune';
 
@@ -95,6 +96,7 @@ test.describe('"Something else" — writing your own occasion', () => {
 
   test('the pre-book form asks for details and requires them', async ({ page }) => {
     await page.addInitScript(() => { window.open = () => null; });
+    await mockDelivery(page);
     await page.goto('/prebook/');
 
     await expect(page.locator('#pCustomField')).toBeHidden();
@@ -103,6 +105,7 @@ test.describe('"Something else" — writing your own occasion', () => {
 
     await page.fill('#pName', 'Akash');
     await page.fill('#pPhone', '7999656039');
+    await page.fill('#pEmail', 'a@example.com');
     await page.fill('#pDate', '2026-12-01');
     await page.locator('#prebookForm button[type=submit]').click();
     await expect(page.locator('#prebookForm .form-note')).toContainText("what you're planning");
@@ -114,12 +117,14 @@ test.describe('"Something else" — writing your own occasion', () => {
 
   test('choosing a set occasion does not demand details', async ({ page }) => {
     await page.addInitScript(() => { window.open = () => null; });
+    await mockDelivery(page);
     await page.goto('/prebook/');
     await page.selectOption('#pExperience', 'Karaoke');
     await expect(page.locator('#pCustomField')).toBeHidden();
 
     await page.fill('#pName', 'Akash');
     await page.fill('#pPhone', '7999656039');
+    await page.fill('#pEmail', 'a@example.com');
     await page.fill('#pDate', '2026-12-01');
     await page.locator('#prebookForm button[type=submit]').click();
     await expect(page.locator('#prebookForm .form-note')).toContainText('Thanks');

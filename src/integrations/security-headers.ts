@@ -1,5 +1,6 @@
 import type { AstroIntegration } from 'astro';
 import { createHash } from 'node:crypto';
+import { formOrigin } from '../data/site';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, extname } from 'node:path';
 
@@ -45,8 +46,9 @@ export default function securityHeaders(): AstroIntegration {
           "style-src 'self' 'unsafe-inline'",
           "font-src 'self'",
           "img-src 'self' data:",
-          "connect-src 'self'",
-          "form-action 'self' https://wa.me https://api.whatsapp.com https://docs.google.com",
+          `connect-src 'self'${formOrigin ? ' ' + formOrigin : ''}`.trim(),
+          ['form-action', "'self'", 'https://wa.me', 'https://api.whatsapp.com',
+           'https://docs.google.com', formOrigin].filter(Boolean).join(' '),
           "frame-ancestors 'none'",
           "base-uri 'self'",
           "object-src 'none'",

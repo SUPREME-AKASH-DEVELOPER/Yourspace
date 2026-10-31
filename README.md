@@ -14,7 +14,7 @@ npm run dev        # http://localhost:4321
 npm run build      # static site -> dist/
 npm run preview    # serve the built site
 npm run check      # TypeScript + Astro diagnostics
-npm test           # Playwright: 440 checks across Chromium, Firefox, WebKit, mobile
+npm test           # Playwright: 580 checks across Chromium, Firefox, WebKit, mobile
 npm run verify     # check + test, the pre-deploy gate
 ```
 
@@ -24,7 +24,8 @@ npm run verify     # check + test, the pre-deploy gate
 src/
   data/             ← the files you normally edit
     site.ts           phone, WhatsApp, address, hours, email
-    booking.ts        prices, packages, add-ons, experiences, capacity
+    booking.ts        prices, packages, add-ons, experiences
+    decorations.ts    the three setups, their prices and photographs, capacity
     faq.ts            every question and answer
     nav.ts            the menus
   pages/            one file per route
@@ -51,6 +52,28 @@ at night. The hero greeting and the "good for a Tuesday" suggestion are filled i
 by script rather than baked into the HTML, because the pages are static and cached
 and would otherwise go stale. Contrast is tested in all four dayparts.
 
+### The reel and the deck
+
+The photographs live in two custom pieces rather than a plain grid. The **reel** is a
+35mm filmstrip with drawn perforations — drag it, flick it, or step through with the
+arrows; frames sit cool and flat until you hover one, which brings the colour up. The
+**deck** on the tickets page is the three setups as cards: the pointer tilts them and
+drags a band of light across, and clicking turns a card over to its details. Both are
+ordinary buttons underneath, so the keyboard path is just focus and press, and the
+hidden face of a card is marked `inert` so it stays out of the tab order.
+
+### The decoration photographs
+
+`src/data/decorations.ts` holds the three setups — Aesthetic ₹1,000, Trendy ₹2,000 and
+Royal — with their photographs and descriptions. They appear on the home page, the room
+page and the tickets page, and any one can be opened full size.
+
+Two things need your attention before launch. **The Royal price was never quoted**, so the
+site says "Price on request" rather than inventing a number. And **the provenance of the
+photographs needs confirming**: if any of them are a supplier's pictures rather than your
+own room and your own work, they have to come down, because someone who books from them
+will turn up expecting exactly what they saw.
+
 ### Heritage marks
 
 The city is set in Devanagari — जबलपुर — beside the footer wordmark, in Tiro
@@ -76,7 +99,9 @@ automatically; on another host, copy the directives into its header config.
 | 3 | Set the real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Blocking** — canonical URLs, sitemap and OG image URLs derive from it |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
 | 5 | Legal review of `/terms`, `/privacy`, `/refunds` | Client | **Blocking** — drafts, with the refund windows as placeholders |
-| 6 | Real photographs of the room | Client | High — the marks are CSS-drawn stand-ins |
+| 6 | Confirm the decoration photographs are ours to publish, and add pictures of the empty room | Client | **Blocking** — see note below |
+| 9 | Set the Royal decoration price in `src/data/decorations.ts` (it shows "Price on request" until then) | Client | High |
+| 10 | Reconcile the decoration prices with the placeholder package prices in `booking.ts` | Both | High |
 | 7 | Room specs: projector, sound, seat count, AC | Client | High |
 | 8 | Decide where bookings land (Google Form or an API) | Both | High |
 
@@ -84,16 +109,28 @@ Everything above is also marked `TODO` in the code.
 
 ## Where bookings go
 
-There is no server yet, so nothing is stored centrally:
+Every form now **posts the submission to a real inbox**. It goes through
+[FormSubmit](https://formsubmit.co), which is free and needs no account:
+`formEndpoint` in `src/data/site.ts` points at the address that receives them.
 
-- every submission is saved to `localStorage` under `ys-requests` (that browser only), and
-- the visitor is handed to WhatsApp, or to a Google Form if `googleForm` is set in `site.ts`.
+**One step before it works:** submit any form once, then open the confirmation email
+FormSubmit sends to that address and click the link. Nothing is delivered until that
+is done — it is how they stop people pointing forms at strangers.
 
-For the Reddit validation run the Google Form is the reliable option — it is the only
-one that collects responses somewhere you can read them.
+After that, swap `formEndpoint` for the hashed URL FormSubmit gives you
+(`https://formsubmit.co/ajax/<random-string>`) so the address is not sitting in the
+page source for scrapers.
 
-When you want real bookings, add an Astro server endpoint under `src/pages/api/` and
-switch that one route to `output: 'server'`.
+Alongside that:
+
+- the visitor's own copy is kept in their browser under `ys-requests`, so a failed
+  send never loses the details;
+- if the post fails, they are handed a WhatsApp draft rather than a dead end;
+- a hidden decoy field catches bots without a captcha;
+- anyone who leaves an email address gets a written confirmation back.
+
+The emails themselves are in [`email/`](email/) — see that folder's README for how to
+switch to a provider that renders them.
 
 ## Testing
 

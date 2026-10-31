@@ -1,6 +1,7 @@
 import { test, expect, type Browser } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { PAGES } from './pages';
+import { mockDelivery } from './helpers';
 
 /** Pin the clock so the time-aware theme is deterministic. */
 async function atTime(browser: Browser, iso: string) {
@@ -15,6 +16,23 @@ async function atTime(browser: Browser, iso: string) {
     window.Date = Pinned;
   `);
   return ctx;
+}
+
+/** Sections fade in on scroll; auditing mid-fade judges a state no one sees. */
+async function settle(page: import('@playwright/test').Page) {
+  await page.evaluate(() => {
+    document.querySelectorAll<HTMLElement>('.reveal').forEach((e) => {
+      // drop the transition so the reveal lands at once: waiting out an
+      // 0.8s fade is flaky when four browsers are running at the same time
+      e.style.transition = 'none';
+      e.classList.add('is-in');
+    });
+  });
+  await expect
+    .poll(() => page.evaluate(() =>
+      [...document.querySelectorAll('.reveal')]
+        .every((el) => getComputedStyle(el).opacity === '1')), { timeout: 15_000 })
+    .toBe(true);
 }
 
 const DAYPARTS = [
@@ -41,6 +59,7 @@ test.describe('the site reacts to the time of day', () => {
       const ctx = await atTime(browser, part.iso);
       const page = await ctx.newPage();
       await page.goto('/');
+      await settle(page);
       const { violations } = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
         .analyze();
@@ -113,6 +132,7 @@ test.describe('the enquiry form in the hero', () => {
 
   test('it validates and accepts', async ({ page }) => {
     await page.addInitScript(() => { window.open = () => null; });
+    await mockDelivery(page);
     await page.goto('/tickets/');
     const form = page.locator('.hero-enquiry');
     const note = form.locator('.form-note');
@@ -126,6 +146,7 @@ test.describe('the enquiry form in the hero', () => {
     await expect(note).toContainText('valid 10-digit');
 
     await form.locator('input[name=phone]').fill('7999656039');
+    await form.locator('input[name=email]').fill('a@example.com');
     await form.locator('button[type=submit]').click();
     await expect(note).toContainText('Thanks');
   });

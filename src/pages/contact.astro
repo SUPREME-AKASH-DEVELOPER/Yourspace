@@ -45,6 +45,9 @@ import { site } from '../data/site';
       <div class="reveal">
         <p class="rule-label"><i>Or</i><span>Send us a message</span></p>
         <form class="bookform" id="contactForm" data-form="contact" novalidate>
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
+
           <div class="field">
             <label for="cName">Your name</label>
             <input id="cName" name="name" data-label="your name" data-req type="text" autocomplete="name" placeholder="Who are we talking to?" />
@@ -55,8 +58,9 @@ import { site } from '../data/site';
               <input id="cPhone" name="phone" data-label="your phone number" data-req data-phone type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile number" />
             </div>
             <div class="field">
-              <label for="cEmail">Email <span class="opt">Optional</span></label>
-              <input id="cEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+              <label for="cEmail">Email</label>
+              <input id="cEmail" name="email" data-label="your email" data-req type="email"
+                     autocomplete="email" placeholder="you@example.com" />
             </div>
           </div>
           <div class="field">
@@ -88,6 +92,9 @@ import { site } from '../data/site';
       <p class="rule-label"><i>Quicker</i><span>Just want a call back?</span></p>
       <h2 class="title">Leave your number. We'll <em>call you</em>.</h2>
       <form class="bookform" id="callbackForm" data-form="callback" novalidate style="max-width:520px;margin-top:26px">
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
+
         <div class="field-row">
           <div class="field">
             <label for="kName">Name</label>
@@ -97,6 +104,12 @@ import { site } from '../data/site';
             <label for="kPhone">Number</label>
             <input id="kPhone" name="phone" data-label="your phone number" data-req data-phone type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile" />
           </div>
+        </div>
+        <div class="field">
+          <label for="kEmail">Email</label>
+          <input id="kEmail" name="email" data-label="your email" data-req type="email"
+                 autocomplete="email" placeholder="you@example.com" />
+          <span class="field-hint">So we can send you a confirmation.</span>
         </div>
         <button class="btn btn-key full" type="submit">Request a call back<span aria-hidden="true">→</span></button>
         <p class="form-note" role="status"></p>

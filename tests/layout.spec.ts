@@ -27,6 +27,10 @@ test.describe('layout', () => {
           const cs = getComputedStyle(el);
           if (cs.display === 'none' || cs.visibility === 'hidden') return false;
           if (cs.overflowX !== 'hidden' && cs.overflow !== 'hidden') return false;
+          // subtitles are clamped to two lines deliberately, and .sr-only text
+          // is clipped on purpose so only screen readers get it
+          if (cs.webkitLineClamp && cs.webkitLineClamp !== 'none') return false;
+          if (el.classList.contains('reel-cc') || el.classList.contains('sr-only')) return false;
           // only elements that render their own text
           const ownText = [...el.childNodes]
             .filter((n) => n.nodeType === 3 && n.textContent!.trim())

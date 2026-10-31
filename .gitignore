@@ -1,0 +1,28 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# test artefacts
+test-results/
+playwright-report/
+blob-report/
+.cache/
+
+# local config
+.env
+.env.*
+!.env.example
+
+# reference material, not part of the site
+MY SKILLS _AKASH/
+
+# the original phone photos — the processed versions the site uses live in
+# src/assets/decor/, so these would only be a second copy in the history
+pictures which to add/
+
+# os
+.DS_Store
+*.log

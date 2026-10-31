@@ -1243,7 +1243,11 @@ h3{
 }
 .hero-enquiry-head .fine{margin:0}
 .hero-enquiry-row{
-  display:grid;grid-template-columns:1fr 1fr auto;gap:16px;align-items:end;
+  display:grid;grid-template-columns:repeat(3,1fr) auto;gap:16px;align-items:end;
+}
+@media (max-width:1100px){
+  .hero-enquiry-row{grid-template-columns:1fr 1fr;gap:14px}
+  .hero-enquiry-row .btn{grid-column:1 / -1}
 }
 .hero-enquiry .tfield input{
   width:100%;padding:8px 0 10px;
@@ -1745,3 +1749,15 @@ a:visited{color:inherit}
   .reel-switches{gap:6px}
   .reel-toggle{padding:6px 10px;font-size:.58rem}
 }
+
+/* a submission on its way */
+.form-note.is-busy{color:var(--amber)}
+.band-paper .form-note.is-busy{color:var(--ember-ink)}
+.btn[disabled]{opacity:.55;cursor:progress}
+
+/* a quiet line under a field, explaining why we ask */
+.field-hint{
+  font-family:var(--mono);font-size:.64rem;line-height:1.5;
+  color:var(--grey);letter-spacing:.03em;
+}
+.band-paper .field-hint{color:var(--grey-2)}

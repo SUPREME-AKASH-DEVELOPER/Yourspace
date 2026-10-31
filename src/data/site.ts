@@ -30,6 +30,33 @@ export const site = {
 
   /** Optional: a Google Form to send enquiries to instead of WhatsApp. */
   googleForm: '',
+
+  /**
+   * Where form submissions are actually delivered.
+   *
+   * This is FormSubmit, which needs no account: it posts the form to the
+   * address in the URL. The FIRST submission sends that address a one-time
+   * confirmation email — click the link in it, and every submission after
+   * that arrives straight in the inbox.
+   *
+   * TODO (Akash/Tanishk):
+   *   1. Submit the form once and click the confirmation link Google sends to
+   *      tanishkofficial27@gmail.com. Nothing is delivered until you do.
+   *   2. Then swap this for the hashed URL FormSubmit gives you
+   *      (https://formsubmit.co/ajax/<random-string>), so the address is not
+   *      sitting in the page source for scrapers to read.
+   *   3. If you would rather have the entries in a spreadsheet, put a Google
+   *      Form URL in googleForm above and leave this empty.
+   *
+   * Empty string = no delivery; the site falls back to a WhatsApp draft.
+   */
+  formEndpoint: 'https://formsubmit.co/ajax/tanishkofficial27@gmail.com',
+
+  /** Shown to visitors when a submission could not be delivered. */
+  notifyEmail: 'tanishkofficial27@gmail.com',
+
+  /** Copied in on every submission. Comma-separated for more than one. */
+  notifyCc: 'badalakki11@gmail.com',
 } as const;
 
 /** A real Indian mobile, and not the placeholder we ship with. */
@@ -52,3 +79,6 @@ export const phoneNumbers = [
 
 export const waLink = (text: string) =>
   `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`;
+
+/** The origin we post submissions to, so the CSP can allow exactly that one. */
+export const formOrigin = site.formEndpoint ? new URL(site.formEndpoint).origin : '';

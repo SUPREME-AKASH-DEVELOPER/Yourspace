@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-ECq5CjFay9dYanbWW9lUrzYstzDoqd9djko3Dg/XJUg=' 'sha256-2ve3Kbk8SlSQrIonejUqIPizpcjNcEFHy3f4vVFVlxY='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; form-action 'self' https://wa.me https://api.whatsapp.com https://docs.google.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'sha256-ECq5CjFay9dYanbWW9lUrzYstzDoqd9djko3Dg/XJUg=' 'sha256-2ve3Kbk8SlSQrIonejUqIPizpcjNcEFHy3f4vVFVlxY='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://formsubmit.co; form-action 'self' https://wa.me https://api.whatsapp.com https://docs.google.com https://formsubmit.co; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin

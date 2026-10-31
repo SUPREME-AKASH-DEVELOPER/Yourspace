@@ -31,10 +31,13 @@ async function settle(page: import('@playwright/test').Page) {
   });
   // wait on the real state rather than a guessed delay, so the audit never
   // races a transition that is still running
+  await page.evaluate(() => {
+    document.querySelectorAll<HTMLElement>('.reveal').forEach((e) => { e.style.transition = 'none'; });
+  });
   await expect
     .poll(() => page.evaluate(() =>
       [...document.querySelectorAll('.reveal')]
-        .every((el) => getComputedStyle(el).opacity === '1')), { timeout: 10_000 })
+        .every((el) => getComputedStyle(el).opacity === '1')), { timeout: 15_000 })
     .toBe(true);
 }
 

@@ -2,6 +2,9 @@
 import { experiences, OTHER } from '../data/booking';
 ---
 <form class="bookform reveal" id="prebookForm" data-form="prebook" novalidate>
+  <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" />
+
   <div class="field">
     <label for="pName">Your name</label>
     <input id="pName" name="name" data-label="your name" data-req type="text" autocomplete="name" placeholder="Who should we ask for?" />
@@ -9,6 +12,12 @@ import { experiences, OTHER } from '../data/booking';
   <div class="field">
     <label for="pPhone">Phone number</label>
     <input id="pPhone" name="phone" data-label="your phone number" data-req data-phone type="tel" autocomplete="tel" inputmode="tel" placeholder="10-digit mobile number" />
+  </div>
+  <div class="field">
+    <label for="pEmail">Email</label>
+    <input id="pEmail" name="email" data-label="your email" data-req type="email"
+           autocomplete="email" placeholder="you@example.com" />
+    <span class="field-hint">We send your confirmation here.</span>
   </div>
   <div class="field-row">
     <div class="field">

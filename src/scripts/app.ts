@@ -372,17 +372,103 @@ function wireMenu() {
 
 /* ---------- the standalone forms (pre-book, contact, callback) ----------
    One validator serves them all: fields declare data-req / data-phone.   */
+/* ---------- the standalone forms (pre-book, contact, callback, enquiry) ----------
+   One validator serves them all: fields declare data-req / data-phone.
+   A valid submission is POSTed to site.formEndpoint so it reaches a real
+   inbox. The visitor's own copy is kept in their browser either way, and if
+   the network refuses we hand them a WhatsApp draft rather than losing it.  */
+
+/** How each field should read in the email, and the order it should read in. */
+const FIELD_LABELS: [string, string][] = [
+  ['name', 'Name'],
+  ['phone', 'Phone'],
+  ['email', 'Email'],
+  ['experience', 'Occasion'],
+  ['custom', 'What they are planning'],
+  ['topic', 'About'],
+  ['date', 'Preferred date'],
+  ['guests', 'Guests'],
+  ['message', 'Message'],
+  ['notes', 'Notes'],
+];
+
+const KIND_TITLES: Record<string, string> = {
+  prebook: 'Pre-booking',
+  enquiry: 'Enquiry',
+  contact: 'Message',
+  callback: 'Call-back request',
+};
+
+/** The note the visitor gets back, in the same voice as the site. */
+function thankYou(who: string, titled: string, data: Record<string, string>): string {
+  const lines = [
+    `Thanks ${who || 'there'} — we have your ${titled.toLowerCase()}.`,
+    '',
+    'Here is what you told us:',
+  ];
+  FIELD_LABELS.forEach(([key, label]) => {
+    if (key !== 'email' && data[key]) lines.push(`  ${label}: ${data[key]}`);
+  });
+  lines.push(
+    '',
+    `Someone will call you on ${data.phone || 'the number you gave us'} to confirm the date,`,
+    'the time and your group size.',
+    '',
+    'Nothing has been charged, and nothing will be until you have confirmed with us.',
+    'If your plans change before then, just reply to this email.',
+    '',
+    `— YourSpace, ${site.city}`,
+    'A private screening room for your people',
+  );
+  return lines.join('\n');
+}
+
+/** Deliver one submission. Resolves true when the service accepted it. */
+async function deliver(payload: Record<string, string>): Promise<boolean> {
+  if (!site.formEndpoint) return false;
+  const ctl = new AbortController();
+  const bail = setTimeout(() => ctl.abort(), 12_000);
+  try {
+    const res = await fetch(site.formEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctl.signal,
+    });
+    if (!res.ok) return false;
+    const body = await res.json().catch(() => ({}));
+    // FormSubmit answers { success: "true" }; anything else is a refusal
+    return String((body as Record<string, unknown>).success ?? 'true') === 'true';
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(bail);
+  }
+}
+
 function wireForms() {
   $$<HTMLFormElement>('form[data-form]').forEach((form) => {
     const note = $('.form-note', form);
-    form.addEventListener('submit', (e) => {
+    const button = $<HTMLButtonElement>('button[type=submit]', form);
+    const buttonHtml = button?.innerHTML ?? '';
+
+    const say = (state: 'err' | 'ok' | 'busy', text: string) => {
+      if (!note) return;
+      note.className = `form-note is-${state === 'busy' ? 'busy' : state}`;
+      note.textContent = text;
+    };
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (button?.disabled) return;                 // already on its way
+
       const data: Record<string, string> = {};
       let problem = '';
 
       $$<HTMLInputElement>('[name]', form).forEach((f) => {
         const val = (f.value || '').trim();
         const label = f.getAttribute('data-label') || f.name;
+        if (f.name.startsWith('_')) { data[f.name] = val; return; }   // service fields
         data[f.name] = val;
         if (problem) return;
         if (f.hasAttribute('data-req') && !val) problem = `Please add ${label}.`;
@@ -392,30 +478,77 @@ function wireForms() {
           problem = 'That email address does not look right.';
       });
 
-      if (problem) {
-        if (note) { note.className = 'form-note is-err'; note.textContent = problem; }
-        return;
-      }
+      if (problem) { say('err', problem); return; }
+
+      // a bot filling every field trips this; a person never sees it
+      if (data._gotcha) { say('ok', 'Thanks — we have your message.'); form.reset(); return; }
 
       const kind = form.getAttribute('data-form') ?? 'enquiry';
+      const who = (data.name || '').split(' ')[0];
+
+      // keep the visitor's own copy first, so nothing is lost if the post fails
       stash({ at: new Date().toISOString(), source: kind, data });
 
-      const who = (data.name || '').split(' ')[0];
-      if (note) {
-        note.className = 'form-note is-ok';
-        note.textContent = kind === 'contact'
-          ? `Thanks ${who} — message noted. We'll get back to you on ${data.phone || 'your number'}.`
-          : `Thanks ${who} — you're on the list. We'll call you on ${data.phone || 'your number'} to confirm. Nothing has been charged.`;
-      }
-      form.reset();
-      $$<HTMLInputElement>('[name=guests]', form).forEach((g) => { g.value = '2'; });
-
-      const lines = Object.keys(data).filter((k) => data[k])
+      const lines = Object.keys(data)
+        .filter((k) => data[k] && !k.startsWith('_'))
         .map((k) => `${k[0].toUpperCase()}${k.slice(1)}: ${data[k]}`);
       const msg = `YourSpace — ${kind}\n${lines.join('\n')}`;
 
-      if (site.googleForm) window.open(site.googleForm, '_blank', 'noopener');
-      else if (phoneIsSet) window.open(waLink(msg), '_blank', 'noopener');
+      if (button) {
+        button.disabled = true;
+        button.innerHTML = 'Sending…';
+      }
+      say('busy', 'Sending…');
+
+      // Send human labels rather than field names, in a sensible order, so the
+      // email reads like a booking slip instead of a form dump.
+      const titled = KIND_TITLES[kind] ?? 'Enquiry';
+      const payload: Record<string, string> = {};
+      FIELD_LABELS.forEach(([key, label]) => {
+        if (data[key]) payload[label] = data[key];
+      });
+      payload['Received'] = new Date().toLocaleString('en-IN', {
+        dateStyle: 'full', timeStyle: 'short',
+      });
+      payload['Came from'] = location.pathname;
+
+      const sent = await deliver({
+        ...payload,
+        _subject: `${titled} — ${data.name || 'someone'}${data.phone ? ` · ${data.phone}` : ''}`,
+        _template: 'table',
+        _captcha: 'false',
+        // everyone on the team sees it
+        ...(site.notifyCc ? { _cc: site.notifyCc } : {}),
+        // replying to the notification goes straight back to the visitor
+        ...(data.email ? { _replyto: data.email } : {}),
+        // and the visitor gets a thank-you of their own
+        ...(data.email ? { _autoresponse: thankYou(who, titled, data) } : {}),
+      });
+
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = buttonHtml;
+      }
+
+      if (sent) {
+        say('ok', kind === 'contact'
+          ? `Thanks ${who} — your message is with us. We'll come back to you on ${data.phone || 'your number'}.`
+          : `Thanks ${who} — you're on the list. We'll call you on ${data.phone || 'your number'} to confirm. Nothing has been charged.`);
+        form.reset();
+        $$<HTMLInputElement>('[name=guests]', form).forEach((g) => { g.value = '2'; });
+        return;
+      }
+
+      // it did not get through: say so, and give them a way that will
+      if (phoneIsSet) {
+        say('err', `That didn't send — the connection may be down. Opening WhatsApp so you can reach us directly.`);
+        window.open(waLink(msg), '_blank', 'noopener');
+      } else if (site.googleForm) {
+        say('err', `That didn't send. Opening our form instead.`);
+        window.open(site.googleForm, '_blank', 'noopener');
+      } else {
+        say('err', `That didn't send. Please call us, or email ${site.notifyEmail}.`);
+      }
     });
   });
 }

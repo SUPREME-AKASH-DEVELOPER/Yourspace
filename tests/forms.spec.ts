@@ -1,29 +1,32 @@
 import { test, expect, type Page } from '@playwright/test';
+import { mockDelivery } from './helpers';
 
-/** Submitting hands off to WhatsApp; stop that opening tabs mid-test. */
+/** Submissions post to a real service and can fall back to WhatsApp.
+    Intercept the post, and stop any fallback opening tabs mid-test. */
 async function muteHandoff(page: Page) {
   await page.addInitScript(() => { window.open = () => null; });
+  await mockDelivery(page);
 }
 
 const CASES = [
   {
     name: 'pre-book (home)', path: '/', form: '#prebookForm',
-    fill: { '#pName': 'Akash', '#pPhone': '9876543210', '#pDate': '2026-12-01' },
+    fill: { '#pName': 'Akash', '#pPhone': '9876543210', '#pEmail': 'a@example.com', '#pDate': '2026-12-01' },
     select: { '#pExperience': 'Karaoke' },
   },
   {
     name: 'pre-book (page)', path: '/prebook/', form: '#prebookForm',
-    fill: { '#pName': 'Akash', '#pPhone': '9876543210', '#pDate': '2026-12-01' },
+    fill: { '#pName': 'Akash', '#pPhone': '9876543210', '#pEmail': 'a@example.com', '#pDate': '2026-12-01' },
     select: { '#pExperience': 'Karaoke' },
   },
   {
     name: 'contact', path: '/contact/', form: '#contactForm',
-    fill: { '#cName': 'Akash', '#cPhone': '9876543210', '#cMessage': 'Is the 9th free?' },
+    fill: { '#cName': 'Akash', '#cPhone': '9876543210', '#cEmail': 'a@example.com', '#cMessage': 'Is the 9th free?' },
     select: { '#cTopic': 'Booking a session' },
   },
   {
     name: 'callback', path: '/contact/', form: '#callbackForm',
-    fill: { '#kName': 'Akash', '#kPhone': '9876543210' },
+    fill: { '#kName': 'Akash', '#kPhone': '9876543210', '#kEmail': 'a@example.com' },
     select: {},
   },
 ];
@@ -55,6 +58,7 @@ test.describe('forms', () => {
     await muteHandoff(page);
     await page.goto('/contact/');
     await page.fill('#kName', 'Akash');
+    await page.fill('#kEmail', 'a@example.com');
     await page.fill('#kPhone', '12345');
     await page.locator('#callbackForm button[type=submit]').click();
     await expect(page.locator('#callbackForm .form-note')).toContainText('valid 10-digit');
@@ -87,6 +91,7 @@ test.describe('forms', () => {
     await page.goto('/prebook/');
     await page.fill('#pName', 'x'.repeat(600));
     await page.fill('#pPhone', '9876543210');
+    await page.fill('#pEmail', 'a@example.com');
     await page.selectOption('#pExperience', 'Karaoke');
     await page.fill('#pDate', '2026-12-01');
     await page.locator('#prebookForm button[type=submit]').click();
