@@ -537,7 +537,7 @@ async function submit() {
   };
 
   const first = S.name.split(' ')[0] || 'there';
-  const sent = await deliver({
+  const outcome = await deliver({
     ...payload,
     ...envelope(`Booking — ${S.name || 'someone'} · ${S.phone}`, S.email),
     _autoresponse:
@@ -552,10 +552,12 @@ async function submit() {
 
   const state = $('#bkSendState');
   if (!state) return;
-  state.textContent = sent
+  state.textContent = outcome.ok
     ? 'Your booking has been emailed to us, and a copy is on its way to you.'
-    : `That didn't reach us — the connection may have dropped. Please call us so we do not miss it.`;
-  state.className = sent ? 'fine center' : 'fine center bk-send-failed';
+    : outcome.reason === 'busy'
+      ? `We're getting a lot of bookings right now, so this one hasn't reached us yet. Please call us so we don't miss it.`
+      : `That didn't reach us. Your details are saved here, but please call us so we don't miss it.`;
+  state.className = outcome.ok ? 'fine center' : 'fine center bk-send-failed';
 }
 
 function renderDone() {

@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 /** Forms post to a real service; tests must never actually email anyone. */
-export const ENDPOINT = 'https://formsubmit.co/**';
+export const ENDPOINT = /formsubmit\.co|api\.web3forms\.com/;
 
 /** Accept every submission, and hand back what was posted. */
 export async function mockDelivery(page: Page) {

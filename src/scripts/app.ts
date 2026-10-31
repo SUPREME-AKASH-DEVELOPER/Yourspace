@@ -480,7 +480,7 @@ function wireForms() {
       });
       payload['Came from'] = location.pathname;
 
-      const sent = await deliver({
+      const outcome = await deliver({
         ...payload,
         ...envelope(
           `${titled} — ${data.name || 'someone'}${data.phone ? ` · ${data.phone}` : ''}`,
@@ -494,7 +494,7 @@ function wireForms() {
         button.innerHTML = buttonHtml;
       }
 
-      if (sent) {
+      if (outcome.ok) {
         say('ok', kind === 'contact'
           ? `Thanks ${who} — your message is with us. We'll come back to you on ${data.phone || 'your number'}.`
           : `Thanks ${who} — you're on the list. We'll call you on ${data.phone || 'your number'} to confirm. Nothing has been charged.`);
@@ -503,12 +503,19 @@ function wireForms() {
         return;
       }
 
-      // It did not get through. Leave every answer exactly where they typed it
-      // so pressing the button again is all it takes.
-      say('err',
-        `That didn't send — it looks like the connection dropped. ` +
-        `Nothing you typed has been lost, so please press the button again. ` +
-        `If it still will not go, call us on ${prettyPhone}.`);
+      // It did not get through. Leave every answer exactly where they typed it,
+      // and say which of the three things actually happened.
+      const kept = 'Nothing you typed has been lost.';
+      if (outcome.reason === 'busy') {
+        say('err', `We're getting a lot of messages right now. ${kept} ` +
+                   `Please press the button again in a minute, or call us on ${prettyPhone}.`);
+      } else if (outcome.reason === 'offline') {
+        say('err', `That didn't send — it looks like the connection dropped. ${kept} ` +
+                   `Please press the button again. If it still will not go, call us on ${prettyPhone}.`);
+      } else {
+        say('err', `We couldn't send that just now. ${kept} ` +
+                   `Please call us on ${prettyPhone} so we don't miss you.`);
+      }
     });
   });
 }

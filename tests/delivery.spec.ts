@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-const ENDPOINT = 'https://formsubmit.co/**';
+const ENDPOINT = /formsubmit\.co|api\.web3forms\.com/;
 
 /** Pretend the service accepted it, and record what we sent. */
 async function acceptAndCapture(page: Page, sink: Record<string, unknown>[]) {
@@ -114,7 +114,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.fill('#pDate', '2026-12-01');
     await page.locator('#prebookForm button[type=submit]').click();
 
-    await expect(page.locator('#prebookForm .form-note')).toContainText("didn't send");
+    await expect(page.locator('#prebookForm .form-note')).toContainText('connection dropped');
     // email is the only route now: nothing is opened elsewhere
     const opened = await page.evaluate(() => (window as any).__opened as string[]);
     expect(opened, 'no hand-off to another channel').toEqual([]);
@@ -137,7 +137,10 @@ test.describe('submissions actually go somewhere', () => {
     await page.fill('#kPhone', '9429690584');
     await page.fill('#kEmail', 'akash@example.com');
     await page.locator('#callbackForm button[type=submit]').click();
-    await expect(page.locator('#callbackForm .form-note')).toContainText("didn't send");
+    const note = page.locator('#callbackForm .form-note');
+    await expect(note).toContainText("couldn't send");
+    await expect(note).toContainText('Nothing you typed has been lost');
+    await expect(note, 'a refusal is not a dropped line').not.toContainText('connection dropped');
   });
 
   test('someone who leaves an email gets a confirmation written back', async ({ page }) => {
@@ -310,9 +313,48 @@ test.describe('submissions actually go somewhere', () => {
     }
   });
 
-  test('the content policy allows posting to the endpoint', async () => {
+  test('the content policy allows exactly the service in use', async () => {
     const { readFileSync } = await import('node:fs');
     const headers = readFileSync('dist/_headers', 'utf8');
-    expect(headers).toContain('connect-src \'self\' https://formsubmit.co');
+    const csp = headers.match(/connect-src [^;]*/)?.[0] ?? '';
+    expect(csp).toMatch(/formsubmit\.co|api\.web3forms\.com/);
+  });
+
+  test('a rate limit is reported as busy, not as a dead connection', async ({ page }) => {
+    let calls = 0;
+    await page.route(ENDPOINT, (route) => {
+      calls++;
+      return route.fulfill({
+        status: 429, contentType: 'application/json',
+        body: JSON.stringify({ success: false, message: 'Rate limit exceeded. Please try again later.' }),
+      });
+    });
+    await page.goto('/contact/');
+    await page.fill('#kName', 'Akash');
+    await page.fill('#kPhone', '9429690584');
+    await page.fill('#kEmail', 'a@example.com');
+    await page.locator('#callbackForm button[type=submit]').click();
+
+    const note = page.locator('#callbackForm .form-note');
+    await expect(note).toContainText('a lot of messages');
+    await expect(note).not.toContainText('connection dropped');
+    expect(calls, 'a rate limit must not be hammered with a retry').toBe(1);
+  });
+
+  test('a dropped connection is retried once', async ({ page }) => {
+    let calls = 0;
+    await page.route(ENDPOINT, (route) => {
+      calls++;
+      return calls === 1
+        ? route.abort('failed')
+        : route.fulfill({ status: 200, contentType: 'application/json', body: '{"success":"true"}' });
+    });
+    await page.goto('/contact/');
+    await page.fill('#kName', 'Akash');
+    await page.fill('#kPhone', '9429690584');
+    await page.fill('#kEmail', 'a@example.com');
+    await page.locator('#callbackForm button[type=submit]').click();
+    await expect(page.locator('#callbackForm .form-note')).toContainText('Thanks', { timeout: 15_000 });
+    expect(calls, 'one retry after a network failure').toBe(2);
   });
 });

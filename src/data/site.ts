@@ -46,6 +46,19 @@ export const site = {
 
   /** Offered to visitors if a submission could not be delivered at all. */
   notifyEmail: 'tanishkofficial27@gmail.com',
+
+  /**
+   * HOW THE EMAIL IS SENT
+   *
+   * Leave this empty and the site uses FormSubmit, which needs no account but
+   * rate-limits hard and has to be confirmed by clicking a link first.
+   *
+   * Paste a Web3Forms access key here and it uses that instead: free, 250
+   * submissions a month, no confirmation step, and far steadier.
+   * Get one in under a minute at https://web3forms.com — enter the address
+   * the forms should reach, and the key is emailed to you.
+   */
+  web3formsKey: '',
 } as const;
 
 /** A real Indian mobile, and not the placeholder we ship with. */

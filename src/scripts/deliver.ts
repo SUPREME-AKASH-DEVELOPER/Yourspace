@@ -1,41 +1,79 @@
 import { site, formEndpoint } from '../data/site';
 
+/** Web3Forms when a key is set, FormSubmit otherwise. */
+const useWeb3Forms = Boolean(site.web3formsKey);
+const ENDPOINT = useWeb3Forms ? 'https://api.web3forms.com/submit' : formEndpoint;
+
 /**
  * Every submission on this site leaves by one route: email.
  * Nothing is handed off to WhatsApp or any other channel.
  */
 
-async function postOnce(payload: Record<string, string>): Promise<boolean> {
+/** Why a send did not go through, so we can say something true about it. */
+export type Outcome =
+  | { ok: true }
+  | { ok: false; reason: 'offline' | 'busy' | 'refused'; retryAfter?: number };
+
+async function postOnce(payload: Record<string, string>): Promise<Outcome> {
   const ctl = new AbortController();
   const bail = setTimeout(() => ctl.abort(), 12_000);
   try {
-    const res = await fetch(formEndpoint, {
+    const res = await fetch(ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(payload),
       signal: ctl.signal,
     });
-    if (!res.ok) return false;
+
+    // Too many requests: the send is fine, the service just wants a pause.
+    if (res.status === 429) {
+      const after = Number(res.headers.get('retry-after')) || 0;
+      return { ok: false, reason: 'busy', retryAfter: after };
+    }
+    if (!res.ok) return { ok: false, reason: res.status >= 500 ? 'offline' : 'refused' };
+
     const body = await res.json().catch(() => ({}));
-    // FormSubmit answers { success: "true" }; anything else is a refusal
-    return String((body as Record<string, unknown>).success ?? 'true') === 'true';
+    const success = String((body as Record<string, unknown>).success ?? 'true') === 'true';
+    if (success) return { ok: true };
+
+    const msg = String((body as Record<string, unknown>).message ?? '').toLowerCase();
+    return { ok: false, reason: msg.includes('rate limit') ? 'busy' : 'refused' };
   } catch {
-    return false;
+    return { ok: false, reason: 'offline' };
   } finally {
     clearTimeout(bail);
   }
 }
 
-/** Email is the only route, so a flaky line gets one more try. */
-export async function deliver(payload: Record<string, string>): Promise<boolean> {
-  if (!formEndpoint) return false;
-  if (await postOnce(payload)) return true;
-  await new Promise((r) => setTimeout(r, 1200));
+/**
+ * Deliver one submission by email.
+ *
+ * Email is the only route, so a dropped connection is worth one more try.
+ * A refusal or a rate limit is not: repeating those makes it worse, and the
+ * visitor is better served by a message that says what actually happened.
+ */
+export async function deliver(payload: Record<string, string>): Promise<Outcome> {
+  if (!ENDPOINT) return { ok: false, reason: 'refused' };
+  const first = await postOnce(payload);
+  if (first.ok || first.reason !== 'offline') return first;
+  await new Promise((r) => setTimeout(r, 1500));
   return postOnce(payload);
 }
 
-/** The fields every email carries, whoever it is addressed to. */
+/**
+ * The fields every email carries. The two services name these differently,
+ * so the rest of the site never has to know which one is in use.
+ */
 export function envelope(subject: string, replyTo?: string): Record<string, string> {
+  if (useWeb3Forms) {
+    return {
+      access_key: site.web3formsKey,
+      subject,
+      from_name: `${site.name} ${site.city}`,
+      ...(site.notifyCc ? { ccemail: site.notifyCc } : {}),
+      ...(replyTo ? { replyto: replyTo } : {}),
+    };
+  }
   return {
     _subject: subject,
     _template: 'table',
@@ -44,3 +82,8 @@ export function envelope(subject: string, replyTo?: string): Record<string, stri
     ...(replyTo ? { _replyto: replyTo } : {}),
   };
 }
+
+/** Which service is carrying the mail, for the CSP and for tests. */
+export const mailOrigin = useWeb3Forms
+  ? 'https://api.web3forms.com'
+  : (formEndpoint ? new URL(formEndpoint).origin : '');
