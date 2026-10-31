@@ -67,9 +67,13 @@ test.describe('contact details', () => {
     expect(data.telephone).toEqual([PRIMARY.raw, SECOND.raw]);
   });
 
-  test('WhatsApp still goes to the primary line', async ({ page }) => {
-    await page.goto('/contact/');
-    const href = await page.locator('a[data-wa]').first().getAttribute('href');
-    expect(href).toContain('wa.me/919429690584');
+  test('no WhatsApp route is offered anywhere — email is the only one', async ({ page }) => {
+    for (const path of ['/contact/', '/', '/prebook/', '/thanks/']) {
+      await page.goto(path);
+      await expect(page.locator('a[data-wa]'), `${path}`).toHaveCount(0);
+      const hrefs = await page.evaluate(() =>
+        [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href') ?? ''));
+      expect(hrefs.filter((h) => h.includes('wa.me')), `${path}`).toEqual([]);
+    }
   });
 });

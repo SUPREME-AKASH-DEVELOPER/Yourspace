@@ -115,10 +115,13 @@ test.describe('submissions actually go somewhere', () => {
     await page.locator('#prebookForm button[type=submit]').click();
 
     await expect(page.locator('#prebookForm .form-note')).toContainText("didn't send");
-    // they are handed a way through that does work
+    // email is the only route now: nothing is opened elsewhere
     const opened = await page.evaluate(() => (window as any).__opened as string[]);
-    expect(opened.join(' ')).toContain('wa.me');
-    // and their details are still kept locally
+    expect(opened, 'no hand-off to another channel').toEqual([]);
+    // what they typed is still on screen, so one more press is all it takes
+    await expect(page.locator('#pName')).toHaveValue('Akash');
+    await expect(page.locator('#pPhone')).toHaveValue('9429690584');
+    // and a copy is kept locally
     const saved = await page.evaluate(() => localStorage.getItem('ys-requests'));
     expect(saved).toContain('9429690584');
   });
@@ -216,6 +219,88 @@ test.describe('submissions actually go somewhere', () => {
 
     await page.waitForTimeout(600);
     expect(sent, 'nothing posted for a bot').toHaveLength(0);
+  });
+
+  test('the booking flow emails the whole booking', async ({ page }) => {
+    const sent: Record<string, unknown>[] = [];
+    await acceptAndCapture(page, sent);
+    await page.goto('/book/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.locator('[data-exp-pick="karaoke"]').click();
+    await page.locator('[data-seat="6"]').click();
+    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-bk-next]').click();
+    await page.locator('[data-slot-pick="s4"]').click();
+    await page.locator('[data-pkg-pick="romantic"]').click();
+    await page.locator('.xrow', { hasText: 'Cake' }).locator('[data-delta="1"]').click();
+    await page.locator('[data-bk-next]').click();
+
+    await page.fill('#bName', 'Tanishk Sharma');
+    await page.fill('#bPhone', '7999656039');
+    await page.fill('#bEmail', 'tanishk@example.com');
+    await page.locator('[data-bk-next]').click();
+
+    await expect(page.locator('#bkTitle')).toContainText("You're on the list");
+    await expect(page.locator('#bkSendState')).toContainText('emailed to us', { timeout: 10_000 });
+
+    expect(sent, 'the booking was posted').toHaveLength(1);
+    const body = sent[0] as Record<string, string>;
+    expect(body.Name).toBe('Tanishk Sharma');
+    expect(body.Occasion).toBe('Karaoke');
+    expect(body.Seats).toBe('6');
+    expect(body.Package).toContain('Romantic Setup');
+    expect(body.Extras).toContain('Cake');
+    expect(body['Estimated total']).toContain('nothing paid');
+    expect(body._cc).toContain('tanishkofficial27@gmail.com');
+    expect(body._cc).toContain('badalakki11@gmail.com');
+    expect(body._autoresponse).toContain('Thanks Tanishk');
+  });
+
+  test('a booking needs an email before it can be confirmed', async ({ page }) => {
+    await page.goto('/book/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.locator('[data-exp-pick="date"]').click();
+    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-bk-next]').click();
+    await page.locator('[data-slot-pick="s1"]').click();
+    await page.locator('[data-pkg-pick="room"]').click();
+    await page.locator('[data-bk-next]').click();
+    await page.fill('#bName', 'Akash');
+    await page.fill('#bPhone', '9429690584');
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('.bk-flash')).toContainText('email');
+  });
+
+  test('a booking that cannot be emailed says so', async ({ page }) => {
+    await fail(page);
+    await page.goto('/book/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.locator('[data-exp-pick="date"]').click();
+    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-bk-next]').click();
+    await page.locator('[data-slot-pick="s1"]').click();
+    await page.locator('[data-pkg-pick="room"]').click();
+    await page.locator('[data-bk-next]').click();
+    await page.fill('#bName', 'Akash');
+    await page.fill('#bPhone', '9429690584');
+    await page.fill('#bEmail', 'a@example.com');
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('#bkSendState')).toContainText("didn't reach us", { timeout: 15_000 });
+  });
+
+  test('nothing anywhere hands the visitor off to WhatsApp', async ({ page }) => {
+    for (const path of ['/', '/prebook/', '/contact/', '/book/', '/thanks/', '/tickets/']) {
+      await page.goto(path);
+      const wa = await page.evaluate(() =>
+        [...document.querySelectorAll('a[href]')]
+          .map((a) => a.getAttribute('href') ?? '')
+          .filter((h) => h.includes('wa.me') || h.includes('whatsapp')));
+      expect(wa, `${path} should offer no WhatsApp route`).toEqual([]);
+    }
   });
 
   test('every form carries the hidden decoy field', async ({ page }) => {

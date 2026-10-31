@@ -15,16 +15,13 @@ export const site = {
   hours: 'Opening soon',            // TODO: real opening hours
 
   /**
-   * The line we answer first. Call buttons and the WhatsApp hand-off use it.
+   * The line we answer first. The Call buttons use it.
    * To make the other number primary, swap the two values.
    */
   phone: '+919429690584',
 
   /** A second line, shown alongside the first. Leave '' if there is only one. */
   phoneAlt: '+917999656039',
-
-  /** Usually the same digits as `phone`, without the +. */
-  whatsapp: '919429690584',
 
   email: '',                        // TODO: optional box-office email
 
@@ -69,8 +66,6 @@ export const phoneNumbers = [
   ...(phoneAltIsSet ? [{ raw: site.phoneAlt, pretty: prettyPhoneAlt }] : []),
 ];
 
-export const waLink = (text: string) =>
-  `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(text)}`;
 
 /**
  * Where submissions are posted. Built from notifyPrimary so the address and

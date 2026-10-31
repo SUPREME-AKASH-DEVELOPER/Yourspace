@@ -4,6 +4,7 @@ import { mockDelivery } from './helpers';
 const STORY = 'A surprise farewell for my sister before she moves to Pune';
 
 async function freshFlow(page: Page) {
+  await mockDelivery(page);
   await page.goto('/book/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -54,6 +55,7 @@ test.describe('"Something else" — writing your own occasion', () => {
     await page.locator('[data-bk-next]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '7999656039');
+    await page.fill('#bEmail', 'a@example.com');
     await page.locator('[data-bk-next]').click();
 
     await expect(page.locator('.bk-done')).toContainText(STORY);

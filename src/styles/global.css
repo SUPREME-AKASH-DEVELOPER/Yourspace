@@ -1761,3 +1761,6 @@ a:visited{color:inherit}
   color:var(--grey);letter-spacing:.03em;
 }
 .band-paper .field-hint{color:var(--grey-2)}
+
+/* a booking that could not be emailed */
+.bk-send-failed{color:#E58A6E}

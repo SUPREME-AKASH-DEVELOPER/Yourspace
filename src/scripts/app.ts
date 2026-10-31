@@ -1,5 +1,6 @@
 import { $, $$, stash } from './dom';
-import { site, formEndpoint, phoneIsSet, phoneAltIsSet, prettyPhone, prettyPhoneAlt, waLink } from '../data/site';
+import { site, phoneIsSet, phoneAltIsSet, prettyPhone, prettyPhoneAlt } from '../data/site';
+import { deliver, envelope } from './deliver';
 import { mountBooking, openBooking, prefillBooking, prefillDecor } from './booking';
 import { experiences, OTHER } from '../data/booking';
 import { decorations } from '../data/decorations';
@@ -19,12 +20,6 @@ function wireContact() {
     if (phoneIsSet) { a.href = `tel:${site.phone}`; return; }
     a.href = '/contact/';
     a.title = 'Set phone in src/data/site.ts to enable calling';
-  });
-  $$<HTMLAnchorElement>('[data-wa]').forEach((a) => {
-    if (!phoneIsSet) { a.href = '/contact/'; return; }
-    a.target = '_blank';
-    a.rel = 'noopener';
-    a.href = waLink('Hi YourSpace! I would like to pre-book a slot.');
   });
   $$<HTMLAnchorElement>('[data-email]').forEach((a) => {
     if (site.email) { a.href = `mailto:${site.email}`; a.textContent = site.email; }
@@ -374,9 +369,10 @@ function wireMenu() {
    One validator serves them all: fields declare data-req / data-phone.   */
 /* ---------- the standalone forms (pre-book, contact, callback, enquiry) ----------
    One validator serves them all: fields declare data-req / data-phone.
-   A valid submission is POSTed to formEndpoint so it reaches a real
-   inbox. The visitor's own copy is kept in their browser either way, and if
-   the network refuses we hand them a WhatsApp draft rather than losing it.  */
+   A valid submission is POSTed to formEndpoint and arrives as email. That is
+   the only route: nothing is handed off to WhatsApp or anywhere else. The
+   visitor's own copy is kept in their browser, and a failed send leaves the
+   form filled in so they can simply try again.                              */
 
 /** How each field should read in the email, and the order it should read in. */
 const FIELD_LABELS: [string, string][] = [
@@ -423,29 +419,6 @@ function thankYou(who: string, titled: string, data: Record<string, string>): st
   return lines.join('\n');
 }
 
-/** Deliver one submission. Resolves true when the service accepted it. */
-async function deliver(payload: Record<string, string>): Promise<boolean> {
-  if (!formEndpoint) return false;
-  const ctl = new AbortController();
-  const bail = setTimeout(() => ctl.abort(), 12_000);
-  try {
-    const res = await fetch(formEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(payload),
-      signal: ctl.signal,
-    });
-    if (!res.ok) return false;
-    const body = await res.json().catch(() => ({}));
-    // FormSubmit answers { success: "true" }; anything else is a refusal
-    return String((body as Record<string, unknown>).success ?? 'true') === 'true';
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(bail);
-  }
-}
-
 function wireForms() {
   $$<HTMLFormElement>('form[data-form]').forEach((form) => {
     const note = $('.form-note', form);
@@ -489,11 +462,6 @@ function wireForms() {
       // keep the visitor's own copy first, so nothing is lost if the post fails
       stash({ at: new Date().toISOString(), source: kind, data });
 
-      const lines = Object.keys(data)
-        .filter((k) => data[k] && !k.startsWith('_'))
-        .map((k) => `${k[0].toUpperCase()}${k.slice(1)}: ${data[k]}`);
-      const msg = `YourSpace — ${kind}\n${lines.join('\n')}`;
-
       if (button) {
         button.disabled = true;
         button.innerHTML = 'Sending…';
@@ -514,14 +482,10 @@ function wireForms() {
 
       const sent = await deliver({
         ...payload,
-        _subject: `${titled} — ${data.name || 'someone'}${data.phone ? ` · ${data.phone}` : ''}`,
-        _template: 'table',
-        _captcha: 'false',
-        // everyone on the team sees it
-        ...(site.notifyCc ? { _cc: site.notifyCc } : {}),
-        // replying to the notification goes straight back to the visitor
-        ...(data.email ? { _replyto: data.email } : {}),
-        // and the visitor gets a thank-you of their own
+        ...envelope(
+          `${titled} — ${data.name || 'someone'}${data.phone ? ` · ${data.phone}` : ''}`,
+          data.email),
+        // the visitor gets a thank-you of their own
         ...(data.email ? { _autoresponse: thankYou(who, titled, data) } : {}),
       });
 
@@ -539,16 +503,12 @@ function wireForms() {
         return;
       }
 
-      // it did not get through: say so, and give them a way that will
-      if (phoneIsSet) {
-        say('err', `That didn't send — the connection may be down. Opening WhatsApp so you can reach us directly.`);
-        window.open(waLink(msg), '_blank', 'noopener');
-      } else if (site.googleForm) {
-        say('err', `That didn't send. Opening our form instead.`);
-        window.open(site.googleForm, '_blank', 'noopener');
-      } else {
-        say('err', `That didn't send. Please call us, or email ${site.notifyEmail}.`);
-      }
+      // It did not get through. Leave every answer exactly where they typed it
+      // so pressing the button again is all it takes.
+      say('err',
+        `That didn't send — it looks like the connection dropped. ` +
+        `Nothing you typed has been lost, so please press the button again. ` +
+        `If it still will not go, call us on ${prettyPhone}.`);
     });
   });
 }

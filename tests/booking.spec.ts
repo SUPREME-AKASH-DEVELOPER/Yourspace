@@ -1,7 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
+import { mockDelivery } from './helpers';
 
 /** Each test starts from an empty flow — the saved-progress behaviour is tested separately. */
 async function freshFlow(page: Page) {
+  await mockDelivery(page);          // the booking is emailed on confirm
   await page.goto('/book/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
@@ -56,6 +58,7 @@ test.describe('booking flow', () => {
     await expect(page.locator('.bk-flash')).toContainText('valid 10-digit');
 
     await page.fill('#bPhone', '9876543210');
+    await page.fill('#bEmail', 'a@example.com');
     await page.locator('[data-bk-next]').click();
     await expect(page.locator('#bkTitle')).toContainText("You're on the list");
   });
@@ -70,6 +73,7 @@ test.describe('booking flow', () => {
     await page.locator('[data-bk-next]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9876543210');
+    await page.fill('#bEmail', 'a@example.com');
     await page.locator('[data-bk-next]').click();
 
     await expect(page.locator('.bk-done')).toContainText('Nothing has been charged');

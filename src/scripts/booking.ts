@@ -1,5 +1,6 @@
 import { $, $$, rupee, esc, dateLabel, nextDays, stash } from './dom';
-import { site, phoneIsSet, waLink } from '../data/site';
+import { site } from '../data/site';
+import { deliver, envelope } from './deliver';
 import {
   experiences, slots, packages, extras, stepNames, OTHER,
   ROOM_BASE, BASE_GUESTS, EXTRA_GUEST, MAX_GUESTS, SESSION_LABEL,
@@ -20,13 +21,13 @@ const ICON: Record<string, string> = {
 interface State {
   step: number; exp: string; date: string; guests: number;
   slot: string; pkg: string; extras: Record<string, number>;
-  name: string; phone: string; notes: string;
+  name: string; phone: string; email: string; notes: string;
   /** Filled in when the occasion is "Something else". */
   customOccasion: string;
 }
 const BLANK: State = {
   step: 0, exp: '', date: '', guests: 2, slot: '', pkg: '', extras: {},
-  name: '', phone: '', notes: '', customOccasion: '',
+  name: '', phone: '', email: '', notes: '', customOccasion: '',
 };
 
 const KEY = 'ys-booking-v2';
@@ -241,6 +242,7 @@ function validate(step: number) {
   if (step === 5) {
     if (!S.name.trim()) return 'Please add your name.';
     if (!/^[6-9]\d{9}$/.test(S.phone.replace(/\D/g, '').slice(-10))) return 'Enter a valid 10-digit mobile number.';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email.trim())) return 'Please add an email we can send your confirmation to.';
   }
   return '';
 }
@@ -394,6 +396,9 @@ function step5(t: ReturnType<typeof totals>) {
         <input id="bName" type="text" autocomplete="name" placeholder="Who should we ask for?" value="${esc(S.name)}"></div>
       <div class="field"><label for="bPhone">Phone number</label>
         <input id="bPhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="14" placeholder="10-digit mobile number" value="${esc(S.phone)}"></div>
+      <div class="field"><label for="bEmail">Email</label>
+        <input id="bEmail" type="email" autocomplete="email" placeholder="you@example.com" value="${esc(S.email)}">
+        <span class="field-hint">We send your confirmation here.</span></div>
       <div class="field"><label for="bNotes">Anything we should set up? <span class="opt">Optional</span></label>
         <textarea id="bNotes" rows="3" placeholder="A name on the cake, a song to open with, a different date…">${esc(S.notes)}</textarea></div>
     </div>` +
@@ -472,7 +477,7 @@ function onBodyClick(e: Event) {
 function wireFields() {
   const body = $('#bkBody')!;
   ([['bName', 'name'], ['bPhone', 'phone'], ['bNotes', 'notes'],
-    ['bkCustom', 'customOccasion']] as const).forEach(([id, key]) => {
+    ['bEmail', 'email'], ['bkCustom', 'customOccasion']] as const).forEach(([id, key]) => {
     const el = $<HTMLInputElement>(`#${id}`, body);
     el?.addEventListener('input', () => { (S as any)[key] = el.value; save(); });
   });
@@ -505,9 +510,52 @@ function bookingText() {
   return L.join('\n');
 }
 
-function submit() {
+async function submit() {
   stash({ at: new Date().toISOString(), source: 'booking-flow', state: structuredClone(S), total: totals().total });
   go(6);
+
+  // The booking leaves by email, the same single route as every other form.
+  const t = totals();
+  const p = pkgOf();
+  const extrasChosen = Object.entries(S.extras)
+    .map(([id, qty]) => { const x = extraOf(id); return x && qty ? `${x.name} x${qty}` : ''; })
+    .filter(Boolean).join(', ');
+
+  const payload: Record<string, string> = {
+    Name: S.name,
+    Phone: S.phone,
+    Email: S.email,
+    Occasion: occasionLabel(),
+    'Date & time': `${dateLabel(S.date)}${slotOf() ? ` at ${slotOf()!.start}` : ''}`,
+    Seats: String(S.guests),
+    Package: p ? `${p.name} (${rupee(p.price)})` : '—',
+    ...(extrasChosen ? { Extras: extrasChosen } : {}),
+    ...(t.extraHeads ? { 'Extra seats': `${t.extraHeads} (${rupee(t.guestFee)})` } : {}),
+    ...(S.notes.trim() ? { Notes: S.notes.trim() } : {}),
+    'Estimated total': `${rupee(t.total)} — nothing paid`,
+    Received: new Date().toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' }),
+  };
+
+  const first = S.name.split(' ')[0] || 'there';
+  const sent = await deliver({
+    ...payload,
+    ...envelope(`Booking — ${S.name || 'someone'} · ${S.phone}`, S.email),
+    _autoresponse:
+      `Thanks ${first} — we have your booking for YourSpace, ${site.city}.\n\n` +
+      Object.entries(payload)
+        .filter(([k]) => k !== 'Email' && k !== 'Received')
+        .map(([k, v]) => `  ${k}: ${v}`).join('\n') +
+      `\n\nWe will call you on ${S.phone} to confirm the date, the time and your group size.\n` +
+      `Nothing has been charged, and nothing will be until you have confirmed with us.\n\n` +
+      `— YourSpace, ${site.city}`,
+  });
+
+  const state = $('#bkSendState');
+  if (!state) return;
+  state.textContent = sent
+    ? 'Your booking has been emailed to us, and a copy is on its way to you.'
+    : `That didn't reach us — the connection may have dropped. Please call us so we do not miss it.`;
+  state.className = sent ? 'fine center' : 'fine center bk-send-failed';
 }
 
 function renderDone() {
@@ -527,13 +575,11 @@ function renderDone() {
         We'll call you on ${esc(S.phone)} to confirm. Nothing has been charged.</p>
       ${summary(t)}
       <div class="bk-actions">
-        ${phoneIsSet ? `<a class="btn btn-key" target="_blank" rel="noopener" href="${waLink(txt)}">Send on WhatsApp<span aria-hidden="true">→</span></a>` : ''}
-        ${site.googleForm ? `<a class="btn btn-line" target="_blank" rel="noopener" href="${site.googleForm}">Open the form</a>` : ''}
-        <button class="btn ${phoneIsSet ? 'btn-line' : 'btn-key'}" type="button" id="bkCopy">Copy my details</button>
+        <button class="btn btn-key" type="button" id="bkCopy">Copy my details</button>
         ${mode === 'modal' ? '<button class="btn btn-line" type="button" data-bk-close>Done</button>'
                            : '<a class="btn btn-line" href="/">Back to home</a>'}
       </div>
-      <p class="fine center">${phoneIsSet ? '' : 'For the team: set the phone number in src/data/site.ts so this messages you directly. '}Your details are saved in this browser only.</p>
+      <p class="fine center" id="bkSendState">Sending your booking…</p>
     </div>`;
 
   $('#bkCopy')?.addEventListener('click', () => {
