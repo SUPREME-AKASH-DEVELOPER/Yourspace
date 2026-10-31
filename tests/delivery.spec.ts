@@ -1,11 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
+import { readBody } from './helpers';
 
 const ENDPOINT = /formsubmit\.co|api\.web3forms\.com/;
 
 /** Pretend the service accepted it, and record what we sent. */
 async function acceptAndCapture(page: Page, sink: Record<string, unknown>[]) {
   await page.route(ENDPOINT, async (route) => {
-    sink.push(JSON.parse(route.request().postData() ?? '{}'));
+    sink.push(readBody(route.request().postData()));
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -45,9 +46,10 @@ test.describe('submissions actually go somewhere', () => {
     expect(body.Received, 'when it arrived').toBeTruthy();
     expect(body['Came from']).toBe('/prebook/');
     // the subject says who it is from at a glance
-    expect(body._subject).toContain('Pre-booking');
-    expect(body._subject).toContain('Tanishk Sharma');
-    expect(body._subject).toContain('7999656039');
+    const subject = body._subject ?? body.subject;
+    expect(subject).toContain('Pre-booking');
+    expect(subject).toContain('Tanishk Sharma');
+    expect(subject).toContain('7999656039');
     // no raw field names leak through
     expect(body.name).toBeUndefined();
   });
@@ -189,6 +191,19 @@ test.describe('submissions actually go somewhere', () => {
     await expect(page.locator('#callbackForm .form-note')).toContainText('your email');
   });
 
+  test('only the two intended addresses are ever used', async ({ page }) => {
+    // the endpoint is built from notifyPrimary, so check both in one place
+    await page.goto('/');
+    const bundle = await page.evaluate(async () => {
+      const src = [...document.querySelectorAll('script[src]')]
+        .map((s) => (s as HTMLScriptElement).src).find((u) => u.includes('_astro')) ?? '';
+      return src ? (await fetch(src)).text() : '';
+    });
+    const addresses = [...new Set(bundle.match(/[\w.+-]+@[\w.-]+\.\w+/g) ?? [])]
+      .filter((a) => !a.endsWith('example.com'));
+    expect(addresses.sort()).toEqual(['badalakki11@gmail.com', 'tanishkofficial27@gmail.com']);
+  });
+
   test('the team is copied in on every submission', async ({ page }) => {
     const sent: Record<string, unknown>[] = [];
     await acceptAndCapture(page, sent);
@@ -200,9 +215,10 @@ test.describe('submissions actually go somewhere', () => {
     await expect(page.locator('#callbackForm .form-note')).toContainText('Thanks');
 
     const body = sent[0] as Record<string, string>;
-    expect(body._cc, 'Tanishk copied').toContain('tanishkofficial27@gmail.com');
-    expect(body._cc, 'Badal copied').toContain('badalakki11@gmail.com');
-    expect(body._replyto, 'replying reaches the visitor').toBe('akash@example.com');
+    const cc = body._cc ?? body.ccemail ?? '';
+    expect(cc, 'Tanishk copied').toContain('tanishkofficial27@gmail.com');
+    expect(cc, 'Badal copied').toContain('badalakki11@gmail.com');
+    expect(body._replyto ?? body.replyto, 'replying reaches the visitor').toBe('akash@example.com');
   });
 
   test('a bot that fills the hidden field is quietly dropped', async ({ page }) => {
@@ -256,8 +272,7 @@ test.describe('submissions actually go somewhere', () => {
     expect(body.Package).toContain('Romantic Setup');
     expect(body.Extras).toContain('Cake');
     expect(body['Estimated total']).toContain('nothing paid');
-    expect(body._cc).toContain('tanishkofficial27@gmail.com');
-    expect(body._cc).toContain('badalakki11@gmail.com');
+    expect(body._cc ?? body.ccemail).toContain('badalakki11@gmail.com');
     expect(body._autoresponse).toContain('Thanks Tanishk');
   });
 

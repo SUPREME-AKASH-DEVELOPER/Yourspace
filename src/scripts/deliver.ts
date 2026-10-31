@@ -9,6 +9,12 @@ const ENDPOINT = useWeb3Forms ? 'https://api.web3forms.com/submit' : formEndpoin
  * Nothing is handed off to WhatsApp or any other channel.
  */
 
+function toFormData(payload: Record<string, string>): FormData {
+  const fd = new FormData();
+  Object.entries(payload).forEach(([k, v]) => fd.append(k, v));
+  return fd;
+}
+
 /** Why a send did not go through, so we can say something true about it. */
 export type Outcome =
   | { ok: true }
@@ -18,12 +24,18 @@ async function postOnce(payload: Record<string, string>): Promise<Outcome> {
   const ctl = new AbortController();
   const bail = setTimeout(() => ctl.abort(), 12_000);
   try {
-    const res = await fetch(ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(payload),
-      signal: ctl.signal,
-    });
+    // Web3Forms refuses the CORS preflight that a JSON content-type sets off,
+    // so it gets FormData — a "simple" request the browser sends straight out.
+    // FormSubmit's ajax endpoint wants JSON.
+    const init: RequestInit = useWeb3Forms
+      ? { method: 'POST', body: toFormData(payload), signal: ctl.signal }
+      : {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(payload),
+          signal: ctl.signal,
+        };
+    const res = await fetch(ENDPOINT, init);
 
     // Too many requests: the send is fine, the service just wants a pause.
     if (res.status === 429) {
@@ -66,11 +78,14 @@ export async function deliver(payload: Record<string, string>): Promise<Outcome>
  */
 export function envelope(subject: string, replyTo?: string): Record<string, string> {
   if (useWeb3Forms) {
+    // Web3Forms delivers to the address the key was created with, so both
+    // of our people go on the copy line rather than one being "primary".
+    const copies = [site.notifyPrimary, site.notifyCc].filter(Boolean).join(', ');
     return {
       access_key: site.web3formsKey,
       subject,
       from_name: `${site.name} ${site.city}`,
-      ...(site.notifyCc ? { ccemail: site.notifyCc } : {}),
+      ...(copies ? { ccemail: copies } : {}),
       ...(replyTo ? { replyto: replyTo } : {}),
     };
   }

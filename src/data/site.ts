@@ -32,17 +32,17 @@ export const site = {
    * WHO GETS THE FORMS
    *
    * notifyPrimary is the inbox FormSubmit needs confirmed. The very first
-   * submission sends that address a one-time link; until someone clicks it,
-   * nothing is delivered to anyone. Make it an inbox YOU can open, so you are
-   * not waiting on someone else to switch the site on.
+   * submission sends that address a one-time link, and nothing is delivered
+   * to anyone until it is clicked — so whoever owns this address has to click
+   * it once. (A Web3Forms key below skips that step entirely.)
    *
    * notifyCc rides along on every submission and needs no confirmation of
-   * its own — so Tanishk and Badal start receiving the moment you click.
+   * its own.
    */
-  notifyPrimary: 'akash@ethixweb.com',          // ← the inbox you will confirm from
+  notifyPrimary: 'tanishkofficial27@gmail.com',
 
   /** Copied in on every submission. Comma-separated for more than one. */
-  notifyCc: 'tanishkofficial27@gmail.com, badalakki11@gmail.com',
+  notifyCc: 'badalakki11@gmail.com',
 
   /** Offered to visitors if a submission could not be delivered at all. */
   notifyEmail: 'tanishkofficial27@gmail.com',
@@ -58,7 +58,7 @@ export const site = {
    * Get one in under a minute at https://web3forms.com — enter the address
    * the forms should reach, and the key is emailed to you.
    */
-  web3formsKey: '',
+  web3formsKey: '4943e365-6fd6-49d6-a37a-1b35fd92d625',
 } as const;
 
 /** A real Indian mobile, and not the placeholder we ship with. */
@@ -81,17 +81,17 @@ export const phoneNumbers = [
 
 
 /**
- * Where submissions are posted. Built from notifyPrimary so the address and
- * the endpoint can never disagree.
- *
- * TODO (Akash): once FormSubmit is confirmed it offers a hashed URL
- * (https://formsubmit.co/ajax/<random-string>). Put that here instead and
- * delete the line below — the repo is public, and this leaves the address
- * in the page source for scrapers to read.
+ * The FormSubmit endpoint, used only when no Web3Forms key is set.
+ * Built from notifyPrimary so the address and the endpoint cannot disagree.
  */
 export const formEndpoint = site.notifyPrimary
   ? `https://formsubmit.co/ajax/${site.notifyPrimary}`
   : '';
 
-/** The origin we post submissions to, so the CSP can allow exactly that one. */
-export const formOrigin = formEndpoint ? new URL(formEndpoint).origin : '';
+/**
+ * The one origin submissions are posted to, so the CSP can allow exactly
+ * that and nothing else. Follows whichever service is in use.
+ */
+export const formOrigin = site.web3formsKey
+  ? 'https://api.web3forms.com'
+  : (formEndpoint ? new URL(formEndpoint).origin : '');
