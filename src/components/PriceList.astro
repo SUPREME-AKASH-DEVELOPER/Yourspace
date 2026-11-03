@@ -7,11 +7,14 @@ const { as: Heading = 'h3' } = Astro.props;
 ---
 <div class="pricelist reveal">
   <Heading class="pricelist-head">Add-ons</Heading>
-  <p class="standfirst">Nothing is added by default. You pick what goes in, and the total updates as you go.</p>
+  <p class="standfirst">For Celebration &amp; Date Night. Nothing is added by default; you pick what goes in, and the total updates as you go.</p>
   <ul class="leaders">
     {priceList.map((item) => (
-      <li><span>{item.name}</span><b class="num">₹{item.price.toLocaleString('en-IN')}</b></li>
+      <li><span>{item.name}</span><b class="num">{item.price !== null
+        ? `₹${item.price.toLocaleString('en-IN')}`
+        : (item.priceNote ?? 'On call')}</b></li>
     ))}
   </ul>
+  <p class="fine">Fog entry and candlelight come with every decoration, so they are not sold separately. Prices marked "on call" are confirmed when we speak.</p>
   <p class="fine">Prices shown before taxes and applicable charges.</p>
 </div>

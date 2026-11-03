@@ -20,6 +20,12 @@ async function atTime(browser: Browser, iso: string) {
 
 /** Sections fade in on scroll; auditing mid-fade judges a state no one sees. */
 async function settle(page: import('@playwright/test').Page) {
+  // Freeze every transition and animation, then wait for the fonts, so the
+  // audit measures a settled page rather than a frame mid-way through one.
+  await page.addStyleTag({ content: `*,*::before,*::after{
+    transition:none !important; animation:none !important;
+  }` });
+  await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => {
     document.querySelectorAll<HTMLElement>('.reveal').forEach((e) => {
       // drop the transition so the reveal lands at once: waiting out an

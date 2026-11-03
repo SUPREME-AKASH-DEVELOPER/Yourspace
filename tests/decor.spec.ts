@@ -4,7 +4,7 @@ test.describe('the deck of setups', () => {
   test('all three cards are dealt, with photographs', async ({ page }) => {
     await page.goto('/tickets/');
     await expect(page.locator('[data-card]')).toHaveCount(3);
-    for (const id of ['aesthetic', 'trendy', 'royal']) {
+    for (const id of ['aesthetic', 'elite', 'royal']) {
       await expect(page.locator(`#${id}`)).toBeVisible();
     }
   });
@@ -12,14 +12,14 @@ test.describe('the deck of setups', () => {
   test('prices match what Tanishk quoted, and the unknown one is not invented', async ({ page }) => {
     await page.goto('/tickets/');
     await expect(page.locator('#aesthetic .card-price-chip')).toHaveText('₹1,000');
-    await expect(page.locator('#trendy .card-price-chip')).toHaveText('₹2,000');
+    await expect(page.locator('#elite .card-price-chip')).toHaveText('₹2,000');
     // the Royal price was never given — say so rather than guess
     await expect(page.locator('#royal .card-price-chip')).toHaveText('On request');
   });
 
   test('a card turns over and announces that it did', async ({ page }) => {
     await page.goto('/tickets/');
-    const card = page.locator('#trendy');
+    const card = page.locator('#elite');
     await expect(card).toHaveAttribute('aria-expanded', 'false');
 
     await card.click();
@@ -43,7 +43,7 @@ test.describe('the deck of setups', () => {
   test('the hidden face is kept out of the tab order', async ({ page }) => {
     await page.goto('/tickets/');
     // the back starts inert, so nothing behind the card can be tabbed to
-    for (const id of ['aesthetic', 'trendy', 'royal']) {
+    for (const id of ['aesthetic', 'elite', 'royal']) {
       await expect(page.locator(`#${id} .card-back`)).toHaveAttribute('inert', '');
     }
   });
@@ -53,12 +53,14 @@ test.describe('the deck of setups', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.locator('.card-seat', { has: page.locator('#trendy') })
+    await page.locator('.card-seat', { has: page.locator('#elite') })
       .getByRole('button', { name: /Book this setup/ }).click();
     await expect(page.locator('#bk')).toBeVisible();
 
-    const saved = await page.evaluate(() => localStorage.getItem('ys-booking-v2'));
-    expect(saved).toContain('Trendy');
+    // it becomes a Date Night with that decoration already chosen
+    const saved = JSON.parse(await page.evaluate(() => localStorage.getItem('ys-booking-v3') ?? '{}'));
+    expect(saved.setup).toBe('date');
+    expect(saved.decor).toBe('elite');
   });
 });
 

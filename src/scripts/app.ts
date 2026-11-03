@@ -540,7 +540,7 @@ function boot() {
     const decorId = trigger.getAttribute('data-decor');
     if (decorId) {
       const decor = decorations.find((d) => d.id === decorId);
-      if (decor) prefillDecor(decor.name);
+      if (decor) prefillDecor(decor.id);
     }
     openBooking(trigger.getAttribute('data-exp') ?? '');
   });

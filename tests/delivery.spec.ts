@@ -248,30 +248,31 @@ test.describe('submissions actually go somewhere', () => {
     await page.reload();
 
     await page.locator('[data-exp-pick="karaoke"]').click();
-    await page.locator('[data-seat="6"]').click();
-    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-seat="5"]').click();
+    await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
     await page.locator('[data-slot-pick="s4"]').click();
-    await page.locator('[data-pkg-pick="romantic"]').click();
-    await page.locator('.xrow', { hasText: 'Cake' }).locator('[data-delta="1"]').click();
-    await page.locator('[data-bk-next]').click();
+    await page.locator('[data-setup-pick="karaoke"]').click();
 
     await page.fill('#bName', 'Tanishk Sharma');
     await page.fill('#bPhone', '7999656039');
     await page.fill('#bEmail', 'tanishk@example.com');
+    await page.locator('input[name=bkPay][value=later]').check();
     await page.locator('[data-bk-next]').click();
 
     await expect(page.locator('#bkTitle')).toContainText("You're on the list");
-    await expect(page.locator('#bkSendState')).toContainText('emailed to us', { timeout: 10_000 });
+    await expect(page.locator('#bkSendState')).toContainText('reached us', { timeout: 10_000 });
 
     expect(sent, 'the booking was posted').toHaveLength(1);
     const body = sent[0] as Record<string, string>;
     expect(body.Name).toBe('Tanishk Sharma');
     expect(body.Occasion).toBe('Karaoke');
-    expect(body.Seats).toBe('6');
-    expect(body.Package).toContain('Romantic Setup');
-    expect(body.Extras).toContain('Cake');
-    expect(body['Estimated total']).toContain('nothing paid');
+    expect(body.Guests).toBe('5');
+    expect(body.Karaoke).toBe('₹750');
+    expect(body['Date & time']).toContain('4:30 PM – 5:00 PM');
+    expect(body.Total).toBe('₹750');
+    expect(body.Payment).toContain('Nothing paid');
+    expect(body['Booking ref']).toMatch(/^YS-/);
     expect(body._cc ?? body.ccemail).toContain('badalakki11@gmail.com');
     expect(body._autoresponse).toContain('Thanks Tanishk');
   });
@@ -281,11 +282,10 @@ test.describe('submissions actually go somewhere', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.locator('[data-exp-pick="date"]').click();
-    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s1"]').click();
-    await page.locator('[data-pkg-pick="room"]').click();
-    await page.locator('[data-bk-next]').click();
+    await page.locator('[data-slot-pick="s8"]').click();
+    await page.locator('[data-setup-pick="movie"]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9429690584');
     await page.locator('[data-bk-next]').click();
@@ -298,14 +298,14 @@ test.describe('submissions actually go somewhere', () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.locator('[data-exp-pick="date"]').click();
-    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s1"]').click();
-    await page.locator('[data-pkg-pick="room"]').click();
-    await page.locator('[data-bk-next]').click();
+    await page.locator('[data-slot-pick="s8"]').click();
+    await page.locator('[data-setup-pick="movie"]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9429690584');
     await page.fill('#bEmail', 'a@example.com');
+    await page.locator('input[name=bkPay][value=later]').check();
     await page.locator('[data-bk-next]').click();
     await expect(page.locator('#bkSendState')).toContainText("didn't reach us", { timeout: 15_000 });
   });

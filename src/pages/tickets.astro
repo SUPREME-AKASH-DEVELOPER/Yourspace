@@ -5,10 +5,10 @@ import TicketStub from '../components/TicketStub.astro';
 import PriceList from '../components/PriceList.astro';
 import PackageCards from '../components/PackageCards.astro';
 import DecorDeck from '../components/DecorDeck.astro';
-import { EXTRA_GUEST, BASE_GUESTS } from '../data/booking';
+import { MAX_GUESTS } from '../data/booking';
 ---
 <Base title="Tickets & Add-ons — YourSpace Jabalpur"
-      description="Sessions from ₹1,499 for up to 4 guests. Packages, add-ons and extra-guest pricing, all listed before you book.">
+      description="Sessions from ₹1,500 for up to 7 guests. Every setup, decoration and add-on price, listed before you book.">
   <PageHead crumb="Tickets">
     <h1 class="headline">One price for the room.<br />Everything else is <em>yours to choose</em>.</h1>
     <p class="standfirst">No packages you have to decode, and no price that changes once you're in the room. This page lists everything we charge for. If it isn't here, we don't charge for it.</p>
@@ -37,9 +37,9 @@ import { EXTRA_GUEST, BASE_GUESTS } from '../data/booking';
   <section class="band">
     <div class="shell">
       <header class="sec-head">
-        <p class="rule-label"><i>Packages</i><span>If you'd rather not pick piece by piece</span></p>
-        <h2 class="title">Four setups, <em>already</em> put together.</h2>
-        <p class="standfirst">Each one includes the private room for your whole session. You can still add anything from the list above on top.</p>
+        <p class="rule-label"><i>Setups</i><span>What you actually book</span></p>
+        <h2 class="title">Pick the <em>kind</em> of night.</h2>
+        <p class="standfirst">Each one is the private room for your whole session. Date Night adds a decoration of your choice, and the add-ons above.</p>
       </header>
       <PackageCards />
     </div>
@@ -51,12 +51,12 @@ import { EXTRA_GUEST, BASE_GUESTS } from '../data/booking';
       <h2 class="title">No surprises at the <em>door</em>.</h2>
       <ul class="stub-list" style="margin-bottom:28px">
         <li>Taxes and applicable charges are added on top of the prices above — we'll show you the final amount before you confirm.</li>
-        <li>Extra guests are ₹{EXTRA_GUEST} each beyond the first {BASE_GUESTS}, up to the room's capacity.</li>
+        <li>Up to {MAX_GUESTS} guests book online. Karaoke needs at least 3; for fewer, call us.</li>
         <li>Food and drink beyond the listed add-ons isn't included.</li>
-        <li>Pre-booking on this site charges you nothing at all. Payment is arranged with us directly, after we've confirmed your slot.</li>
+        <li>Pay by UPI when you book, or after we call — your choice. If we can't give you the slot, you get it back in full.</li>
       </ul>
       <div class="hero-actions">
-        <button class="btn btn-key btn-lg" data-book>Pre-book a slot<span aria-hidden="true">→</span></button>
+        <button class="btn btn-key btn-lg" data-book>Book a slot<span aria-hidden="true">→</span></button>
         <a class="btn btn-line btn-lg" href="/faq/">Read the questions</a>
       </div>
     </div>

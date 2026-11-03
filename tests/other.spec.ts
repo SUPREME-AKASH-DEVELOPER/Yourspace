@@ -48,14 +48,14 @@ test.describe('"Something else" — writing your own occasion', () => {
 
     await page.locator('[data-date-pick]').first().click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s1"]').click();
-    await page.locator('[data-pkg-pick="room"]').click();
+    await page.locator('[data-slot-pick="s8"]').click();
+    await page.locator('[data-setup-pick="movie"]').click();
     await expect(page.locator('.bk-sum-row').first()).toContainText(STORY);
 
-    await page.locator('[data-bk-next]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '7999656039');
     await page.fill('#bEmail', 'a@example.com');
+    await page.locator('input[name=bkPay][value=later]').check();
     await page.locator('[data-bk-next]').click();
 
     await expect(page.locator('.bk-done')).toContainText(STORY);

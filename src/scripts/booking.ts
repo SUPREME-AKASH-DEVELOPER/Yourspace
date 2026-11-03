@@ -1,11 +1,13 @@
+import qrcode from 'qrcode-generator';
 import { $, $$, rupee, esc, dateLabel, nextDays, stash } from './dom';
-import { site } from '../data/site';
+import { site, phoneNumbers } from '../data/site';
 import { deliver, envelope } from './deliver';
 import {
-  experiences, slots, packages, extras, stepNames, OTHER,
-  ROOM_BASE, BASE_GUESTS, EXTRA_GUEST, MAX_GUESTS, SESSION_LABEL,
-  type Extra,
+  experiences, slots, setups, addonGroups, stepNames, OTHER,
+  MAX_GUESTS, setupOf, setupPrice, addonOf, quote, addMinutes,
+  type Setup, type Quote,
 } from '../data/booking';
+import { decorations, DECOR_INCLUDED } from '../data/decorations';
 
 /* Line-art marks for the occasion tiles — drawn, not emoji. */
 const ICON: Record<string, string> = {
@@ -18,27 +20,43 @@ const ICON: Record<string, string> = {
   other:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20.5 5 16l9.8-9.8a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8L9 20l-5 .5Z"/><path d="M13 7.5 16.5 11"/></svg>',
 };
 
+type Pay = '' | 'upi' | 'later';
+type Send = '' | 'sending' | 'sent' | 'failed';
+
 interface State {
   step: number; exp: string; date: string; guests: number;
-  slot: string; pkg: string; extras: Record<string, number>;
+  slot: string; setup: string; decor: string; addons: string[];
   name: string; phone: string; email: string; notes: string;
   /** Filled in when the occasion is "Something else". */
   customOccasion: string;
+  pay: Pay;
+  /** Made once, when the booking is sent, and printed on everything after. */
+  ref: string;
+  /** Where the booking email got to. A sent booking is never sent again. */
+  send: Send;
+  /** The UPI reference they give us. We pass it on; we never call it paid. */
+  utr: string;
+  utrSend: Send;
 }
 const BLANK: State = {
-  step: 0, exp: '', date: '', guests: 2, slot: '', pkg: '', extras: {},
+  step: 0, exp: '', date: '', guests: 2, slot: '', setup: '', decor: '', addons: [],
   name: '', phone: '', email: '', notes: '', customOccasion: '',
+  pay: '', ref: '', send: '', utr: '', utrSend: '',
 };
 
-const KEY = 'ys-booking-v2';
+const KEY = 'ys-booking-v3';
+const DONE = 6;
 let S: State = structuredClone(BLANK);
 let root: HTMLElement | null = null;
 let mode: 'modal' | 'inline' = 'modal';
 let lastFocus: HTMLElement | null = null;
 let resumed = false;
+/** Guards against a double tap sending the same thing twice. */
+let busy = false;
 
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
 const clearSaved = () => { try { localStorage.removeItem(KEY); } catch {} };
+const today = () => new Date().toISOString().slice(0, 10);
 
 function load() {
   try {
@@ -47,14 +65,26 @@ function load() {
     const o = JSON.parse(raw) as Partial<State>;
     if (!o || typeof o !== 'object') return;
     (Object.keys(BLANK) as (keyof State)[]).forEach((k) => {
-      if (o[k] !== undefined && o[k] !== null) (S as any)[k] = o[k];
+      if (o[k] !== undefined && o[k] !== null && typeof o[k] === typeof BLANK[k]) (S as any)[k] = o[k];
     });
-    if (S.date && S.date < new Date().toISOString().slice(0, 10)) { S.date = ''; S.slot = ''; }
-    S.step = Math.min(Math.max(0, S.step | 0), 5);
+    if (!Array.isArray(S.addons)) S.addons = [];
+    if (S.date && S.date < today()) {
+      // a finished booking for a day that has gone is of no use to anyone
+      if (S.step === DONE) { S = structuredClone(BLANK); clearSaved(); return; }
+      S.date = ''; S.slot = '';
+    }
+    S.step = Math.min(Math.max(0, S.step | 0), DONE);
+    // a confirmation screen without a sent booking behind it is not real
+    if (S.step === DONE && !S.ref) S.step = 5;
+    // the page went away mid-send: we cannot know if it arrived, so offer a resend
+    if (S.send === 'sending') S.send = 'failed';
+    if (S.utrSend === 'sending') S.utrSend = 'failed';
     S.guests = Math.min(MAX_GUESTS, Math.max(1, S.guests | 0 || 2));
-    resumed = Boolean(S.exp || S.pkg || S.date);
+    resumed = Boolean(S.exp || S.setup || S.date);
   } catch {}
 }
+
+/* ---------- what has been chosen ---------- */
 
 /** What to call the occasion: their own words when they gave us some. */
 function occasionLabel(): string {
@@ -62,19 +92,51 @@ function occasionLabel(): string {
   return expOf()?.name ?? '—';
 }
 
-const pkgOf = () => packages.find((p) => p.id === S.pkg) ?? null;
 const expOf = () => experiences.find((e) => e.id === S.exp) ?? null;
 const slotOf = () => slots.find((s) => s.id === S.slot) ?? null;
-const extraOf = (id: string): Extra | undefined => extras.find((e) => e.id === id);
+const decorOf = () => decorations.find((d) => d.id === S.decor) ?? null;
 
-function totals() {
-  const base = pkgOf()?.price ?? ROOM_BASE;
-  const extraHeads = Math.max(0, S.guests - BASE_GUESTS);
-  const guestFee = extraHeads * EXTRA_GUEST;
-  const addons = Object.entries(S.extras)
-    .reduce((sum, [id, qty]) => sum + (extraOf(id)?.price ?? 0) * qty, 0);
-  return { base, guestFee, extraHeads, addons, total: base + guestFee + addons };
+/** "6:00 PM – 7:30 PM", or 30 minutes from the start for karaoke. */
+function timeLabel(): string {
+  const sl = slotOf();
+  if (!sl) return '';
+  const mins = setupOf(S.setup)?.minutes;
+  const end = mins && mins !== 90 ? addMinutes(sl.start, mins) : sl.end;
+  return `${sl.start} – ${end}`;
 }
+
+function totals(): Quote {
+  const d = decorOf();
+  return quote({
+    setup: S.setup,
+    guests: S.guests,
+    decor: d ? { name: d.name, price: d.price } : null,
+    addons: S.addons,
+  });
+}
+
+/** Online payment is only offered when every line has a real price. */
+const canPayOnline = (q: Quote) =>
+  Boolean(site.upiId) && !q.blocked && q.unpriced.length === 0 && q.total > 0;
+
+/** A slot that has already started today cannot be booked. */
+function slotPassed(start: string): boolean {
+  if (S.date !== today()) return false;
+  const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(start);
+  if (!m) return false;
+  const mins = ((Number(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)) * 60 + Number(m[2]);
+  const now = new Date();
+  return mins <= now.getHours() * 60 + now.getMinutes();
+}
+
+const totalText = (q: Quote) => q.unpriced.length ? `${rupee(q.total)} + on call` : rupee(q.total);
+
+const tel = () => phoneNumbers[0];
+const callLink = () => tel()
+  ? `<a href="tel:${tel()!.raw}">${esc(tel()!.pretty)}</a>`
+  : 'the number on our contact page';
+
+/* ---------- the panel ---------- */
 
 const PANEL = `
   <div class="bk-scrim" data-bk-close></div>
@@ -89,7 +151,7 @@ const PANEL = `
     <div class="bk-body" id="bkBody" tabindex="-1"></div>
     <div class="bk-foot" id="bkFoot">
       <button class="btn btn-line" type="button" data-bk-back>Back</button>
-      <p class="bk-total" id="bkTotal"></p>
+      <p class="bk-total" id="bkTotal" aria-live="polite"></p>
       <button class="btn btn-key" type="button" data-bk-next>Continue<span aria-hidden="true">→</span></button>
     </div>
   </div>`;
@@ -107,7 +169,7 @@ export function mountBooking() {
     $$('[data-bk-close]', root).forEach((el) => el.remove());
     const q = new URLSearchParams(location.search).get('exp');
     const hit = experiences.find((e) => e.id === q || e.name.toLowerCase() === (q ?? '').toLowerCase());
-    if (hit) { S.exp = hit.id; if (S.step < 1) S.step = 1; save(); }
+    if (hit && S.step !== DONE) { S.exp = hit.id; if (S.step < 1) S.step = 1; save(); }
     bindPanel();
     render();
     return;
@@ -130,6 +192,10 @@ function bindPanel() {
     if (t.closest('[data-bk-next]')) return onNext();
     onBodyClick(e);
   });
+  root!.addEventListener('change', (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.name === 'bkPay') { S.pay = t.value as Pay; save(); updateNext(); }
+  });
   if (mode === 'modal') {
     document.addEventListener('keydown', (e) => {
       if (root!.hidden) return;
@@ -148,18 +214,18 @@ function trap(e: KeyboardEvent) {
   else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 }
 
-/** Note the decoration they picked, so it reaches us with the booking. */
-export function prefillDecor(name: string) {
-  const line = `Decoration: ${name}`;
-  const existing = S.notes.trim();
-  if (!existing.includes(line)) {
-    S.notes = existing ? `${line}\n${existing}` : line;
-    save();
-  }
+/** "Book this setup" on a decoration card: Date Night, with that decoration. */
+export function prefillDecor(id: string) {
+  if (S.step === DONE) return;
+  if (!decorations.some((d) => d.id === id)) return;
+  S.setup = 'date';
+  S.decor = id;
+  save();
 }
 
 /** Used by the hero ticket: carry what they already chose into the flow. */
 export function prefillBooking(opts: { exp?: string; custom?: string; date?: string; guests?: number }) {
+  if (S.step === DONE) resetState();
   const hit = experiences.find((e) => e.name.toLowerCase() === (opts.exp ?? '').toLowerCase());
   const isOther = opts.exp === OTHER.id;
   if (hit) S.exp = hit.id;
@@ -167,18 +233,18 @@ export function prefillBooking(opts: { exp?: string; custom?: string; date?: str
     S.exp = OTHER.id;
     S.customOccasion = (opts.custom ?? '').trim();
   }
-  if (opts.date) S.date = opts.date;
+  if (opts.date && opts.date >= today()) S.date = opts.date;
   if (opts.guests && opts.guests > 0) S.guests = Math.min(MAX_GUESTS, Math.max(1, opts.guests));
   // with a described occasion we can move on; without one, stay and ask
   const chosen = hit || (isOther && S.customOccasion);
-  S.step = chosen ? (opts.date ? 2 : 1) : 0;
+  S.step = chosen ? (S.date ? 2 : 1) : 0;
   save();
 }
 
 export function openBooking(expName = '') {
   if (!root) mountBooking();
   const hit = experiences.find((e) => e.id === expName || e.name.toLowerCase() === expName.toLowerCase());
-  if (hit) { S.exp = hit.id; if (S.step < 1) S.step = 1; save(); }
+  if (hit && S.step !== DONE) { S.exp = hit.id; if (S.step < 1) S.step = 1; save(); }
   if (mode === 'inline') {
     render();
     window.scrollTo({ top: root!.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
@@ -208,14 +274,18 @@ function closeBooking() {
   if (!root || mode === 'inline') return;
   root.hidden = true;
   setBackgroundInert(false);
-  if (S.step === 6) resetFlow();
+  // keep a booking that is still waiting on a UPI payment, so it can be reopened
+  if (S.step === DONE && !(S.pay === 'upi' && S.utrSend !== 'sent')) resetState();
   document.body.classList.remove('is-locked');
   save();
   lastFocus?.focus();
 }
 
 function go(n: number) {
-  S.step = Math.max(0, Math.min(6, n));
+  const dir = n >= S.step ? 1 : -1;
+  // step 5 (add-ons) only exists for setups that have any
+  if (n === 4 && !setupOf(S.setup)?.hasAddons) n += dir;
+  S.step = Math.max(0, Math.min(DONE, n));
   save();
   render();
   const body = $('#bkBody');
@@ -232,17 +302,25 @@ function onNext() {
   go(S.step + 1);
 }
 
-function validate(step: number) {
+function validate(step: number): string {
   if (step === 0 && !S.exp) return 'Pick an occasion to continue.';
   if (step === 0 && S.exp === OTHER.id && !S.customOccasion.trim())
     return 'Tell us what you are planning, in a line or two.';
   if (step === 1 && !S.date) return 'Choose a date to continue.';
+  if (step === 1 && (S.guests < 1 || S.guests > MAX_GUESTS)) return `Choose between 1 and ${MAX_GUESTS} guests.`;
   if (step === 2 && !S.slot) return 'Pick a time to continue.';
-  if (step === 3 && !S.pkg) return 'Choose a package to continue.';
+  if (step === 2 && slotOf() && slotPassed(slotOf()!.start)) return 'That time has already started today. Pick a later one.';
+  if (step === 3) {
+    if (!S.setup) return 'Choose a setup to continue.';
+    const blocked = setupPrice(S.setup, S.guests).blocked;
+    if (blocked) return blocked;
+    if (setupOf(S.setup)?.hasDecor && !decorOf()) return 'Pick a decoration to continue.';
+  }
   if (step === 5) {
     if (!S.name.trim()) return 'Please add your name.';
     if (!/^[6-9]\d{9}$/.test(S.phone.replace(/\D/g, '').slice(-10))) return 'Enter a valid 10-digit mobile number.';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email.trim())) return 'Please add an email we can send your confirmation to.';
+    if (canPayOnline(totals()) && !S.pay) return 'Choose how you would like to pay.';
   }
   return '';
 }
@@ -255,39 +333,64 @@ function flash(msg: string) {
   p.setAttribute('role', 'alert');
   p.textContent = msg;
   foot.insertBefore(p, foot.firstChild);
-  setTimeout(() => p.remove(), 4200);
+  setTimeout(() => p.remove(), 5200);
 }
 
 /* ---------- render ---------- */
+
+function updateNext() {
+  const next = $('[data-bk-next]', root!);
+  if (!next) return;
+  const q = totals();
+  const label = S.step < 5 ? 'Continue'
+    : S.pay === 'upi' && canPayOnline(q) ? `Send & pay ${rupee(q.total)}`
+    : 'Send booking request';
+  next.innerHTML = `${label}<span aria-hidden="true">→</span>`;
+}
+
 function render() {
-  if (S.step === 6) return renderDone();
-  const t = totals();
+  if (S.step === DONE) return renderDone();
+  const q = totals();
 
   $('#bkSteps')!.innerHTML = stepNames.map((n, i) => {
+    const skipped = i === 4 && S.setup && !setupOf(S.setup)?.hasAddons;
     const cls = i === S.step ? 'is-now' : i < S.step ? 'is-done' : '';
-    return `<span class="bk-step ${cls}">${String(i + 1).padStart(2, '0')} ${n}</span>`;
+    return `<span class="bk-step ${cls}${skipped ? ' is-skip' : ''}">${String(i + 1).padStart(2, '0')} ${n}</span>`;
   }).join('');
   ($('#bkBar') as HTMLElement).style.width = `${((S.step + 1) / 6) * 100}%`;
 
   ($('#bkFoot') as HTMLElement).style.display = '';
   ($('[data-bk-back]') as HTMLElement).style.visibility = S.step === 0 ? 'hidden' : 'visible';
-  $('[data-bk-next]')!.innerHTML = (S.step === 5 ? 'Confirm pre-booking' : 'Continue') + '<span aria-hidden="true">→</span>';
+  updateNext();
 
   const bits = [occasionLabel(), S.date && dateLabel(S.date), slotOf()?.start,
                 `${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}`].filter(Boolean);
-  $('#bkTotal')!.innerHTML = `<strong>${rupee(t.total)}</strong><span>${esc(bits.join(' · '))} · ₹0 today</span>`;
+  const amount = S.setup && !q.blocked ? totalText(q) : '—';
+  $('#bkTotal')!.innerHTML = `<strong>${amount}</strong><span>${esc(bits.join(' · '))}</span>`;
 
-  $('#bkBody')!.innerHTML = [step0, step1, step2, step3, step4, step5][S.step](t);
+  $('#bkBody')!.innerHTML = [step0, step1, step2, step3, step4, step5][S.step](q);
   wireFields();
 }
 
-const head = (kick: string, title: string, sub?: string) =>
-  `<p class="bk-kicker">${kick}</p><h2 class="title" id="bkTitle">${title}</h2>` +
+const head = (n: number, title: string, sub?: string) =>
+  `<p class="bk-kicker">Step ${String(n).padStart(2, '0')} of 06</p><h2 class="title" id="bkTitle">${title}</h2>` +
   (sub ? `<p class="bk-sub">${sub}</p>` : '');
+
+/** A photograph from BookingMedia.astro, or nothing if there is none for this key. */
+function photo(key?: string): string {
+  if (!key) return '';
+  const tpl = document.getElementById('bkMedia') as HTMLTemplateElement | null;
+  const img = tpl?.content.querySelector(`[data-media="${CSS.escape(key)}"]`);
+  return img ? img.outerHTML : '';
+}
+
+/** The picture at the top of a card: a photograph when we have one, drawn otherwise. */
+const visual = (key: string | undefined, art: string, tone: string) =>
+  photo(key) || `<span class="vis-art vis-${tone}" aria-hidden="true"><span class="art art-${art}"></span></span>`;
 
 function step0() {
   const isOther = S.exp === OTHER.id;
-  return head('Step 01 of 06', 'What are you celebrating?',
+  return head(1, 'What are you celebrating?',
     'Same private room, set up to match the occasion. You can change this later.') +
     `<div class="bk-grid">${experiences.map((e) => `
       <button class="tile ${S.exp === e.id ? 'is-sel' : ''}" type="button" data-exp-pick="${e.id}">
@@ -316,14 +419,13 @@ function step0() {
 /* the seat picker: you choose seats, not a number in a box */
 function seatmap() {
   let i = 0;
-  const rows = [['A', 6], ['B', 6]] as const;
+  const rows = [['A', 4], ['B', MAX_GUESTS - 4]] as const;
   const html = rows.map(([letter, count]) => {
     let r = `<div class="seat-row"><i>${letter}</i>`;
     for (let c = 0; c < count; c++) {
       i++;
-      const cls = i <= S.guests ? (i <= BASE_GUESTS ? 'is-taken' : 'is-extra') : '';
-      r += `<button type="button" class="seat ${cls}" data-seat="${i}" aria-pressed="${i <= S.guests}"
-              aria-label="Seat ${letter}${c + 1}, ${i <= BASE_GUESTS ? 'included' : `${rupee(EXTRA_GUEST)} extra`}"></button>`;
+      r += `<button type="button" class="seat ${i <= S.guests ? 'is-taken' : ''}" data-seat="${i}" aria-pressed="${i <= S.guests}"
+              aria-label="Seat ${letter}${c + 1}"></button>`;
     }
     return r + '</div>';
   }).join('');
@@ -332,65 +434,140 @@ function seatmap() {
     <div class="seat-screen"><span aria-hidden="true"></span><em>Screen</em></div>
     <div class="seat-rows">${html}</div>
     <p class="seat-legend">
-      <span><b class="k"></b>Included (up to ${BASE_GUESTS})</span>
-      <span><b class="e"></b>+${rupee(EXTRA_GUEST)} each</span>
+      <span><b class="k"></b>${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}</span>
       <span><b></b>Free seat</span>
     </p></div>`;
 }
 
 function step1() {
-  return head('Step 02 of 06', "When's the night, and who's coming?",
-    `Tap a seat for every guest. ${rupee(ROOM_BASE)} covers the room for up to ${BASE_GUESTS}.`) +
+  return head(2, "When's the night, and who's coming?",
+    `Tap a seat for every guest — up to ${MAX_GUESTS}. The price for your group shows when you choose a setup.`) +
     seatmap() +
     '<p class="bk-kicker">Pick a date</p>' +
     `<div class="bk-dates">${nextDays(21).map((d) => `
       <button class="daytile ${S.date === d.iso ? 'is-sel' : ''}" type="button" data-date-pick="${d.iso}">
         <em>${d.dow}</em><strong>${d.day}</strong><em>${d.mon}</em>
       </button>`).join('')}</div>` +
-    '<p class="fine">Looking further ahead? Tell us the date in the notes on the last step.</p>';
+    `<p class="fine">More than ${MAX_GUESTS} of you, or looking further ahead? Call us on ${callLink()}.</p>`;
 }
 
 function step2() {
-  return head('Step 03 of 06', 'Choose your time',
-    `${dateLabel(S.date)} · ${S.guests} guests · every slot is a ${SESSION_LABEL}.`) +
-    `<div class="slots">${slots.map((s) => `
-      <button class="slot ${S.slot === s.id ? 'is-sel' : ''}" type="button" data-slot-pick="${s.id}">
-        <strong>${s.start}</strong><span>to ${s.end}</span>
-      </button>`).join('')}</div>` +
-    `<div class="bk-note" style="margin-top:22px"><i>Note</i><span>We are <b>opening soon</b>, so times are indicative. We call you to lock the exact slot, and nothing is charged until you confirm with us.</span></div>`;
+  return head(3, 'Choose your time',
+    `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Karaoke runs 30 minutes from the start of the slot.`) +
+    `<div class="slots">${slots.map((s) => {
+      const gone = slotPassed(s.start);
+      return `
+      <button class="slot ${S.slot === s.id ? 'is-sel' : ''}" type="button" data-slot-pick="${s.id}"${gone ? ' disabled' : ''}>
+        <strong>${s.start}</strong><span>${gone ? 'Already started' : `to ${s.end}`}</span>
+      </button>`;
+    }).join('')}</div>` +
+    `<div class="bk-note" style="margin-top:22px"><i>Note</i><span>We check the slot is free as soon as your booking reaches us, and call you if it is not. You are never charged for a slot we cannot give you.</span></div>`;
+}
+
+const TONE: Record<string, string> = { date: 'rose', movie: 'night', karaoke: 'neon', watch: 'pitch' };
+
+function setupCard(s: Setup) {
+  const p = setupPrice(s.id, S.guests);
+  const sel = S.setup === s.id;
+  const suggested = expOf()?.suggests === s.id;
+  const dur = s.minutes ? `${s.minutes} min` : 'Duration on call';
+  const price = p.amount !== null
+    ? `<span class="sc-price num">${rupee(p.amount)}</span>`
+    : `<span class="sc-price sc-price-ask">${p.blocked ? 'Call to book' : 'Price on call'}</span>`;
+  return `
+    <button class="sc sc-${TONE[s.id]} ${sel ? 'is-sel' : ''} ${p.blocked ? 'is-blocked' : ''}" type="button"
+            data-setup-pick="${s.id}" aria-pressed="${sel}"${p.blocked ? ' aria-describedby="sc-why-' + s.id + '"' : ''}>
+      <span class="sc-media">${visual(s.photo, s.art, TONE[s.id])}
+        <span class="sc-chip num">${dur}</span>
+        ${suggested ? '<span class="sc-chip sc-chip-hint">Suggested</span>' : ''}
+      </span>
+      <span class="sc-body">
+        <strong class="sc-name">${s.name}</strong>
+        <span class="sc-tag">${s.tagline}</span>
+        <span class="sc-pricing">${price}${p.note ? `<span class="sc-per">${esc(p.note)}</span>` : ''}</span>
+        <span class="sc-list">${s.includes.map((i) => `<span>${esc(i)}</span>`).join('')}</span>
+        ${p.blocked ? `<span class="sc-why" id="sc-why-${s.id}">${esc(p.blocked)}</span>` : ''}
+        ${s.idealFor && S.guests > s.idealFor && !p.blocked ? `<span class="sc-hint">Set up for ${s.idealFor}. Bigger groups are welcome — we will arrange the room on the call.</span>` : ''}
+      </span>
+    </button>`;
+}
+
+function decorStep() {
+  return `
+    <div class="decor-pick" id="bkDecor">
+      <p class="bk-kicker">Now choose your decoration</p>
+      <p class="decor-incl"><b>In every package</b>${DECOR_INCLUDED.map((x) => `<span>${esc(x)}</span>`).join('')}</p>
+      <div class="dc-grid">${decorations.map((d) => {
+        const sel = S.decor === d.id;
+        return `
+        <button class="dc ${sel ? 'is-sel' : ''}" type="button" data-decor-pick="${d.id}" aria-pressed="${sel}">
+          <span class="dc-media">${visual(`decor-${d.id}`, 'heart', 'rose')}
+            <span class="dc-price num">${d.price !== null ? `+${rupee(d.price)}` : 'Price on call'}</span>
+          </span>
+          <span class="dc-body">
+            <strong>${esc(d.name)}</strong>
+            <span class="dc-tag">${esc(d.tagline)}</span>
+            <span class="dc-list">${d.includes.map((i) => `<span${DECOR_INCLUDED.includes(i) ? ' class="is-incl"' : ''}>${esc(i)}</span>`).join('')}</span>
+          </span>
+        </button>`;
+      }).join('')}</div>
+      <p class="fine">Decoration is added to the ${rupee(setupPrice('date', S.guests).amount ?? 0)} session. Prices are confirmed with you before anything is charged.</p>
+    </div>`;
 }
 
 function step3() {
-  const heads = Math.max(0, S.guests - BASE_GUESTS);
-  return head('Step 04 of 06', 'Choose your setup',
-    'Every package includes the private room for your whole session. Extras come next.') +
-    `<div class="pkgs">${packages.map((p) => `
-      <button class="pkg ${S.pkg === p.id ? 'is-sel' : ''}" type="button" data-pkg-pick="${p.id}">
-        ${p.tag ? `<span class="pkg-tag">${p.tag}</span>` : ''}
-        <span class="pkg-top"><strong>${p.name}</strong><span class="pkg-price">${rupee(p.price)}</span></span>
-        <p>${p.desc}</p>
-        <ul>${p.includes.map((i) => `<li>${i}</li>`).join('')}</ul>
-        <p class="pkg-fine">Up to ${BASE_GUESTS} guests · ${SESSION_LABEL}${heads ? ` · +${rupee(heads * EXTRA_GUEST)} for ${heads} extra seat${heads > 1 ? 's' : ''}` : ''}</p>
-      </button>`).join('')}</div>`;
+  const s = setupOf(S.setup);
+  return head(4, 'Choose your setup',
+    `Priced for ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}. Change the number of guests on step 2.`) +
+    `<div class="sc-grid">${setups.map(setupCard).join('')}</div>` +
+    (s?.hasDecor && !setupPrice(s.id, S.guests).blocked ? decorStep() : '') +
+    `<p class="fine">Something you cannot book here? Call us on ${callLink()}.</p>`;
 }
 
-function step4(t: ReturnType<typeof totals>) {
-  const groups = [...new Set(extras.map((x) => x.group))];
-  return head('Step 05 of 06', 'Make it yours',
-    'Optional — add only what you want. Your package already covers its own inclusions.') +
-    groups.map((g) => `<div class="xgroup"><h3>${g}</h3>` +
-      extras.filter((x) => x.group === g).map((x) => `
-        <div class="xrow"><div class="xrow-main"><strong>${x.name}</strong>
-          <span>${rupee(x.price)} each</span></div>
-          ${stepper(`x:${x.id}`, S.extras[x.id] || 0, 0, x.max)}</div>`).join('') +
-      '</div>').join('') +
-    summary(t) +
-    '<p class="fine">Nothing is added by default, and the total updates as you go.</p>';
+function step4(q: Quote) {
+  return head(5, 'Make it yours',
+    'Optional — add only what you want. Fog entry and candlelight are already in your decoration.') +
+    addonGroups.map((g) => `
+      <div class="ad-group">
+        <h3>${esc(g.name)}<span>${esc(g.blurb)}</span></h3>
+        <div class="ad-grid">${g.options.map((o) => {
+          const sel = S.addons.includes(o.id);
+          const price = o.price !== null ? rupee(o.price) : (o.priceNote ? `${o.priceNote}, confirmed on call` : 'Price on call');
+          return `
+          <button class="ad ${sel ? 'is-sel' : ''}" type="button" data-addon-pick="${o.id}" aria-pressed="${sel}">
+            <span class="ad-media">${visual(o.photo, g.art, 'rose')}</span>
+            <span class="ad-body"><strong>${esc(o.name)}</strong><span class="ad-price">${esc(price)}</span></span>
+          </button>`;
+        }).join('')}</div>
+        ${g.callFor ? `<p class="fine">${esc(g.callFor)} Call ${callLink()}.</p>` : ''}
+      </div>`).join('') +
+    summary(q) +
+    '<p class="fine">One of each at most. Tap a choice again to remove it.</p>';
 }
 
-function step5(t: ReturnType<typeof totals>) {
-  return head('Step 06 of 06', 'Where do we reach you?',
-    'We call you to confirm the slot. No payment, and no card details.') +
+function step5(q: Quote) {
+  const online = canPayOnline(q);
+  if (!online && S.pay === 'upi') S.pay = 'later';
+  const payBlock = online ? `
+    <fieldset class="paypick">
+      <legend>How would you like to pay?</legend>
+      <label class="payopt ${S.pay === 'upi' ? 'is-sel' : ''}">
+        <input type="radio" name="bkPay" value="upi"${S.pay === 'upi' ? ' checked' : ''}>
+        <span><strong>Pay now by UPI · ${rupee(q.total)}</strong>
+        <em>Any UPI app. We show you a QR code and a pay link as soon as this is sent.</em></span>
+      </label>
+      <label class="payopt ${S.pay === 'later' ? 'is-sel' : ''}">
+        <input type="radio" name="bkPay" value="later"${S.pay === 'later' ? ' checked' : ''}>
+        <span><strong>Pay after we call</strong>
+        <em>We confirm the slot first, then send you the payment details.</em></span>
+      </label>
+    </fieldset>`
+    : `<div class="bk-note"><i>Payment</i><span>${q.unpriced.length
+        ? `<b>${esc(q.unpriced.join(', '))}</b> ${q.unpriced.length > 1 ? 'are' : 'is'} priced on the call, so we will send you the exact amount and how to pay once we have spoken.`
+        : 'We will send you the payment details once we have confirmed your slot.'}</span></div>`;
+
+  return head(6, 'Your details, then payment',
+    'We send your booking straight to the team, and a copy to you.') +
     `<div class="bookform" style="margin-bottom:24px">
       <div class="field"><label for="bName">Your name</label>
         <input id="bName" type="text" autocomplete="name" placeholder="Who should we ask for?" value="${esc(S.name)}"></div>
@@ -400,38 +577,25 @@ function step5(t: ReturnType<typeof totals>) {
         <input id="bEmail" type="email" autocomplete="email" placeholder="you@example.com" value="${esc(S.email)}">
         <span class="field-hint">We send your confirmation here.</span></div>
       <div class="field"><label for="bNotes">Anything we should set up? <span class="opt">Optional</span></label>
-        <textarea id="bNotes" rows="3" placeholder="A name on the cake, a song to open with, a different date…">${esc(S.notes)}</textarea></div>
+        <textarea id="bNotes" rows="3" placeholder="A name on the cake, a song to open with…">${esc(S.notes)}</textarea></div>
     </div>` +
-    summary(t) +
-    `<div class="bk-note"><i>Note</i><span><b>Nothing is charged now.</b> This reserves your interest in the slot. Prices are indicative while we set up, and we confirm the final amount with you on the call before anything is paid.</span></div>`;
+    summary(q) + payBlock;
 }
 
-function summary(t: ReturnType<typeof totals>) {
+function summary(q: Quote) {
   const rows: [string, string][] = [
     ['Occasion', occasionLabel()],
-    ['Date & time', (S.date ? dateLabel(S.date) : '—') + (slotOf() ? ` · ${slotOf()!.start}` : '')],
-    ['Seats', String(S.guests)],
-    ['Package', `${pkgOf()?.name ?? '—'} · ${rupee(t.base)}`],
+    ['Date & time', (S.date ? dateLabel(S.date) : '—') + (slotOf() ? ` · ${timeLabel()}` : '')],
+    ['Guests', String(S.guests)],
   ];
-  if (t.extraHeads) rows.push([`${t.extraHeads} extra seat${t.extraHeads > 1 ? 's' : ''}`, rupee(t.guestFee)]);
-  Object.entries(S.extras).forEach(([id, qty]) => {
-    const x = extraOf(id);
-    if (x && qty) rows.push([`${x.name} × ${qty}`, rupee(x.price * qty)]);
-  });
+  q.lines.forEach((l) => rows.push([l.label, l.amount !== null ? rupee(l.amount) : 'On call']));
   return `<div class="bk-sum">${rows.map(([a, b]) =>
     `<div class="bk-sum-row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}
-    <div class="bk-sum-row is-total"><span>Estimated total</span><span>${rupee(t.total)}</span></div>
-    <div class="bk-sum-row"><span>To pay now</span><span>₹0</span></div></div>`;
+    <div class="bk-sum-row is-total"><span>${q.unpriced.length ? 'Total so far' : 'Total'}</span><span>${esc(totalText(q))}</span></div></div>`;
 }
 
-const stepper = (key: string, val: number, min: number, max: number) => `
-  <div class="stepper" data-step-key="${key}">
-    <button type="button" data-delta="-1" aria-label="Remove one"${val <= min ? ' disabled' : ''}>&minus;</button>
-    <output>${val}</output>
-    <button type="button" data-delta="1" aria-label="Add one"${val >= max ? ' disabled' : ''}>+</button>
-  </div>`;
-
 /* ---------- interaction ---------- */
+
 function onBodyClick(e: Event) {
   const t = e.target as HTMLElement;
   if (!t.closest('#bkBody')) return;
@@ -448,10 +612,46 @@ function onBodyClick(e: Event) {
     }
     return go(S.step + 1);
   }
-  if ((el = t.closest('[data-date-pick]'))) { S.date = el.dataset.datePick!; save(); return render(); }
-  if ((el = t.closest('[data-slot-pick]'))) { S.slot = el.dataset.slotPick!; save(); return go(S.step + 1); }
-  if ((el = t.closest('[data-pkg-pick]'))) { S.pkg = el.dataset.pkgPick!; save(); return go(S.step + 1); }
+  if ((el = t.closest('[data-date-pick]'))) {
+    S.date = el.dataset.datePick!;
+    if (slotOf() && slotPassed(slotOf()!.start)) S.slot = '';
+    save(); return render();
+  }
+  if ((el = t.closest('[data-slot-pick]'))) {
+    if ((el as HTMLButtonElement).disabled) return;
+    S.slot = el.dataset.slotPick!; save(); return go(S.step + 1);
+  }
+  if ((el = t.closest('[data-setup-pick]'))) {
+    const id = el.dataset.setupPick!;
+    const blocked = setupPrice(id, S.guests).blocked;
+    if (blocked) return flash(blocked);
+    S.setup = id;
+    save();
+    // Date Night carries on to the decoration below; the others are done here
+    if (setupOf(id)?.hasDecor) {
+      render();
+      $('#bkDecor', root!)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      $<HTMLElement>(`[data-setup-pick="${id}"]`, root!)?.focus({ preventScroll: true });
+      return;
+    }
+    return go(S.step + 1);
+  }
+  if ((el = t.closest('[data-decor-pick]'))) { S.decor = el.dataset.decorPick!; save(); return go(S.step + 1); }
+  if ((el = t.closest('[data-addon-pick]'))) {
+    const id = el.dataset.addonPick!;
+    const group = addonOf(id)?.group;
+    if (!group) return;
+    const had = S.addons.includes(id);
+    // one per group: picking another replaces it, picking the same one removes it
+    S.addons = S.addons.filter((a) => !group.options.some((o) => o.id === a));
+    if (!had) S.addons.push(id);
+    save();
+    render();
+    $<HTMLElement>(`[data-addon-pick="${id}"]`, root!)?.focus();
+    return;
+  }
   if (t.closest('[data-bk-reset]')) return resetFlow();
+  if (t.closest('[data-bk-resend]')) { void sendBooking(); return; }
 
   // seats fill up to the one you tapped; tapping the last one gives it back
   if ((el = t.closest('[data-seat]'))) {
@@ -460,18 +660,7 @@ function onBodyClick(e: Event) {
     save();
     render();
     $<HTMLElement>(`[data-seat="${Math.min(S.guests || 1, MAX_GUESTS)}"]`, root!)?.focus();
-    return;
   }
-
-  const btn = t.closest<HTMLElement>('.stepper button');
-  if (!btn) return;
-  const key = btn.closest<HTMLElement>('.stepper')!.dataset.stepKey!;
-  const id = key.slice(2);
-  const x = extraOf(id);
-  const next = Math.max(0, Math.min(x?.max ?? 9, (S.extras[id] || 0) + Number(btn.dataset.delta)));
-  if (next) S.extras[id] = next; else delete S.extras[id];
-  save();
-  render();
 }
 
 function wireFields() {
@@ -481,116 +670,224 @@ function wireFields() {
     const el = $<HTMLInputElement>(`#${id}`, body);
     el?.addEventListener('input', () => { (S as any)[key] = el.value; save(); });
   });
+  $$<HTMLInputElement>('input[name="bkPay"]', body).forEach((r) => r.addEventListener('change', () => {
+    $$('.payopt', body).forEach((l) => l.classList.toggle('is-sel', l.contains(r) && r.checked));
+  }));
 }
 
-function resetFlow() {
+function resetState() {
   clearSaved();
   S = structuredClone(BLANK);
   resumed = false;
+}
+
+function resetFlow() {
+  resetState();
   if (root && (mode === 'inline' || !root.hidden)) render();
 }
 
-function bookingText() {
-  const t = totals();
-  const L = [
-    `YourSpace ${site.city} — pre-booking request`,
-    `Name: ${S.name}`, `Phone: ${S.phone}`,
-    `Occasion: ${occasionLabel()}`,
-    `Date: ${dateLabel(S.date)}${slotOf() ? ` at ${slotOf()!.start}` : ''}`,
-    `Seats: ${S.guests}`,
-    `Package: ${pkgOf() ? `${pkgOf()!.name} (${rupee(pkgOf()!.price)})` : '—'}`,
-  ];
-  Object.entries(S.extras).forEach(([id, qty]) => {
-    const x = extraOf(id);
-    if (x && qty) L.push(`Extra: ${x.name} x${qty}`);
-  });
-  if (t.extraHeads) L.push(`Extra seats: ${t.extraHeads} (${rupee(t.guestFee)})`);
-  if (S.notes.trim()) L.push(`Notes: ${S.notes.trim()}`);
-  L.push(`Estimated total: ${rupee(t.total)} (nothing paid)`);
-  return L.join('\n');
+/* ---------- sending and paying ---------- */
+
+/** Short, unambiguous, and easy to read out over the phone. */
+function makeRef(): string {
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(6));
+  return 'YS-' + Array.from(bytes, (b) => abc[b % abc.length]).join('');
 }
 
-async function submit() {
-  stash({ at: new Date().toISOString(), source: 'booking-flow', state: structuredClone(S), total: totals().total });
-  go(6);
-
-  // The booking leaves by email, the same single route as every other form.
-  const t = totals();
-  const p = pkgOf();
-  const extrasChosen = Object.entries(S.extras)
-    .map(([id, qty]) => { const x = extraOf(id); return x && qty ? `${x.name} x${qty}` : ''; })
-    .filter(Boolean).join(', ');
-
-  const payload: Record<string, string> = {
+function bookingPayload(): Record<string, string> {
+  const q = totals();
+  const online = canPayOnline(q);
+  return {
+    'Booking ref': S.ref,
     Name: S.name,
     Phone: S.phone,
     Email: S.email,
     Occasion: occasionLabel(),
-    'Date & time': `${dateLabel(S.date)}${slotOf() ? ` at ${slotOf()!.start}` : ''}`,
-    Seats: String(S.guests),
-    Package: p ? `${p.name} (${rupee(p.price)})` : '—',
-    ...(extrasChosen ? { Extras: extrasChosen } : {}),
-    ...(t.extraHeads ? { 'Extra seats': `${t.extraHeads} (${rupee(t.guestFee)})` } : {}),
+    'Date & time': `${dateLabel(S.date)}, ${timeLabel()}`,
+    Guests: String(S.guests),
+    ...Object.fromEntries(q.lines.map((l) => [l.label, l.amount !== null ? rupee(l.amount) : `price on call${l.note ? ` (${l.note})` : ''}`])),
     ...(S.notes.trim() ? { Notes: S.notes.trim() } : {}),
-    'Estimated total': `${rupee(t.total)} — nothing paid`,
+    Total: q.unpriced.length ? `${rupee(q.total)} + ${q.unpriced.join(', ')} (priced on call)` : rupee(q.total),
+    Payment: S.pay === 'upi' && online
+      ? `Customer chose UPI now (${rupee(q.total)}). NOT VERIFIED — check your bank app before confirming.`
+      : 'After the call. Nothing paid.',
     Received: new Date().toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' }),
   };
+}
 
+function bookingText() {
+  return [`YourSpace ${site.city} — booking ${S.ref}`,
+    ...Object.entries(bookingPayload()).filter(([k]) => k !== 'Received' && k !== 'Booking ref' && k !== 'Payment')
+      .map(([k, v]) => `${k}: ${v}`)].join('\n');
+}
+
+async function submit() {
+  if (busy || S.send === 'sent' || S.send === 'sending') return;
+  // check every step, not just this one, in case something changed underneath
+  for (let i = 0; i <= 5; i++) {
+    const err = validate(i);
+    if (err) { go(i); return flash(err); }
+  }
+  if (!canPayOnline(totals())) S.pay = 'later';
+  if (!S.ref) S.ref = makeRef();
+  stash({ at: new Date().toISOString(), source: 'booking-flow', state: structuredClone(S), total: totals().total });
+  S.step = DONE;
+  go(DONE);
+  await sendBooking();
+}
+
+async function sendBooking() {
+  if (busy || S.send === 'sent') return;
+  busy = true;
+  S.send = 'sending'; save(); paintSendState();
+  const payload = bookingPayload();
   const first = S.name.split(' ')[0] || 'there';
+  const upi = S.pay === 'upi';
   const outcome = await deliver({
     ...payload,
-    ...envelope(`Booking — ${S.name || 'someone'} · ${S.phone}`, S.email),
+    ...envelope(`Booking ${S.ref} — ${S.name || 'someone'} · ${S.phone}${upi ? ' · UPI pending' : ''}`, S.email),
     _autoresponse:
       `Thanks ${first} — we have your booking for YourSpace, ${site.city}.\n\n` +
       Object.entries(payload)
-        .filter(([k]) => k !== 'Email' && k !== 'Received')
+        .filter(([k]) => k !== 'Email' && k !== 'Received' && k !== 'Payment')
         .map(([k, v]) => `  ${k}: ${v}`).join('\n') +
-      `\n\nWe will call you on ${S.phone} to confirm the date, the time and your group size.\n` +
-      `Nothing has been charged, and nothing will be until you have confirmed with us.\n\n` +
-      `— YourSpace, ${site.city}`,
+      `\n\nWe will call you on ${S.phone} to confirm.\n` +
+      (upi ? `If you have paid by UPI, we confirm the booking once the payment shows in our account.\n`
+           : `Nothing has been charged.\n`) +
+      `\n— YourSpace, ${site.city}`,
   });
+  busy = false;
+  S.send = outcome.ok ? 'sent' : 'failed';
+  save();
+  paintSendState(outcome.ok ? '' : outcome.reason);
+}
 
+function paintSendState(reason = '') {
   const state = $('#bkSendState');
   if (!state) return;
-  state.textContent = outcome.ok
-    ? 'Your booking has been emailed to us, and a copy is on its way to you.'
-    : outcome.reason === 'busy'
-      ? `We're getting a lot of bookings right now, so this one hasn't reached us yet. Please call us so we don't miss it.`
-      : `That didn't reach us. Your details are saved here, but please call us so we don't miss it.`;
-  state.className = outcome.ok ? 'fine center' : 'fine center bk-send-failed';
+  state.className = S.send === 'failed' ? 'fine center bk-send-failed' : 'fine center';
+  state.innerHTML =
+    S.send === 'sending' ? 'Sending your booking…'
+    : S.send === 'sent' ? 'Your booking has reached us, and a copy is on its way to you.'
+    : `${reason === 'busy' ? "We're getting a lot of bookings right now, so this one hasn't reached us yet."
+        : "That didn't reach us."} <button type="button" class="linkish" data-bk-resend>Try again</button> or call ${callLink()} and quote <b>${esc(S.ref)}</b>.`;
+}
+
+function upiLink(amount: number) {
+  // the UPI ID goes in as written: some apps reject an encoded "@"
+  const enc = encodeURIComponent;
+  return `upi://pay?pa=${site.upiId}&pn=${enc(site.upiPayee)}&am=${amount.toFixed(2)}&cu=INR&tn=${enc(`YourSpace ${S.ref}`)}`;
+}
+
+function qrSvg(text: string) {
+  const qr = qrcode(0, 'M');
+  qr.addData(text);
+  qr.make();
+  return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+}
+
+function payPanel(q: Quote) {
+  const link = upiLink(q.total);
+  const paid = S.utrSend === 'sent';
+  return `
+    <section class="paybox" aria-labelledby="payTitle">
+      <h3 id="payTitle">Pay ${rupee(q.total)} by UPI</h3>
+      <div class="paybox-grid">
+        <div class="paybox-qr" role="img" aria-label="QR code to pay ${rupee(q.total)} by UPI">${qrSvg(link)}</div>
+        <div class="paybox-how">
+          <a class="btn btn-key full paybox-app" href="${esc(link)}">Open my UPI app<span aria-hidden="true">→</span></a>
+          <p class="fine">On a computer, scan the code with any UPI app on your phone.</p>
+          <dl class="paybox-meta">
+            <div><dt>UPI ID</dt><dd><code>${esc(site.upiId)}</code> <button type="button" class="linkish" data-copy="${esc(site.upiId)}">Copy</button></dd></div>
+            <div><dt>Name</dt><dd>${esc(site.upiPayee)}</dd></div>
+            <div><dt>Amount</dt><dd class="num">${rupee(q.total)}</dd></div>
+            <div><dt>Note</dt><dd><code>${esc(S.ref)}</code></dd></div>
+          </dl>
+          <p class="fine">If the link will not open or your app declines it, pay to the UPI ID by hand and put <b>${esc(S.ref)}</b> in the note.</p>
+        </div>
+      </div>
+      ${paid ? `
+        <p class="paybox-done" role="status">Thanks — we have your reference <b>${esc(S.utr)}</b>.
+          We confirm your booking as soon as the payment shows in our account. Until then it is <b>awaiting confirmation</b>, not paid.</p>`
+      : `
+        <div class="bookform paybox-utr"><div class="field">
+          <label for="bUtr">After paying: your UPI reference</label>
+          <input id="bUtr" type="text" inputmode="numeric" autocomplete="off" maxlength="12"
+                 placeholder="12-digit UTR / UPI ref. no." value="${esc(S.utr)}">
+          <span class="field-hint">In your UPI app under the payment's details. It lets us match your payment to this booking.</span>
+        </div></div>
+        <button class="btn btn-line" type="button" data-bk-paid>I've paid — send my reference</button>
+        <p class="fine" id="bkUtrState" role="status">${S.utrSend === 'failed' ? `That didn't reach us. Try again, or call ${callLink()}.` : ''}</p>`}
+    </section>`;
+}
+
+async function sendUtr() {
+  if (busy || S.utrSend === 'sent') return;
+  const input = $<HTMLInputElement>('#bUtr');
+  const utr = (input?.value ?? '').replace(/\s/g, '');
+  if (!/^\d{12}$/.test(utr)) {
+    const st = $('#bkUtrState');
+    if (st) st.textContent = 'A UPI reference is 12 digits. You will find it in your UPI app under the payment.';
+    input?.focus();
+    return;
+  }
+  busy = true;
+  S.utr = utr; S.utrSend = 'sending'; save();
+  const btn = $<HTMLButtonElement>('[data-bk-paid]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  const q = totals();
+  const outcome = await deliver({
+    'Booking ref': S.ref,
+    Name: S.name,
+    Phone: S.phone,
+    Amount: rupee(q.total),
+    'UPI reference (UTR)': utr,
+    Status: 'UNVERIFIED — the customer says they paid. Find this UTR in the bank app before confirming.',
+    ...envelope(`UPI payment claimed — ${S.ref} · ${rupee(q.total)} · UTR ${utr}`),
+  });
+  busy = false;
+  S.utrSend = outcome.ok ? 'sent' : 'failed';
+  save();
+  renderDone();
 }
 
 function renderDone() {
-  const t = totals();
-  const txt = bookingText();
+  const q = totals();
   const first = esc(S.name.split(' ')[0] || 'friend');
+  const upi = S.pay === 'upi' && canPayOnline(q);
   $('#bkSteps')!.innerHTML = '';
   ($('#bkBar') as HTMLElement).style.width = '100%';
   ($('#bkFoot') as HTMLElement).style.display = 'none';
   $('#bkBody')!.innerHTML = `
     <div class="bk-done">
       <div class="done-mark" aria-hidden="true"></div>
-      <h2 class="title" id="bkTitle">You're on the list, ${first}.</h2>
-      <p class="bk-sub" style="margin-inline:auto">We have your ${esc(
-        S.exp === OTHER.id ? 'booking' : (expOf()?.name.toLowerCase() ?? 'booking'))}
-        for <b>${dateLabel(S.date)}${slotOf() ? ` at ${slotOf()!.start}` : ''}</b>.
-        We'll call you on ${esc(S.phone)} to confirm. Nothing has been charged.</p>
-      ${summary(t)}
+      <h2 class="title" id="bkTitle">${upi ? 'One step left' : "You're on the list"}, ${first}.</h2>
+      <p class="bk-ref">Booking <b class="num">${esc(S.ref)}</b></p>
+      <p class="bk-sub" style="margin-inline:auto">We have your ${esc(setupOf(S.setup)?.name ?? 'booking')}
+        for <b>${dateLabel(S.date)}, ${timeLabel()}</b>.
+        We'll call you on ${esc(S.phone)} to confirm.
+        ${upi ? 'Pay below to hold your slot.' : 'Nothing has been charged.'}</p>
+      <p class="fine center" id="bkSendState" role="status"></p>
+      ${upi ? payPanel(q) : ''}
+      ${summary(q)}
       <div class="bk-actions">
-        <button class="btn btn-key" type="button" id="bkCopy">Copy my details</button>
+        <button class="btn btn-line" type="button" id="bkCopy">Copy my details</button>
         ${mode === 'modal' ? '<button class="btn btn-line" type="button" data-bk-close>Done</button>'
-                           : '<a class="btn btn-line" href="/">Back to home</a>'}
+                           : '<button class="btn btn-line" type="button" data-bk-reset>Start a new booking</button>'}
       </div>
-      <p class="fine center" id="bkSendState">Sending your booking…</p>
     </div>`;
+  paintSendState();
 
-  $('#bkCopy')?.addEventListener('click', () => {
-    const btn = $('#bkCopy')!;
-    const done = () => {
-      btn.textContent = 'Copied';
-      setTimeout(() => { btn.textContent = 'Copy my details'; }, 2200);
-    };
-    navigator.clipboard?.writeText(txt).then(done, done) ?? done();
-  });
-  clearSaved();
+  const body = $('#bkBody')!;
+  $('#bkCopy', body)?.addEventListener('click', () => copy($('#bkCopy', body)!, bookingText()));
+  $$<HTMLElement>('[data-copy]', body).forEach((b) => b.addEventListener('click', () => copy(b, b.dataset.copy!)));
+  $('[data-bk-paid]', body)?.addEventListener('click', sendUtr);
+  $('#bUtr', body)?.addEventListener('input', (e) => { S.utr = (e.target as HTMLInputElement).value; save(); });
+}
+
+function copy(btn: HTMLElement, text: string) {
+  const was = btn.textContent;
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = was; }, 2200); };
+  navigator.clipboard?.writeText(text).then(done, done) ?? done();
 }

@@ -1,17 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" role="img" aria-label="YourSpace">
   <title>YourSpace</title>
   <defs>
-    <radialGradient id="ysLamp" cx=".5" cy=".5" r=".5">
-      <stop offset="0" stop-color="#F6C878" stop-opacity=".95"/><stop offset="1" stop-color="#E0A542" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="ysSpill" x1="20" y1="15" x2="20" y2="36" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#E0A542" stop-opacity=".5"/><stop offset="1" stop-color="#E0A542" stop-opacity="0"/>
+    <linearGradient id="r" x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F1D89F"/><stop offset=".45" stop-color="#B98F55"/><stop offset="1" stop-color="#6E5230"/>
     </linearGradient>
+    <radialGradient id="h" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#FFE3A6" stop-opacity=".9"/><stop offset=".45" stop-color="#E7B464" stop-opacity=".35"/><stop offset="1" stop-color="#C8964B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="m" x1="13" y1="10" x2="27" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF1CC"/><stop offset="1" stop-color="#E2A84F"/>
+    </linearGradient>
+    <clipPath id="c"><circle cx="20" cy="20" r="17.6"/></clipPath>
   </defs>
-  <rect width="40" height="40" rx="7" fill="#0C0B09"/>
-  <circle cx="20" cy="15.5" r="15" fill="url(#ysLamp)" opacity=".45"/>
-  <path d="M20 15.5 10.5 35.5h19z" fill="url(#ysSpill)"/>
-  <path d="M5.6 35.5V17.8a14.4 14.4 0 0 1 28.8 0v17.7" fill="none" stroke="#EDE6D8" stroke-width="2.6" stroke-linecap="round"/>
-  <path d="M3 35.5h34" stroke="#EDE6D8" stroke-width="2.6" stroke-linecap="round" opacity=".45"/>
-  <circle cx="20" cy="15.5" r="4.2" fill="#F2B855"/>
+  <rect width="40" height="40" fill="#080706"/>
+  <circle cx="20" cy="20" r="18.6" fill="none" stroke="url(#r)" stroke-width="1.3"/>
+  <g clip-path="url(#c)">
+    <circle cx="20" cy="16.5" r="11" fill="url(#h)"/>
+    <circle cx="20" cy="16.5" r="6.4" fill="url(#m)"/>
+    <circle cx="18.4" cy="16.1" r="6.1" fill="#080706"/>
+    <g fill="#0E0C0A" stroke="url(#r)" stroke-width=".7">
+      <path d="M4.8 34v-3.4a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6V34"/>
+      <path d="M11 34v-3.4a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6V34"/>
+      <path d="M17.2 34v-3.4a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6V34"/>
+      <path d="M23.4 34v-3.4a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6V34"/>
+      <path d="M29.6 34v-3.4a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6V34"/>
+    </g>
+  </g>
 </svg>

@@ -1,6 +1,7 @@
 ---
-import { ROOM_BASE, BASE_GUESTS, EXTRA_GUEST, RUNTIME } from '../data/booking';
-const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
+import { ROOM_BASE, MAX_GUESTS, RUNTIME, setupPrice, setupOf } from '../data/booking';
+const rupee = (n: number | null) => n === null ? 'on call' : '₹' + n.toLocaleString('en-IN');
+const karaoke = setupOf('karaoke')!;
 ---
 <div class="stub reveal">
   <div class="stub-main">
@@ -8,22 +9,23 @@ const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
     <p class="stub-amount">
       <span class="cur">₹</span><span class="num">{ROOM_BASE.toLocaleString('en-IN')}</span>
     </p>
-    <p class="stub-sub">per session · admits up to {BASE_GUESTS}</p>
+    <p class="stub-sub">per 90-minute session · admits up to {MAX_GUESTS}</p>
     <ul class="stub-list">
       <li>The room reserved for your group alone</li>
       <li>Screen, sound and seating included</li>
-      <li>Any of the six experiences</li>
-      <li>{rupee(EXTRA_GUEST)} per additional guest, within capacity</li>
+      <li>Movie Space: {rupee(setupPrice('movie', 1).amount)} up to 5, {rupee(setupPrice('movie', MAX_GUESTS).amount)} for 6–{MAX_GUESTS}</li>
+      <li>Date Night: {rupee(setupPrice('date', 2).amount)} plus your decoration</li>
+      <li>Karaoke: {rupee(karaoke.perPerson ?? null)} per person, {karaoke.minutes} minutes, {karaoke.minGuests} or more</li>
     </ul>
   </div>
   <div class="stub-tear" aria-hidden="true"></div>
   <div class="stub-end">
     <dl class="stub-meta">
       <div><dt>Runtime</dt><dd class="num">{RUNTIME}</dd></div>
-      <div><dt>Admits</dt><dd class="num">{BASE_GUESTS}</dd></div>
-      <div><dt>Due today</dt><dd class="num">₹0</dd></div>
+      <div><dt>Admits</dt><dd class="num">{MAX_GUESTS}</dd></div>
+      <div><dt>Pay by</dt><dd class="num">UPI</dd></div>
     </dl>
-    <button class="btn btn-key full" data-book>Pre-book a slot<span aria-hidden="true">→</span></button>
-    <p class="fine center">Extras, taxes and applicable charges are additional</p>
+    <button class="btn btn-key full" data-book>Book a slot<span aria-hidden="true">→</span></button>
+    <p class="fine center">Decoration, add-ons, taxes and applicable charges are additional</p>
   </div>
 </div>

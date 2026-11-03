@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { mockDelivery } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 import { PAGES } from './pages';
 
@@ -31,6 +32,12 @@ async function settle(page: import('@playwright/test').Page) {
   });
   // wait on the real state rather than a guessed delay, so the audit never
   // races a transition that is still running
+  // Freeze every transition and animation, then wait for the fonts, so the
+  // audit measures a settled page rather than a frame mid-way through one.
+  await page.addStyleTag({ content: `*,*::before,*::after{
+    transition:none !important; animation:none !important;
+  }` });
+  await page.evaluate(() => document.fonts.ready);
   await page.evaluate(() => {
     document.querySelectorAll<HTMLElement>('.reveal').forEach((e) => { e.style.transition = 'none'; });
   });
@@ -64,6 +71,7 @@ test.describe('accessibility', () => {
   });
 
   test('each step of the dialog is accessible', async ({ page }) => {
+    await mockDelivery(page);          // the last step emails the booking
     await page.goto('/book/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
@@ -79,12 +87,22 @@ test.describe('accessibility', () => {
     await page.locator('[data-date-pick]').first().click();
     await page.locator('[data-bk-next]').click();
     await audit('time');
-    await page.locator('[data-slot-pick="s1"]').click();
-    await audit('package');
-    await page.locator('[data-pkg-pick="romantic"]').click();
-    await audit('extras');
+    await page.locator('[data-slot-pick="s8"]').click();
+    await audit('setup');
+    await page.locator('[data-setup-pick="date"]').click();
+    await audit('decoration');
+    await page.locator('[data-decor-pick="aesthetic"]').click();
+    await audit('add-ons');
+    await page.locator('[data-addon-pick="bouquet-s"]').click();
     await page.locator('[data-bk-next]').click();
-    await audit('details');
+    await audit('details and payment');
+    await page.fill('#bName', 'Akash');
+    await page.fill('#bPhone', '9876543210');
+    await page.fill('#bEmail', 'a@example.com');
+    await page.locator('input[name=bkPay][value=upi]').check();
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('.paybox')).toBeVisible();
+    await audit('pay by UPI');
   });
 
   test('the skip link is first and shows a visible focus ring', async ({ page }) => {
@@ -151,6 +169,11 @@ test.describe('accessibility', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await expect(page.locator('.reveal').first()).toHaveCSS('opacity', '1');
-    await expect(page.locator('.ys-light').first()).toHaveCSS('opacity', '1');
+    // the logo arrives whole and holds still: ring drawn, eclipse steady, no glint
+    const mark = page.locator('.brand-mark').first();
+    await expect(mark.locator('.ys-ring')).toHaveCSS('stroke-dashoffset', '0px');
+    await expect(mark.locator('.ys-halo')).toHaveCSS('opacity', '1');
+    await expect(mark.locator('.ys-halo')).toHaveCSS('animation-name', 'none');
+    await expect(mark.locator('.ys-glint')).toHaveCSS('opacity', '0');
   });
 });

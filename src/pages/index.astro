@@ -7,12 +7,12 @@ import Faq from '../components/Faq.astro';
 import PrebookForm from '../components/PrebookForm.astro';
 import Marquee from '../components/Marquee.astro';
 import Reel from '../components/Reel.astro';
-import { experiences, OTHER, ROOM_BASE, RUNTIME, BASE_GUESTS } from '../data/booking';
+import { experiences, OTHER, ROOM_BASE, RUNTIME, MAX_GUESTS } from '../data/booking';
 import { homeFaq } from '../data/faq';
 ---
 <Base
   title="YourSpace Jabalpur — A Private Screening Room for Your People"
-  description="A private room in Jabalpur for watch parties, karaoke, date nights, proposals, candlelight dinners and stand-up evenings. Sessions from ₹1,499 for up to 4 guests."
+  description="A private room in Jabalpur for watch parties, karaoke, date nights, proposals, candlelight dinners and stand-up evenings. Sessions from ₹1,500, up to 7 guests."
 >
 
 <section class="hero" id="top">
@@ -32,11 +32,11 @@ import { homeFaq } from '../data/faq';
       <dl class="hero-spec">
         <div><dt>From</dt><dd class="num">₹{ROOM_BASE.toLocaleString('en-IN')}</dd></div>
         <div><dt>Runtime</dt><dd class="num">{RUNTIME}</dd></div>
-        <div><dt>Admits</dt><dd class="num">Up to {BASE_GUESTS}</dd></div>
-        <div><dt>Today</dt><dd class="num">₹0</dd></div>
+        <div><dt>Admits</dt><dd class="num">Up to {MAX_GUESTS}</dd></div>
+        <div><dt>Pay by</dt><dd class="num">UPI</dd></div>
       </dl>
       <p class="fine suggestion" data-daily-pick></p>
-      <p class="fine">Pre-booking takes no payment and no card details. We call you to confirm the slot before anything is charged.</p>
+      <p class="fine">Pay by UPI when you book, or after we call — your choice. No card details, and a full refund if we can't give you the slot.</p>
     </div>
 
     <form class="ticket" id="quickStart" novalidate>
@@ -65,14 +65,14 @@ import { homeFaq } from '../data/faq';
           </label>
           <label class="tfield">
             <span class="tlabel">Guests</span>
-            <input type="number" name="guests" id="qGuests" min="1" max="12" value="2" inputmode="numeric" />
+            <input type="number" name="guests" id="qGuests" min="1" max={MAX_GUESTS} value="2" inputmode="numeric" />
           </label>
         </div>
       </div>
       <div class="ticket-tear" aria-hidden="true"></div>
       <div class="ticket-stub">
         <button class="btn btn-key full" type="submit">Check availability<span aria-hidden="true">→</span></button>
-        <p class="fine center">Under a minute · nothing to pay</p>
+        <p class="fine center">Under a minute · pay now or later</p>
       </div>
     </form>
   </div>
@@ -120,7 +120,7 @@ import { homeFaq } from '../data/faq';
         <div><dt>Privacy</dt><dd>The whole room reserved for your group, start to finish</dd></div>
         <div><dt>Screen &amp; sound</dt><dd>Big-screen projection with a dedicated sound system</dd></div>
         <div><dt>Seating</dt><dd>Lounge seating arranged around your group</dd></div>
-        <div><dt>Session</dt><dd>2 hours 30 minutes, start to finish</dd></div>
+        <div><dt>Session</dt><dd>90 minutes, start to finish (karaoke: 30)</dd></div>
       </dl>
       <p class="fine"><a href="/room/">More about the room →</a></p>
     </div>

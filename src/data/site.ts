@@ -59,6 +59,24 @@ export const site = {
    * the forms should reach, and the key is emailed to you.
    */
   web3formsKey: '4943e365-6fd6-49d6-a37a-1b35fd92d625',
+
+  /**
+   * HOW PEOPLE PAY
+   *
+   * After a booking is sent, the last screen offers UPI: a pay link on phones,
+   * a QR code on computers, and the ID to copy. The amount is filled in.
+   *
+   * The site cannot see whether money arrived. It asks for the UPI reference
+   * and emails it to you marked UNVERIFIED — check your bank app before
+   * confirming the booking. Leave upiId empty to switch UPI off entirely.
+   *
+   * TODO(owner): this is a personal account. Google Pay and PhonePe can block
+   * or warn on pay-links to personal IDs, and UPI caps how much a personal ID
+   * receives in a day. A business/merchant UPI ID avoids both.
+   */
+  upiId: 'tanishksharma062004@okhdfcbank',
+  /** The name shown in the payer's UPI app. */
+  upiPayee: 'Tanishk Sharma',
 } as const;
 
 /** A real Indian mobile, and not the placeholder we ship with. */

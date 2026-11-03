@@ -37,19 +37,23 @@ test.describe('site integrity', () => {
 
   test('prices on the tickets page match what the flow charges', async ({ page }) => {
     await page.goto('/tickets/');
-    const listed = await page.locator('.leaders li', { hasText: 'Cake' }).locator('b').innerText();
+    const listed = await page.locator('.leaders li', { hasText: 'small bouquet' }).locator('b').innerText();
+    const movie = await page.locator('.pkg', { hasText: 'Movie Space' }).locator('.pkg-price').innerText();
 
     await page.goto('/book/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.locator('[data-exp-pick="date"]').click();
-    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s1"]').click();
-    await page.locator('[data-pkg-pick="room"]').click();
-    const charged = await page.locator('.xrow', { hasText: 'Cake' }).locator('span').innerText();
+    await page.locator('[data-slot-pick="s6"]').click();
+    const movieCharged = await page.locator('[data-setup-pick="movie"] .sc-price').innerText();
+    await page.locator('[data-setup-pick="date"]').click();
+    await page.locator('[data-decor-pick="aesthetic"]').click();
+    const charged = await page.locator('[data-addon-pick="bouquet-s"] .ad-price').innerText();
 
     expect(charged).toContain(listed.trim());
+    expect(movie).toContain(movieCharged.trim());
   });
 
   test('security headers are generated for the host', () => {

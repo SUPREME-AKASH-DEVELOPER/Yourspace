@@ -7,7 +7,7 @@
   Apple Mail. Placeholders are {{like_this}} — most services substitute them.
 
   Placeholders: {{kind}} {{name}} {{phone}} {{email}} {{occasion}} {{custom}}
-                {{date}} {{guests}} {{message}} {{notes}} {{received}} {{source}}
+                {{date}} {{guests}} {{message}} {{notes}} {{received}} {{source}} {{payment}}
   Leave a row out entirely if its value is empty.
 -->
 <html lang="en">
@@ -151,7 +151,8 @@
               <div style="font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.7;
                           letter-spacing:0.6px;color:#8E857A;">
                 Received {{received}} · from {{source}}<br>
-                Nothing has been charged. Confirm the slot on the call.
+                Payment: {{payment}}<br>
+                A UPI payment is never confirmed by the website — find it in the bank app first.
               </div>
             </td>
           </tr>

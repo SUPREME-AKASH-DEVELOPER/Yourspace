@@ -1,6 +1,6 @@
 # YourSpace Jabalpur
 
-A private screening room in Jabalpur. Marketing site plus a six-step booking flow.
+A private screening room in Jabalpur. Marketing site plus a six-step booking flow that ends in UPI payment.
 
 **Stack:** [Astro 5](https://astro.build) · TypeScript (strict) · hand-written CSS ·
 [Playwright](https://playwright.dev) · no UI framework.
@@ -14,7 +14,7 @@ npm run dev        # http://localhost:4321
 npm run build      # static site -> dist/
 npm run preview    # serve the built site
 npm run check      # TypeScript + Astro diagnostics
-npm test           # Playwright: 580 checks across Chromium, Firefox, WebKit, mobile
+npm test           # Playwright: 656 checks across Chromium, Firefox, WebKit, mobile
 npm run verify     # check + test, the pre-deploy gate
 ```
 
@@ -24,8 +24,8 @@ npm run verify     # check + test, the pre-deploy gate
 src/
   data/             ← the files you normally edit
     site.ts           phone, WhatsApp, address, hours, email
-    booking.ts        prices, packages, add-ons, experiences
-    decorations.ts    the three setups, their prices and photographs, capacity
+    booking.ts        occasions, slots, setups, add-ons, and quote() — the only place a total is added up
+    decorations.ts    the three decoration packages, their prices and photographs
     faq.ts            every question and answer
     nav.ts            the menus
   pages/            one file per route
@@ -41,8 +41,64 @@ tests/              the suite that gates a release
 ### Prices live in exactly one place
 
 `src/data/booking.ts` is the single source of truth. The booking flow charges from
-it **and** the tickets page renders from it, so a price cannot be right in one place
-and wrong in the other. A test asserts the two agree.
+it **and** the tickets, home, room and FAQ pages render from it, so a price cannot be
+right in one place and wrong in the other. A test asserts the two agree.
+
+A price that has not been confirmed is `null`, never a guess. It shows as
+"price on call", is left out of the total (which then reads "₹X + on call"), and
+switches UPI off for that booking, because we cannot ask for an amount we don't know.
+
+### The booking flow
+
+| Step | What | Notes |
+|---|---|---|
+| 1 | Occasion | Each occasion suggests a setup on step 4 |
+| 2 | Date and guests | Up to 7 seats |
+| 3 | Time | Eight 90-minute slots, 12 PM to 12 AM; slots already started today are disabled |
+| 4 | Setup | Photo cards with the price for *this* group size. Date Night opens the three decorations underneath |
+| 5 | Add-ons | Bouquet, cake, photoshoot, one of each. Date Night only; the step is skipped otherwise |
+| 6 | Details and payment | Pay now by UPI, or after we call |
+
+| Setup | Length | Price | Guests |
+|---|---|---|---|
+| Celebration & Date Night | 90 min | ₹1,500 + decoration | Set up for 2, up to 7 |
+| Movie Space | 90 min | ₹1,500 up to 5, ₹1,700 for 6–7 | 1–7 |
+| Karaoke | 30 min | ₹150 per person (3–5); 6–7 on call | 3–7, fewer must call |
+| Watch Party | — | — | Listed, closed to online booking |
+
+Photographs for the flow come from `src/components/BookingMedia.astro`, which renders
+them once (resized, WebP) into a `<template>` the flow copies from. Anything without a
+photograph gets a drawn card. That file's header says how to add bouquet and cake photos.
+
+### Payment
+
+The last screen shows the amount as a UPI pay link (phones), a QR code (computers,
+drawn in the browser — no third-party request) and the UPI ID to copy, with the booking
+reference (`YS-XXXXXX`) in the note. The UPI ID is `upiId` in `src/data/site.ts`.
+
+**The site never calls a booking paid.** It cannot see the bank account. The booking
+email says `Payment: … NOT VERIFIED`, and when the customer sends their 12-digit UPI
+reference a second email arrives marked `UNVERIFIED` with that reference — find it in
+the bank app before confirming. The customer is told their booking is *awaiting
+confirmation*.
+
+Duplicates are guarded on the client: a booking is sent once (a double tap or a reload
+does not resend it), the reference is made once, and the payment screen survives a
+reload so someone who switches to their UPI app and back doesn't lose it.
+
+**What a static site cannot do**, and needs a server before it can be relied on:
+
+- **Stop double bookings.** Two people can request the same slot; the team sees both
+  emails and calls the second. A real check needs a database of held slots and an API
+  the flow asks before step 6.
+- **Verify payment automatically.** That needs Razorpay (or similar): a server route
+  that creates an order for the exact amount, the Razorpay checkout, and a server route
+  that verifies the signature with the secret key, plus a webhook for payments that
+  finish after the tab closes. The booking is marked paid only by the server, on a
+  verified signature, keyed by booking reference so a retried payment can't create a
+  second booking. Vercel functions under `/api` would host it; it also means a
+  Razorpay account with KYC, a privacy-page update, and allowing Razorpay's origins in
+  the CSP. UPI as it is now stays as the fallback when Razorpay is down.
 
 ### The page changes with the hour
 
@@ -64,8 +120,10 @@ hidden face of a card is marked `inert` so it stays out of the tab order.
 
 ### The decoration photographs
 
-`src/data/decorations.ts` holds the three setups — Aesthetic ₹1,000, Trendy ₹2,000 and
-Royal — with their photographs and descriptions. They appear on the home page, the room
+`src/data/decorations.ts` holds the three decoration packages — Aesthetic ₹1,000, Elite
+₹2,000 and Royal — with their photographs and descriptions. Every one includes fog entry
+and candlelight. **Elite is assumed to be the package previously called Trendy**, so it
+carries Trendy's photos and price; correct that file if not. They appear on the home page, the room
 page and the tickets page, and any one can be opened full size.
 
 Two things need your attention before launch. **The Royal price was never quoted**, so the
@@ -73,6 +131,19 @@ site says "Price on request" rather than inventing a number. And **the provenanc
 photographs needs confirming**: if any of them are a supplier's pictures rather than your
 own room and your own work, they have to come down, because someone who books from them
 will turn up expecting exactly what they saw.
+
+### The logo, and the gold
+
+The logo is drawn in code from the brand artwork, so it is sharp at any size and can
+move. `src/components/Logo.astro` is the badge in the header and menu (ring, eclipse,
+seats); `src/components/LogoFull.astro` is the full YOUR SPACE lockup in the footer.
+Both are quietly alive: the eclipse breathes, its shadow drifts, and a glint of light
+travels round the ring. With reduced motion switched on they hold still.
+
+The palette is taken from the same artwork — near-black and the ring's champagne gold
+(`--amber`), with bronze (`--ember`) where gold has to sit on the cream sections. Red is
+kept only for errors (`--alert`). The favicons, app icons and `og.png` share image are
+rendered from the new mark.
 
 ### Heritage marks
 
@@ -101,7 +172,14 @@ automatically; on another host, copy the directives into its header config.
 | 5 | Legal review of `/terms`, `/privacy`, `/refunds` | Client | **Blocking** — drafts, with the refund windows as placeholders |
 | 6 | Confirm the decoration photographs are ours to publish, and add pictures of the empty room | Client | **Blocking** — see note below |
 | 9 | Set the Royal decoration price in `src/data/decorations.ts` (it shows "Price on request" until then) | Client | High |
-| 10 | Reconcile the decoration prices with the placeholder package prices in `booking.ts` | Both | High |
+| 10 | Confirm the decoration prices, and that they are added on top of the ₹1,500 Date Night session | Client | High |
+| 11 | Karaoke price for 6–7 guests (₹150 a head, or the "₹500" mentioned?) — shows "price on call" until then | Client | High |
+| 12 | Movie Space for 6–7: confirm ₹1,700 | Client | High |
+| 13 | Bouquet and cake options: names, photographs, prices. Photoshoot: ₹400 or ₹500 | Client | High |
+| 14 | Watch Party: length, price, guest limit — it is closed to online booking until set | Client | High |
+| 15 | Are all eight slots open for every setup? When in the slot does a 30-minute karaoke run? | Client | Medium |
+| 16 | Payments go to a personal UPI ID; consider a business one (pay links to personal IDs are sometimes blocked, and daily limits are lower) | Client | Medium |
+| 17 | Razorpay and a booking database, for automatic payment checks and double-booking protection | Both | When ready |
 | 7 | Room specs: projector, sound, seat count, AC | Client | High |
 | 8 | Decide where bookings land (Google Form or an API) | Both | High |
 
@@ -172,8 +250,8 @@ Pages will all serve it. `dist/_headers` is picked up by Netlify and Cloudflare 
 - **No invented numbers.** No ratings, no review counts, no "celebrations hosted" — the
   place has not opened, so there is nothing to count. A test asserts the structured data
   carries no `aggregateRating` or reviews.
-- **No money is taken.** Pre-booking states in several places that nothing is charged and
-  that you call to confirm. If you later collect a token amount, say so upfront and refund
-  it on the stated terms — do not collect it against a reason that is not true.
+- **No card details, and no "paid" we haven't seen.** Payment is by UPI in the
+  customer's own app. Paying later is always offered, and the site says a booking is
+  paid only once the money has reached us.
 - **No tracking.** No cookies, no analytics, no third-party requests. The privacy page
   says so because it is true; adding any of them means updating that page.

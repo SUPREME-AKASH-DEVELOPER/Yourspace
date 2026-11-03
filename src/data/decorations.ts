@@ -1,9 +1,17 @@
 /**
  * The three decoration setups, with the photographs of each.
  *
+ * The three packages are Elite, Royal and Aesthetic (owner's walkthrough, Nov).
+ * Every one includes fog entry and candlelight — see DECOR_INCLUDED.
+ *
  * Prices are Tanishk's (WhatsApp, 11 Oct): Aesthetic ₹1,000 and Trendy ₹2,000.
  * The Royal price was not given, so it is left null and the site says
  * "price on request" rather than guessing a number.
+ *
+ * ASSUMPTION — TODO(owner): "Elite" is the package that was called "Trendy" on
+ * 11 Oct, so it keeps Trendy's photographs and ₹2,000. If that is wrong, swap
+ * the photos and price below. In the booking flow a decoration's price is
+ * added on top of the ₹1,500 Date Night session — also to confirm.
  *
  * TODO (Akash/Tanishk):
  *   0. Confirm these photographs are ours to publish — our own room and our own
@@ -36,6 +44,9 @@ export interface Photo {
   alt: string;
 }
 
+/** In every package, and said so on every card. */
+export const DECOR_INCLUDED = ['Fog entry', 'Candlelight setup'];
+
 export interface Decoration {
   id: string;
   name: string;
@@ -56,6 +67,7 @@ export const decorations: Decoration[] = [
     blurb:
       'Balloons in soft blues, creams and gold, a draped backdrop and a neon sign, with the floor filled so the whole room feels part of it.',
     includes: [
+      ...DECOR_INCLUDED,
       'Balloon arch in soft tones',
       'Draped backdrop',
       'Neon sign',
@@ -69,15 +81,15 @@ export const decorations: Decoration[] = [
     ],
   },
   {
-    id: 'trendy',
-    name: 'Trendy',
+    id: 'elite',
+    name: 'Elite',
     price: 2000,
     tagline: 'A crescent moon and low cloud',
     blurb:
       'A tall crescent moon, brass lanterns and pillar stands, with low fog rolling across a floor of pearl and gold balloons.',
     includes: [
+      ...DECOR_INCLUDED,
       'Crescent moon backdrop',
-      'Low fog across the floor',
       'Brass lanterns and props',
       'Pearl and gold balloons',
       'Fluted pedestals',
@@ -95,8 +107,8 @@ export const decorations: Decoration[] = [
     blurb:
       'Deep red roses, velvet drapes and candlelight, plus a written message and printed photographs of the two of you — the most personal of the three.',
     includes: [
+      ...DECOR_INCLUDED,
       'Rose and velvet backdrop',
-      'Candlelit table',
       'Your message, printed large',
       'Photo panels of your own pictures',
       'Floor balloons in red and white',

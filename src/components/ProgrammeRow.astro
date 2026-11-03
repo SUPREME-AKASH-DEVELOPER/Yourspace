@@ -1,7 +1,7 @@
 ---
 import Art from './Art.astro';
 import type { Experience } from '../data/booking';
-import { RUNTIME, ROOM_BASE } from '../data/booking';
+import { RUNTIME, ROOM_BASE, setupOf, setupPrice } from '../data/booking';
 
 interface Props {
   exp: Experience;
@@ -12,6 +12,9 @@ interface Props {
 }
 const { exp, index, detailed = false, as: Heading = 'h3' } = Astro.props;
 const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
+const setup = setupOf(exp.suggests);
+const runtime = setup?.minutes ? `${setup.minutes} min` : RUNTIME;
+const from = setup ? setupPrice(setup.id, setup.minGuests).amount : ROOM_BASE;
 ---
 <li class="prog reveal" id={exp.id}>
   <p class="prog-no num">{String(index + 1).padStart(2, '0')}</p>
@@ -21,9 +24,9 @@ const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
     <p>{detailed ? exp.blurb : exp.blurb.split('. ')[0] + '.'}</p>
     <dl class="prog-meta">
       <div><dt>Best for</dt><dd>{exp.bestFor}</dd></div>
-      <div><dt>Runtime</dt><dd>{RUNTIME}</dd></div>
+      <div><dt>Runtime</dt><dd>{runtime}</dd></div>
       <div><dt>Set-up</dt><dd>{exp.setUp}</dd></div>
-      {detailed && <div><dt>From</dt><dd class="num">{rupee(ROOM_BASE)}</dd></div>}
+      {detailed && <div><dt>From</dt><dd class="num">{from !== null ? rupee(from) : 'On call'}</dd></div>}
     </dl>
   </div>
   <button class="prog-cta" data-book data-exp={exp.name}>

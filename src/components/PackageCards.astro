@@ -1,17 +1,28 @@
 ---
-import { packages, BASE_GUESTS, EXTRA_GUEST, SESSION_LABEL } from '../data/booking';
+/** The setups you book, from the same data the flow charges, so the two can't drift. */
+import { setups, setupPrice, ROOM_BASE } from '../data/booking';
 const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
+const priceOf = (id: string) => {
+  const s = setups.find((x) => x.id === id)!;
+  if (s.closed) return 'On call';
+  if (s.perPerson) return `${rupee(s.perPerson)} pp`;
+  return `From ${rupee(setupPrice(id, s.minGuests).amount ?? ROOM_BASE)}`;
+};
 ---
 <div class="pkgs">
-  {packages.map((p) => (
+  {setups.map((s) => (
     <div class="pkg reveal">
-      {p.tag && <span class="pkg-tag">{p.tag}</span>}
+      {s.closed && <span class="pkg-tag">Coming soon</span>}
       <span class="pkg-top">
-        <strong>{p.name}</strong><span class="pkg-price num">{rupee(p.price)}</span>
+        <strong>{s.name}</strong><span class="pkg-price num">{priceOf(s.id)}</span>
       </span>
-      <p>{p.desc}</p>
-      <ul>{p.includes.map((i) => <li>{i}</li>)}</ul>
-      <p class="pkg-fine">Up to {BASE_GUESTS} guests · {SESSION_LABEL} · +{rupee(EXTRA_GUEST)} per extra seat</p>
+      <p>{s.tagline}.</p>
+      <ul>{s.includes.map((i) => <li>{i}</li>)}</ul>
+      <p class="pkg-fine">
+        {s.minutes ? `${s.minutes} min` : 'Duration on call'}
+        {' · '}{s.minGuests > 1 ? `${s.minGuests}–${s.maxGuests}` : `Up to ${s.maxGuests}`} guests
+        {s.perPerson && ` · minimum ${rupee(s.perPerson * s.minGuests)}`}
+      </p>
     </div>
   ))}
 </div>
