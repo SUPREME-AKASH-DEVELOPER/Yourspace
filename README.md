@@ -14,7 +14,7 @@ npm run dev        # http://localhost:4321
 npm run build      # static site -> dist/
 npm run preview    # serve the built site
 npm run check      # TypeScript + Astro diagnostics
-npm test           # Playwright: 656 checks across Chromium, Firefox, WebKit, mobile
+npm test           # Playwright: 760 checks across Chromium, Firefox, WebKit, mobile
 npm run verify     # check + test, the pre-deploy gate
 ```
 
@@ -67,8 +67,18 @@ switches UPI off for that booking, because we cannot ask for an amount we don't 
 | Watch Party | — | — | Listed, closed to online booking |
 
 Photographs for the flow come from `src/components/BookingMedia.astro`, which renders
-them once (resized, WebP) into a `<template>` the flow copies from. Anything without a
-photograph gets a drawn card. That file's header says how to add bouquet and cake photos.
+them once (resized, WebP) into a `<template>` the flow copies from. **To add the owner's
+photos, drop them in `src/assets/booking/` named by key** — `addon-bouquet-s.jpg`,
+`setup-movie.jpg` and so on; that folder's README lists every one. No code changes.
+Anything without a photograph gets a drawn gold card.
+
+"Today", the date list and which slots have already started are all worked out in
+**Jabalpur time** (Asia/Kolkata), whatever the visitor's device is set to — a UTC date
+would offer yesterday between midnight and 5:30 AM in India.
+
+Saved progress is read back from the visitor's browser, so every value is checked
+against what the flow could have produced before it is used, and the cleaned state is
+written back.
 
 ### Payment
 
@@ -185,6 +195,8 @@ automatically; on another host, copy the directives into its header config.
 | 15 | Are all eight slots open for every setup? When in the slot does a 30-minute karaoke run? | Client | Medium |
 | 16 | Payments go to a personal UPI ID; consider a business one (pay links to personal IDs are sometimes blocked, and daily limits are lower) | Client | Medium |
 | 17 | Razorpay and a booking database, for automatic payment checks and double-booking protection | Both | When ready |
+| 18 | Owner's photographs for Movie Space, Karaoke, Watch Party and every add-on (see `src/assets/booking/README.md`) | Client | High |
+| 19 | Upgrade Astro 5 → 7 to clear the remaining `npm audit` advisories (build-time only; none reach the static site) | Dev | Medium |
 | 7 | Room specs: projector, sound, seat count, AC | Client | High |
 | 8 | Decide where bookings land (Google Form or an API) | Both | High |
 
@@ -216,6 +228,10 @@ The emails themselves are in [`email/`](email/) — see that folder's README for
 switch to a provider that renders them.
 
 ## Testing
+
+`tests/requirements.spec.ts` checks every rule from the owner's call one by one —
+every price for every group size, the slots, the durations, the ruled-out add-ons —
+plus the edge cases around them (time zones, going back, tampered saved state).
 
 `npm test` runs the suite against a real production build in four browser profiles:
 

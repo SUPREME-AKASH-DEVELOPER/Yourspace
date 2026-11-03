@@ -6,16 +6,35 @@
  * The flow is drawn in the browser, so it clones these out of a <template> by
  * key (`data-media`). Nothing inside a <template> downloads until it is used.
  *
- * TO ADD A PHOTOGRAPH (a bouquet, a cake, a room shot for Movie Space…):
- *   1. put the file in src/assets/
- *   2. import it below and add a line to `media` with a key and alt text
- *   3. set `photo: '<that key>'` on the setup or add-on in src/data/booking.ts
- * Anything without a photograph shows an illustrated card instead.
+ * TO ADD THE OWNER'S PHOTOGRAPHS — no code needed:
+ *   save the picture in src/assets/booking/ under its key, and rebuild.
+ *     setup-movie.jpg     setup-karaoke.jpg     setup-watch.jpg
+ *     addon-bouquet-s.jpg addon-bouquet-m.jpg   addon-bouquet-l.jpg
+ *     addon-cake-strawberry.jpg  addon-cake-chocolate.jpg
+ *     addon-photo-15.jpg
+ *   (any of .jpg .jpeg .png .webp). The key is "setup-" or "addon-" plus the id
+ *   in src/data/booking.ts, so a new cake added there gets its own key too.
+ *   The alt text comes from the item's name. Anything without a photograph
+ *   shows a drawn gold card in its place.
  */
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import { decorations } from '../data/decorations';
+import { setups, addonGroups } from '../data/booking';
 import room from '../assets/decor/trendy-2.jpeg';
+
+const names: Record<string, string> = {
+  ...Object.fromEntries(setups.map((s) => [`setup-${s.id}`, `${s.name}: ${s.tagline}`])),
+  ...Object.fromEntries(addonGroups.flatMap((g) =>
+    g.options.map((o) => [`addon-${o.id}`, `${g.name}: ${o.name}`]))),
+};
+
+const dropped = Object.entries(
+  import.meta.glob<{ default: ImageMetadata }>('../assets/booking/*.{jpg,jpeg,png,webp}', { eager: true }),
+).map(([path, mod]) => {
+  const key = path.split('/').pop()!.replace(/\.[^.]+$/, '');
+  return { key, src: mod.default, alt: names[key] ?? key };
+});
 
 const media: { key: string; src: ImageMetadata; alt: string }[] = [
   ...decorations.map((d) => ({ key: `decor-${d.id}`, src: d.photos[0].src, alt: d.photos[0].alt })),
@@ -23,7 +42,9 @@ const media: { key: string; src: ImageMetadata; alt: string }[] = [
     key: 'setup-date', src: room,
     alt: 'The room from the doorway: the projection screen on one side, a decorated backdrop and fog over a floor of balloons on the other.',
   },
-];
+  // a photograph dropped in src/assets/booking/ wins over anything above with the same key
+  ...dropped,
+].filter((m, i, all) => all.findLastIndex((x) => x.key === m.key) === i);
 ---
 <template id="bkMedia">
   {media.map((m) => (

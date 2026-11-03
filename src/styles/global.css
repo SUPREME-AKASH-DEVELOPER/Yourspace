@@ -1047,24 +1047,6 @@ h3{
 }
 .pkg-fine{margin:4px 0 0;font-family:var(--mono);font-size:.66rem;color:var(--grey);letter-spacing:.04em}
 
-/* extras */
-.xgroup{margin-bottom:26px}
-.xgroup>h3{
-  margin:0 0 8px;font-family:var(--mono);font-size:.655rem;font-weight:400;
-  text-transform:uppercase;letter-spacing:.17em;color:var(--amber);
-}
-.xrow{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--rule)}
-.xrow-main{flex:1;min-width:0}
-.xrow-main strong{display:block;font-weight:500;font-size:.96rem}
-.xrow-main span{font-family:var(--mono);font-size:.68rem;color:var(--grey);letter-spacing:.04em}
-.stepper{display:flex;align-items:center;gap:2px;flex:0 0 auto;border:1px solid var(--rule-2);border-radius:2px}
-.stepper button{
-  width:32px;height:32px;cursor:pointer;color:var(--paper);font-size:1rem;line-height:1;
-  transition:background .18s,color .18s;
-}
-.stepper button:hover:not([disabled]){background:var(--amber);color:var(--ink)}
-.stepper button[disabled]{opacity:.3;cursor:not-allowed}
-.stepper output{min-width:30px;text-align:center;font-family:var(--mono);font-size:.95rem}
 
 /* =============================================================
    Seat picker — you choose seats, not a number in a box
@@ -1098,7 +1080,6 @@ h3{
 }
 .seat:hover{border-color:var(--amber);transform:translateY(-2px)}
 .seat.is-taken{background:var(--amber);border-color:var(--amber)}
-.seat.is-extra{background:var(--ember);border-color:var(--ember)}
 .seat[disabled]{opacity:.28;cursor:not-allowed;transform:none}
 .seat-legend{
   display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:20px 0 0;
@@ -1107,7 +1088,6 @@ h3{
 .seat-legend span{display:inline-flex;align-items:center;gap:7px}
 .seat-legend b{width:13px;height:11px;border-radius:4px 4px 2px 2px;border:1px solid var(--rule-2);display:block}
 .seat-legend b.k{background:var(--amber);border-color:var(--amber)}
-.seat-legend b.e{background:var(--ember);border-color:var(--ember)}
 
 /* summary + notes */
 .bk-sum{border:1px solid var(--rule);border-radius:2px;margin-bottom:20px}
@@ -1172,6 +1152,7 @@ h3{
 .sc-body,.dc-body,.ad-body{display:flex;flex-direction:column;gap:6px;padding:14px 16px 16px;flex:1}
 .sc-name{font-size:1.12rem;font-weight:700;font-variation-settings:"wdth" 108;letter-spacing:-.02em;line-height:1.2}
 .sc-tag,.dc-tag{color:var(--grey);font-size:.88rem}
+.dc-blurb{font-size:.86rem;line-height:1.5;color:#B9AF9F}
 .sc-pricing{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:4px 0 2px}
 .sc-price{font-family:var(--mono);font-size:1.5rem;font-weight:500;color:var(--amber);letter-spacing:-.02em}
 .sc-price-ask{font-size:1rem;color:var(--paper)}
@@ -1215,6 +1196,7 @@ h3{
 .bk-ref{margin:-4px 0 10px;font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;color:var(--grey)}
 .bk-ref b{color:var(--amber);font-weight:500}
 .paybox{margin:22px auto 6px;max-width:680px;text-align:left;padding:clamp(16px,3vw,26px);border:1px solid var(--amber);border-radius:8px;background:rgba(212,168,95,.06)}
+.paybox.is-arming{pointer-events:none}
 .paybox h3{margin:0 0 16px;font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
 .paybox-grid{display:grid;grid-template-columns:200px 1fr;gap:clamp(16px,3vw,28px);align-items:start}
 .paybox-qr{background:#fff;padding:8px;border-radius:6px;line-height:0}

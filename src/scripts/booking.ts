@@ -1,5 +1,5 @@
 import qrcode from 'qrcode-generator';
-import { $, $$, rupee, esc, dateLabel, nextDays, stash } from './dom';
+import { $, $$, rupee, esc, dateLabel, nextDays, stash, venueNow, venueToday, isIsoDate } from './dom';
 import { site, phoneNumbers } from '../data/site';
 import { deliver, envelope } from './deliver';
 import {
@@ -53,10 +53,14 @@ let lastFocus: HTMLElement | null = null;
 let resumed = false;
 /** Guards against a double tap sending the same thing twice. */
 let busy = false;
+/** The pay panel has been on screen long enough to take a tap. */
+let armed = false;
 
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
 const clearSaved = () => { try { localStorage.removeItem(KEY); } catch {} };
-const today = () => new Date().toISOString().slice(0, 10);
+const today = venueToday;
+/** Set when something they asked for could not be done as asked, and said once on the next screen. */
+let notice = '';
 
 function load() {
   try {
@@ -67,7 +71,20 @@ function load() {
     (Object.keys(BLANK) as (keyof State)[]).forEach((k) => {
       if (o[k] !== undefined && o[k] !== null && typeof o[k] === typeof BLANK[k]) (S as any)[k] = o[k];
     });
+    // Saved progress lives in the visitor's browser and can be edited there, so
+    // nothing is trusted: every value must be one this flow could have made.
     if (!Array.isArray(S.addons)) S.addons = [];
+    S.addons = S.addons.filter((a) => typeof a === 'string' && addonOf(a) !== null);
+    if (S.date && !isIsoDate(S.date)) S.date = '';
+    if (S.slot && !slots.some((x) => x.id === S.slot)) S.slot = '';
+    if (S.setup && !setupOf(S.setup)) S.setup = '';
+    if (S.decor && !decorations.some((d) => d.id === S.decor)) S.decor = '';
+    if (S.exp && S.exp !== OTHER.id && !experiences.some((e) => e.id === S.exp)) S.exp = '';
+    if (!(['', 'upi', 'later'] as string[]).includes(S.pay)) S.pay = '';
+    if (!(['', 'sending', 'sent', 'failed'] as string[]).includes(S.send)) S.send = '';
+    if (!(['', 'sending', 'sent', 'failed'] as string[]).includes(S.utrSend)) S.utrSend = '';
+    if (S.ref && !/^YS-[A-Z0-9]{6}$/.test(S.ref)) S.ref = '';
+    S.utr = S.utr.replace(/\D/g, '').slice(0, 12);
     if (S.date && S.date < today()) {
       // a finished booking for a day that has gone is of no use to anyone
       if (S.step === DONE) { S = structuredClone(BLANK); clearSaved(); return; }
@@ -81,6 +98,7 @@ function load() {
     if (S.utrSend === 'sending') S.utrSend = 'failed';
     S.guests = Math.min(MAX_GUESTS, Math.max(1, S.guests | 0 || 2));
     resumed = Boolean(S.exp || S.setup || S.date);
+    save();   // write the cleaned state back, so what is stored is always valid
   } catch {}
 }
 
@@ -125,8 +143,7 @@ function slotPassed(start: string): boolean {
   const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(start);
   if (!m) return false;
   const mins = ((Number(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)) * 60 + Number(m[2]);
-  const now = new Date();
-  return mins <= now.getHours() * 60 + now.getMinutes();
+  return mins <= venueNow().minutes;
 }
 
 const totalText = (q: Quote) => q.unpriced.length ? `${rupee(q.total)} + on call` : rupee(q.total);
@@ -234,7 +251,12 @@ export function prefillBooking(opts: { exp?: string; custom?: string; date?: str
     S.customOccasion = (opts.custom ?? '').trim();
   }
   if (opts.date && opts.date >= today()) S.date = opts.date;
-  if (opts.guests && opts.guests > 0) S.guests = Math.min(MAX_GUESTS, Math.max(1, opts.guests));
+  if (opts.guests && opts.guests > 0) {
+    S.guests = Math.min(MAX_GUESTS, Math.max(1, Math.floor(opts.guests)));
+    if (opts.guests > MAX_GUESTS) {
+      notice = `You asked for ${Math.floor(opts.guests)} guests. Online bookings are for up to ${MAX_GUESTS}, so we have set ${MAX_GUESTS} — for a bigger group, call us on ${tel()?.pretty ?? 'the number on our contact page'}.`;
+    }
+  }
   // with a described occasion we can move on; without one, stay and ask
   const chosen = hit || (isOther && S.customOccasion);
   S.step = chosen ? (S.date ? 2 : 1) : 0;
@@ -307,6 +329,7 @@ function validate(step: number): string {
   if (step === 0 && S.exp === OTHER.id && !S.customOccasion.trim())
     return 'Tell us what you are planning, in a line or two.';
   if (step === 1 && !S.date) return 'Choose a date to continue.';
+  if (step === 1 && S.date < today()) return 'That date has passed. Please pick another.';
   if (step === 1 && (S.guests < 1 || S.guests > MAX_GUESTS)) return `Choose between 1 and ${MAX_GUESTS} guests.`;
   if (step === 2 && !S.slot) return 'Pick a time to continue.';
   if (step === 2 && slotOf() && slotPassed(slotOf()!.start)) return 'That time has already started today. Pick a later one.';
@@ -440,8 +463,11 @@ function seatmap() {
 }
 
 function step1() {
+  const said = notice;
+  notice = '';
   return head(2, "When's the night, and who's coming?",
     `Tap a seat for every guest — up to ${MAX_GUESTS}. The price for your group shows when you choose a setup.`) +
+    (said ? `<div class="bk-note" role="status" style="margin-bottom:22px"><i>Note</i><span>${esc(said)}</span></div>` : '') +
     seatmap() +
     '<p class="bk-kicker">Pick a date</p>' +
     `<div class="bk-dates">${nextDays(21).map((d) => `
@@ -477,7 +503,7 @@ function setupCard(s: Setup) {
   return `
     <button class="sc sc-${TONE[s.id]} ${sel ? 'is-sel' : ''} ${p.blocked ? 'is-blocked' : ''}" type="button"
             data-setup-pick="${s.id}" aria-pressed="${sel}"${p.blocked ? ' aria-describedby="sc-why-' + s.id + '"' : ''}>
-      <span class="sc-media">${visual(s.photo, s.art, TONE[s.id])}
+      <span class="sc-media">${visual(s.photo ?? `setup-${s.id}`, s.art, TONE[s.id])}
         <span class="sc-chip num">${dur}</span>
         ${suggested ? '<span class="sc-chip sc-chip-hint">Suggested</span>' : ''}
       </span>
@@ -507,6 +533,7 @@ function decorStep() {
           <span class="dc-body">
             <strong>${esc(d.name)}</strong>
             <span class="dc-tag">${esc(d.tagline)}</span>
+            <span class="dc-blurb">${esc(d.blurb)}</span>
             <span class="dc-list">${d.includes.map((i) => `<span${DECOR_INCLUDED.includes(i) ? ' class="is-incl"' : ''}>${esc(i)}</span>`).join('')}</span>
           </span>
         </button>`;
@@ -535,7 +562,7 @@ function step4(q: Quote) {
           const price = o.price !== null ? rupee(o.price) : (o.priceNote ? `${o.priceNote}, confirmed on call` : 'Price on call');
           return `
           <button class="ad ${sel ? 'is-sel' : ''}" type="button" data-addon-pick="${o.id}" aria-pressed="${sel}">
-            <span class="ad-media">${visual(o.photo, g.art, 'rose')}</span>
+            <span class="ad-media">${visual(o.photo ?? `addon-${o.id}`, g.art, 'rose')}</span>
             <span class="ad-body"><strong>${esc(o.name)}</strong><span class="ad-price">${esc(price)}</span></span>
           </button>`;
         }).join('')}</div>
@@ -582,7 +609,9 @@ function step5(q: Quote) {
     summary(q) + payBlock;
 }
 
-function summary(q: Quote) {
+/** The booking read back. On the confirmation screen it also says what they asked
+ *  for in their own words and, plainly, where payment stands — never "paid". */
+function summary(q: Quote, final = false) {
   const rows: [string, string][] = [
     ['Occasion', occasionLabel()],
     ['Date & time', (S.date ? dateLabel(S.date) : '—') + (slotOf() ? ` · ${timeLabel()}` : '')],
@@ -591,7 +620,12 @@ function summary(q: Quote) {
   q.lines.forEach((l) => rows.push([l.label, l.amount !== null ? rupee(l.amount) : 'On call']));
   return `<div class="bk-sum">${rows.map(([a, b]) =>
     `<div class="bk-sum-row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}
-    <div class="bk-sum-row is-total"><span>${q.unpriced.length ? 'Total so far' : 'Total'}</span><span>${esc(totalText(q))}</span></div></div>`;
+    <div class="bk-sum-row is-total"><span>${q.unpriced.length ? 'Total so far' : 'Total'}</span><span>${esc(totalText(q))}</span></div>${final ? [
+      ...(S.notes.trim() ? [['Your notes', S.notes.trim()]] : []),
+      ['Payment', S.pay === 'upi' && canPayOnline(q)
+        ? (S.utrSend === 'sent' ? 'UPI reference sent — awaiting confirmation' : 'UPI — awaiting payment')
+        : 'After we call — nothing paid'],
+    ].map(([a, b]) => `<div class="bk-sum-row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('') : ''}</div>`;
 }
 
 /* ---------- interaction ---------- */
@@ -870,7 +904,7 @@ function renderDone() {
         ${upi ? 'Pay below to hold your slot.' : 'Nothing has been charged.'}</p>
       <p class="fine center" id="bkSendState" role="status"></p>
       ${upi ? payPanel(q) : ''}
-      ${summary(q)}
+      ${summary(q, true)}
       <div class="bk-actions">
         <button class="btn btn-line" type="button" id="bkCopy">Copy my details</button>
         ${mode === 'modal' ? '<button class="btn btn-line" type="button" data-bk-close>Done</button>'
@@ -878,6 +912,15 @@ function renderDone() {
       </div>
     </div>`;
   paintSendState();
+
+  // The second tap of a double-tap on "Send & pay" lands here, where the pay
+  // link has just appeared under the finger. Ignore taps on the panel for a
+  // moment so nobody is thrown into their UPI app before they have seen it.
+  const pay = $('.paybox', root!);
+  if (pay && !armed) {
+    pay.classList.add('is-arming');
+    setTimeout(() => { pay.classList.remove('is-arming'); armed = true; }, 700);
+  }
 
   const body = $('#bkBody')!;
   $('#bkCopy', body)?.addEventListener('click', () => copy($('#bkCopy', body)!, bookingText()));

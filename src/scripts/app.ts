@@ -1,4 +1,4 @@
-import { $, $$, stash } from './dom';
+import { $, $$, stash, venueToday } from './dom';
 import { site, phoneIsSet, phoneAltIsSet, prettyPhone, prettyPhoneAlt } from '../data/site';
 import { deliver, envelope } from './deliver';
 import { mountBooking, openBooking, prefillBooking, prefillDecor } from './booking';
@@ -89,7 +89,8 @@ function wireChrome() {
     targets.forEach((t) => t.classList.add('is-in'));
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  // the earliest date anyone can pick is today in Jabalpur
+  const today = venueToday();
   $$<HTMLInputElement>('input[type=date]').forEach((d) => { if (!d.min) d.min = today; });
 }
 
