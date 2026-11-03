@@ -143,7 +143,13 @@ test.describe('layout', () => {
   test('every page renders its logo and has no duplicate ids', async ({ page }) => {
     for (const path of PAGES) {
       await page.goto(path);
-      expect(await page.locator('.brand-mark svg').count(), `${path} logos`).toBeGreaterThan(0);
+      // the header lettering and the footer logo are the supplied artwork, and both load
+      for (const sel of ['.masthead .brand-word img', '.colophon .brand-mark img']) {
+        const img = page.locator(sel);
+        await img.scrollIntoViewIfNeeded();
+        await expect.poll(() => img.evaluate((i: HTMLImageElement) => i.complete && i.naturalWidth),
+          `${path} ${sel}`).toBeGreaterThan(0);
+      }
       const duplicates = await page.evaluate(() => {
         const ids = [...document.querySelectorAll('[id]')].map((e) => e.id);
         return ids.length - new Set(ids).size;

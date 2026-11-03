@@ -236,51 +236,41 @@ h3{
    Masthead
    ============================================================= */
 .brand{display:inline-flex;align-items:center;gap:14px;color:var(--amber)}
-.brand-mark{width:58px;height:58px;flex:0 0 auto;display:block;color:var(--paper);
-  filter:drop-shadow(0 0 14px rgba(212,168,95,.18));
-  transition:width .35s var(--ease),height .35s var(--ease)}
-.brand-word{display:block;height:46px;aspect-ratio:122/60;flex:0 0 auto;transition:height .35s var(--ease)}
-.brand-word svg{width:100%;height:100%;display:block;overflow:visible}
-.brand-word text{font-family:var(--sans);font-weight:260;font-variation-settings:"wdth" 112}
-.brand-word .brand-word-sub{font-weight:420}
-.brand:hover .brand-mark{filter:drop-shadow(0 0 20px rgba(212,168,95,.34))}
-.brand-mark svg{width:100%;height:100%;overflow:visible}
-.brand-name{
-  display:flex;flex-direction:column;line-height:1;color:var(--paper);
-  font-weight:700;font-size:1.04rem;font-variation-settings:"wdth" 112;letter-spacing:-.025em;
-}
-.brand-name em{
-  margin-top:5px;font-family:var(--mono);font-style:normal;font-weight:400;
-  font-size:.56rem;letter-spacing:.26em;text-transform:uppercase;color:var(--grey);
-}
-/* The logo is alive, quietly. On arrival the ring draws itself; after that the
-   eclipse breathes, its shadow drifts so the crescent widens and narrows, and
-   a glint of light travels round the ring. Opacity and transform only, so it
-   costs nothing to run. */
-.ys-ring{stroke-dasharray:100;stroke-dashoffset:100;animation:draw 1.4s var(--ease) .15s forwards}
-@keyframes draw{to{stroke-dashoffset:0}}
-.ys-glint{stroke-dasharray:6 94;stroke-dashoffset:100;opacity:0;
-  animation:glint 9s linear 1.6s infinite}
-@keyframes glint{
-  0%{stroke-dashoffset:100;opacity:0}
-  8%{opacity:.95}
-  60%{opacity:.7}
-  100%{stroke-dashoffset:0;opacity:0}
-}
-.ys-halo{transform-box:fill-box;transform-origin:center;animation:breathe 5.5s ease-in-out infinite alternate}
-@keyframes breathe{from{opacity:.55;transform:scale(.9)}to{opacity:1;transform:scale(1.07)}}
-.ys-shade{animation:drift 7s ease-in-out infinite alternate}
-@keyframes drift{from{transform:translateX(0)}to{transform:translateX(-1.6%)}}
-.ys-seat,.ys-seats{animation:rim 6s ease-in-out infinite alternate}
-/* the bright point on the crescent's tip twinkles, out of step with the breathing */
-.ys-flare{transform-box:fill-box;transform-origin:center;animation:twinkle 3.8s ease-in-out infinite}
-@keyframes twinkle{0%,100%{opacity:.55;transform:scale(.7)}45%{opacity:1;transform:scale(1.15)}}
-@keyframes rim{from{opacity:.75}to{opacity:1}}
 
-.brand-full{display:block;width:clamp(118px,13vw,150px);aspect-ratio:1;margin-bottom:10px}
-.brand-full svg{width:100%;height:100%;display:block;overflow:visible;
-  filter:drop-shadow(0 0 22px rgba(212,168,95,.14))}
-.brand-full text{font-family:var(--sans);font-weight:260;font-variation-settings:"wdth" 112}
+/* ---- the logo, as supplied, with light laid over it ----
+   The artwork's black has been turned into transparency (brightness becomes
+   alpha), so it sits on any dark background exactly as it looks on black.
+   The light overlays blend with `screen`, so they can only ever add light. */
+.brand-word,.brand-mark{position:relative;display:block;flex:0 0 auto}
+.brand-word img,.brand-mark img{display:block;width:100%;height:100%;object-fit:contain}
+.brand-word{height:72px;aspect-ratio:810/450;margin-block:-6px;transition:height .35s var(--ease)}
+.brand-mark{width:150px;aspect-ratio:1}
+.brand-full{width:clamp(130px,14vw,170px);margin:-8px 0 6px -10px}
+
+/* the eclipse breathes: a warm glow over the crescent that swells and settles */
+.ys-halo{position:absolute;pointer-events:none;mix-blend-mode:screen;border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle,rgba(255,226,160,.55) 0,rgba(240,190,110,.22) 32%,rgba(212,168,95,0) 68%);
+  animation:breathe 5.5s ease-in-out infinite alternate}
+.brand-word .ys-halo{left:45.7%;top:42%;width:34%;aspect-ratio:1}
+.brand-mark .ys-halo{left:45.8%;top:39.5%;width:26%;aspect-ratio:1}
+@keyframes breathe{
+  from{opacity:.35;transform:translate(-50%,-50%) scale(.85)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1.12)}
+}
+
+/* a glint of light that travels round the gold ring (full logo only) */
+.ys-glint{position:absolute;pointer-events:none;mix-blend-mode:screen;border-radius:50%;
+  left:50.3%;top:48.5%;width:85.4%;aspect-ratio:1;transform:translate(-50%,-50%) rotate(0deg);
+  background:conic-gradient(from 0deg,transparent 0 78%,rgba(255,236,190,.0) 82%,rgba(255,240,205,.95) 88%,rgba(255,236,190,0) 93%,transparent 100%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px),#000 calc(100% - .5px),transparent 100%);
+          mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px),#000 calc(100% - .5px),transparent 100%);
+  animation:glint 9s linear 1s infinite}
+@keyframes glint{
+  from{transform:translate(-50%,-50%) rotate(0deg)}
+  to{transform:translate(-50%,-50%) rotate(360deg)}
+}
+.brand:hover .brand-word .ys-halo{animation-duration:2s}
 
 .masthead{position:sticky;top:0;z-index:70;background:transparent;transition:background .32s var(--ease)}
 .masthead.is-stuck{background:rgba(10,9,8,.97);backdrop-filter:blur(14px) saturate(130%)}
@@ -288,8 +278,7 @@ h3{
   transition:min-height .35s var(--ease)}
 /* slimmer once you scroll, so it stays out of the way of the page */
 .masthead.is-stuck .masthead-row{min-height:var(--head-h-stuck)}
-.masthead.is-stuck .brand-mark{width:46px;height:46px}
-.masthead.is-stuck .brand-word{height:38px}
+.masthead.is-stuck .brand-word{height:58px}
 /* a hairline of gold along the bottom edge, brightest in the middle */
 .masthead::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;pointer-events:none;
   background:linear-gradient(90deg,transparent,rgba(212,168,95,.55) 30%,rgba(237,203,138,.8) 50%,rgba(212,168,95,.55) 70%,transparent);
@@ -1255,10 +1244,8 @@ h3{
 }
 @media (max-width:860px){
   :root{--head-h:76px;--head-h-stuck:64px}
-  .brand-mark{width:48px;height:48px}
-  .brand-word{height:38px}
-  .masthead.is-stuck .brand-mark{width:40px;height:40px}
-  .masthead.is-stuck .brand-word{height:32px}
+  .brand-word{height:58px}
+  .masthead.is-stuck .brand-word{height:50px}
   .nav,.masthead-end .plate,.masthead-end .btn-key{display:none}
   .menu-btn{display:inline-flex}
   .sticky-cta{display:block}
@@ -1291,10 +1278,9 @@ h3{
 @media (prefers-reduced-motion:reduce){
   .js .reveal{opacity:1;transform:none;transition:none}
   .grain,.beam,.marquee-track,.plate-dot,.art-flame::before{animation:none}
-  .ys-ring{animation:none;stroke-dashoffset:0}
   .ys-glint{animation:none;opacity:0}
-  .ys-halo,.ys-shade,.ys-seat,.ys-seats,.ys-flare{animation:none;opacity:1;transform:none}
-  .brand-mark,.brand-word,.masthead-row{transition:none}
+  .ys-halo{animation:none;opacity:.8;transform:translate(-50%,-50%)}
+  .brand-word,.masthead-row{transition:none}
   html:focus-within{scroll-behavior:auto}
   *{transition-duration:.01ms !important}
 }

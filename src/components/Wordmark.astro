@@ -1,49 +1,17 @@
 ---
 /**
- * The logo's lettering on its own, for the header and menu: YOUR with the
- * eclipse as its O, and S P Λ C E set wide underneath, in the ring's gold.
+ * The logo's lettering on its own — YOUR, with the eclipse for its O, over
+ * S P Λ C E — cropped straight from the supplied artwork
+ * (src/assets/brand/wordmark.png, from the artwork at 205,330 → 1015,780, with
+ * room above for the eclipse's glow and the edges feathered so no crop line shows).
  *
- * Every glyph has a fixed textLength, so the word lands in the same place in
- * every browser whatever the font metrics, and the eclipse always sits
- * exactly in the gap between Y and U.
+ * A soft glow breathes over the crescent; see Logo.astro for how the light
+ * is laid on. The eclipse sits at 45.7% across, 42% down this crop.
  */
-const uid = Math.random().toString(36).slice(2, 8);
-const space: [string, number][] = [['S', 7], ['P', 34], ['C', 88], ['E', 115]];
+import { Image } from 'astro:assets';
+import word from '../assets/brand/wordmark.png';
 ---
-<span class="brand-word" aria-hidden="true">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 122 60" focusable="false">
-    <defs>
-      <linearGradient id={`wgold-${uid}`} x1="0" y1="6" x2="0" y2="58" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stop-color="#F3DDAA" />
-        <stop offset=".5" stop-color="#CDA468" />
-        <stop offset="1" stop-color="#94703F" />
-      </linearGradient>
-      <radialGradient id={`whalo-${uid}`} cx=".5" cy=".5" r=".5">
-        <stop offset="0" stop-color="#FFE6AE" stop-opacity=".7" />
-        <stop offset=".4" stop-color="#E8B466" stop-opacity=".22" />
-        <stop offset="1" stop-color="#C8964B" stop-opacity="0" />
-      </radialGradient>
-      <linearGradient id={`wmoon-${uid}`} x1="36" y1="9" x2="56" y2="33" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stop-color="#FFF4D6" />
-        <stop offset="1" stop-color="#E4A94F" />
-      </linearGradient>
-    </defs>
-
-    <circle class="ys-halo" cx="46" cy="20.6" r="22" fill={`url(#whalo-${uid})`} />
-
-    <g fill={`url(#wgold-${uid})`} class="brand-word-type">
-      <text x="0" y="34" font-size="38" textLength="25" lengthAdjust="spacingAndGlyphs">Y</text>
-      <text x="64" y="34" font-size="38" textLength="57" lengthAdjust="spacingAndGlyphs">UR</text>
-      {space.map(([ch, x]) => (
-        <text x={x} y="56.5" font-size="13" text-anchor="middle" class="brand-word-sub">{ch}</text>
-      ))}
-    </g>
-    <path d="M55.6 56.5 61 47.3 66.4 56.5" fill="none" stroke={`url(#wgold-${uid})`} stroke-width="1.5" />
-
-    <!-- the O -->
-    <circle cx="46" cy="20.6" r="13.4" fill="none" stroke="#5C4628" stroke-width=".6" opacity=".7" />
-    <circle cx="46" cy="20.6" r="13.4" fill={`url(#wmoon-${uid})`} />
-    <circle class="ys-shade" cx="42.6" cy="19.9" r="12.9" fill="#0A0908" />
-    <circle class="ys-flare" cx="55.2" cy="12.4" r="1.5" fill="#FFF6DE" />
-  </svg>
+<span class="brand-word">
+  <Image src={word} alt="" widths={[160, 320, 480]} sizes="160px" loading="eager" decoding="async" />
+  <span class="ys-halo" aria-hidden="true"></span>
 </span>

@@ -134,14 +134,16 @@ will turn up expecting exactly what they saw.
 
 ### The logo, and the gold
 
-The logo is drawn in code from the brand artwork, so it is sharp at any size and can
-move. `src/components/Logo.astro` is the badge in the header and menu (ring, eclipse,
-seats); `src/components/LogoFull.astro` is the full YOUR SPACE lockup in the footer.
-`src/components/Wordmark.astro` is the logo's lettering on its own — YOUR with the eclipse
-for its O, S P Λ C E beneath — beside the badge in the header. The header is 96px at
-the top of the page and slims to 74px once you scroll.
-Both are quietly alive: the eclipse breathes, its shadow drifts, and a glint of light
-travels round the ring. With reduced motion switched on they hold still.
+The logo is the supplied artwork itself, in `src/assets/brand/`: `logo.png` (the full
+circle) and `wordmark.png` (YOUR SPACE, cropped from it for the header). Both were made
+from the original JPEG by turning its black background into transparency, so they sit
+on the dark page exactly as they look on black. If a new version of the artwork
+arrives, regenerate both the same way — positions in the CSS are measured from it.
+
+They are made to feel alive by light laid *over* the artwork, never by redrawing it:
+the eclipse's glow breathes (`.ys-halo`), and on the full logo a glint travels round the
+gold ring (`.ys-glint`). With reduced motion switched on, both hold still. The header
+is 96px at the top of the page and slims to 74px once you scroll.
 
 The palette is taken from the same artwork — near-black and the ring's champagne gold
 (`--amber`), with bronze (`--ember`) where gold has to sit on the cream sections. Red is

@@ -1,56 +1,25 @@
 ---
 /**
- * The mark: the gold ring, the eclipse and the row of seats from the
- * YourSpace logo, drawn small enough for the header.
+ * The YourSpace logo, exactly as supplied (src/assets/brand/logo.png).
  *
- * It is alive, quietly: the eclipse breathes, the dark disc drifts a hair so
- * the crescent widens and narrows, and a glint of light travels round the
- * ring. All of it stops for anyone who has asked for reduced motion.
+ * It is made to feel alive with light laid over the artwork rather than by
+ * redrawing it: the eclipse breathes, and a glint of light travels round the
+ * gold ring. The overlays use `screen` blending, so they only ever add light,
+ * and the logo's black background disappears into the dark page around it.
+ * Everything holds still for visitors who have asked for reduced motion.
  *
- * Each instance gets its own gradient ids, so several logos can sit on one
- * page without their <defs> colliding.
+ * Positions are measured from the artwork (1254 × 1254): the ring is centred
+ * at 631,608 with a radius of 531; the crescent's bright tip is at 574,488.
  */
-interface Props { class?: string; id?: string }
-const { class: cls = '', id } = Astro.props;
-const uid = Math.random().toString(36).slice(2, 8);
-const seats = [4.8, 11, 17.2, 23.4, 29.6];
+import { Image } from 'astro:assets';
+import logo from '../assets/brand/logo.png';
+
+interface Props { class?: string; alt?: string; eager?: boolean }
+const { class: cls = '', alt = 'YourSpace', eager = false } = Astro.props;
 ---
-<span class={`brand-mark ${cls}`} id={id} aria-hidden="true">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" focusable="false">
-    <defs>
-      <linearGradient id={`ring-${uid}`} x1="6" y1="4" x2="34" y2="36" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stop-color="#F1D89F" />
-        <stop offset=".45" stop-color="#B98F55" />
-        <stop offset="1" stop-color="#6E5230" />
-      </linearGradient>
-      <radialGradient id={`halo-${uid}`} cx=".5" cy=".5" r=".5">
-        <stop offset="0" stop-color="#FFE3A6" stop-opacity=".9" />
-        <stop offset=".45" stop-color="#E7B464" stop-opacity=".35" />
-        <stop offset="1" stop-color="#C8964B" stop-opacity="0" />
-      </radialGradient>
-      <linearGradient id={`moon-${uid}`} x1="13" y1="10" x2="27" y2="24" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stop-color="#FFF1CC" />
-        <stop offset="1" stop-color="#E2A84F" />
-      </linearGradient>
-      <clipPath id={`in-${uid}`}><circle cx="20" cy="20" r="16.9" /></clipPath>
-    </defs>
-
-    <circle cx="20" cy="20" r="18.6" fill="#080706" />
-    <circle class="ys-ring" pathLength="100" cx="20" cy="20" r="18.6" fill="none"
-            stroke={`url(#ring-${uid})`} stroke-width="1.3" />
-    <circle cx="20" cy="20" r="17.2" fill="none" stroke={`url(#ring-${uid})`} stroke-width=".35" opacity=".5" />
-    <circle class="ys-glint" pathLength="100" cx="20" cy="20" r="18.6" fill="none"
-            stroke="#FFF0C8" stroke-width="1.6" stroke-linecap="round" />
-
-    <g clip-path={`url(#in-${uid})`}>
-      <circle class="ys-halo" cx="20" cy="16.5" r="11" fill={`url(#halo-${uid})`} />
-      <circle cx="20" cy="16.5" r="6.4" fill={`url(#moon-${uid})`} />
-      <circle class="ys-shade" cx="18.4" cy="16.1" r="6.1" fill="#080706" />
-      <circle class="ys-flare" cx="24.4" cy="12.4" r=".75" fill="#FFF6DE" />
-      {seats.map((x) => (
-        <path class="ys-seat" d={`M${x} 34v-3.4a1.6 1.6 0 0 1 1.6-1.6h2.4a1.6 1.6 0 0 1 1.6 1.6V34`}
-              fill="#0E0C0A" stroke={`url(#ring-${uid})`} stroke-width=".7" />
-      ))}
-    </g>
-  </svg>
+<span class={`brand-mark ${cls}`}>
+  <Image src={logo} alt={alt} widths={[160, 320, 480]} sizes="(max-width: 860px) 130px, 160px"
+         loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  <span class="ys-glint" aria-hidden="true"></span>
+  <span class="ys-halo" aria-hidden="true"></span>
 </span>

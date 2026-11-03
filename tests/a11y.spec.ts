@@ -169,11 +169,8 @@ test.describe('accessibility', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/');
     await expect(page.locator('.reveal').first()).toHaveCSS('opacity', '1');
-    // the logo arrives whole and holds still: ring drawn, eclipse steady, no glint
-    const mark = page.locator('.brand-mark').first();
-    await expect(mark.locator('.ys-ring')).toHaveCSS('stroke-dashoffset', '0px');
-    await expect(mark.locator('.ys-halo')).toHaveCSS('opacity', '1');
-    await expect(mark.locator('.ys-halo')).toHaveCSS('animation-name', 'none');
-    await expect(mark.locator('.ys-glint')).toHaveCSS('opacity', '0');
+    // the logo holds still: the eclipse's glow steady, no glint on the ring
+    await expect(page.locator('.masthead .brand-word .ys-halo')).toHaveCSS('animation-name', 'none');
+    await expect(page.locator('.colophon .brand-mark .ys-glint')).toHaveCSS('opacity', '0');
   });
 });
