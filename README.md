@@ -137,6 +137,9 @@ will turn up expecting exactly what they saw.
 The logo is drawn in code from the brand artwork, so it is sharp at any size and can
 move. `src/components/Logo.astro` is the badge in the header and menu (ring, eclipse,
 seats); `src/components/LogoFull.astro` is the full YOUR SPACE lockup in the footer.
+`src/components/Wordmark.astro` is the logo's lettering on its own — YOUR with the eclipse
+for its O, S P Λ C E beneath — beside the badge in the header. The header is 96px at
+the top of the page and slims to 74px once you scroll.
 Both are quietly alive: the eclipse breathes, its shadow drifts, and a glint of light
 travels round the ring. With reduced motion switched on they hold still.
 

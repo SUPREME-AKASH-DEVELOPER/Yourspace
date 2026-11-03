@@ -1,11 +1,12 @@
 ---
 import Logo from './Logo.astro';
+import Wordmark from './Wordmark.astro';
 import { primaryNav, menuExtra } from '../data/nav';
 const items = [...primaryNav, ...menuExtra];
 ---
 <div class="menu" id="menu" role="dialog" aria-modal="true" aria-label="Menu" hidden>
   <div class="shell menu-top">
-    <span class="brand"><Logo /><span class="brand-name">YourSpace<em>Jabalpur</em></span></span>
+    <span class="brand" role="img" aria-label="YourSpace Jabalpur"><Logo /><Wordmark /></span>
     <button class="btn btn-line" id="menuClose">Close</button>
   </div>
   <nav class="menu-links shell" aria-label="Mobile">

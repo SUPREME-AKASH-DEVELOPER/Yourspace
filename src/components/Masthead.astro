@@ -1,13 +1,14 @@
 ---
 import Logo from './Logo.astro';
+import Wordmark from './Wordmark.astro';
 import { primaryNav } from '../data/nav';
 const path = Astro.url.pathname;
 ---
 <header class="masthead" id="head">
   <div class="shell masthead-row">
-    <a class="brand" href="/">
+    <a class="brand" href="/" aria-label="YourSpace Jabalpur — home">
       <Logo />
-      <span class="brand-name">YourSpace<em>Jabalpur</em></span>
+      <Wordmark />
     </a>
 
     <nav class="nav" aria-label="Primary">

@@ -45,23 +45,24 @@ const seat = (s: { x: number; y: number; w: number; h: number; r: number }) =>
         <stop offset="0" stop-color="#E9C98B" stop-opacity=".9" />
         <stop offset="1" stop-color="#E9C98B" stop-opacity="0" />
       </linearGradient>
-      <clipPath id={`fin-${uid}`}><circle cx="200" cy="200" r="181" /></clipPath>
+      <clipPath id={`fin-${uid}`}><circle cx="200" cy="200" r="178" /></clipPath>
     </defs>
 
     <circle cx="200" cy="200" r="190" fill="#070605" />
     <circle class="ys-ring" pathLength="100" cx="200" cy="200" r="186" fill="none"
             stroke={`url(#fring-${uid})`} stroke-width="3" />
+    <circle cx="200" cy="200" r="179" fill="none" stroke={`url(#fring-${uid})`} stroke-width=".8" opacity=".45" />
     <circle class="ys-glint" pathLength="100" cx="200" cy="200" r="186" fill="none"
             stroke="#FFF0C8" stroke-width="3.6" stroke-linecap="round" />
 
     <g clip-path={`url(#fin-${uid})`}>
-      <circle class="ys-halo" cx="176" cy="165" r="92" fill={`url(#fhalo-${uid})`} />
+      <circle class="ys-halo" cx="165" cy="165" r="96" fill={`url(#fhalo-${uid})`} />
 
       <g class="ys-word" fill={`url(#ftext-${uid})`}>
-        <text x="139" y="195" text-anchor="end" font-size="84" font-weight="300">Y</text>
-        <text x="214" y="195" text-anchor="start" font-size="84" font-weight="300">UR</text>
+        <text x="72" y="195" font-size="84" textLength="55" lengthAdjust="spacingAndGlyphs">Y</text>
+        <text x="203" y="195" font-size="84" textLength="126" lengthAdjust="spacingAndGlyphs">UR</text>
         {[['S', 130], ['P', 165], ['C', 235], ['E', 270]].map(([ch, x]) => (
-          <text x={x} y="248" text-anchor="middle" font-size="30" font-weight="300">{ch}</text>
+          <text x={x} y="248" text-anchor="middle" font-size="30">{ch}</text>
         ))}
       </g>
       <!-- the chevron A of SPACE -->
@@ -69,8 +70,11 @@ const seat = (s: { x: number; y: number; w: number; h: number; r: number }) =>
             stroke={`url(#ftext-${uid})`} stroke-width="2.4" stroke-linejoin="miter" />
 
       <!-- the O: a crescent of light behind a dark disc -->
-      <circle cx="177" cy="165" r="31" fill={`url(#fmoon-${uid})`} />
-      <circle class="ys-shade" cx="169" cy="163" r="30" fill="#070605" />
+      <circle cx="165" cy="165" r="31" fill="none" stroke="#5C4628" stroke-width="1.2" opacity=".75" />
+      <circle cx="165" cy="165" r="31" fill={`url(#fmoon-${uid})`} />
+      <circle class="ys-shade" cx="157" cy="163" r="30" fill="#070605" />
+      <circle class="ys-flare" cx="186" cy="146" r="3.2" fill="#FFF6DE" />
+      <circle cx="186" cy="146" r="9" fill="#FFE3A6" opacity=".3" />
 
       <g class="ys-seats">
         {back.map((s) => <path d={seat(s)} fill="#0C0A08" stroke={`url(#frim-${uid})`} stroke-width="1.4" />)}
