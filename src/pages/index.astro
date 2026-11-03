@@ -9,6 +9,8 @@ import Marquee from '../components/Marquee.astro';
 import Reel from '../components/Reel.astro';
 import { experiences, OTHER, ROOM_BASE, RUNTIME, MAX_GUESTS } from '../data/booking';
 import { homeFaq } from '../data/faq';
+import { Image } from 'astro:assets';
+import roomShot from '../assets/decor/trendy-2.jpeg';
 ---
 <Base
   title="YourSpace Jabalpur — A Private Screening Room for Your People"
@@ -21,7 +23,7 @@ import { homeFaq } from '../data/faq';
     <div class="hero-copy">
       <p class="plate plate-live">
         <span class="plate-dot" aria-hidden="true"></span>
-        <span data-greeting>Now booking</span> · Jabalpur · Opening soon
+        <span><span data-greeting>Now booking</span> · Jabalpur · Opening soon</span>
       </p>
       <h1 class="headline">The whole room,<br /><em>just</em> your people.</h1>
       <p class="lede">A private space in Jabalpur you book by the session — for watch parties, karaoke nights, date nights, proposals, candlelight dinners and stand-up evenings. Nobody else walks in.</p>
@@ -36,8 +38,15 @@ import { homeFaq } from '../data/faq';
         <div><dt>Pay by</dt><dd class="num">UPI</dd></div>
       </dl>
       <p class="fine suggestion" data-daily-pick></p>
-      <p class="fine">Pay by UPI when you book, or after we call — your choice. No card details, and a full refund if we can't give you the slot.</p>
     </div>
+
+    <!-- the right-hand side: the room itself, with the ticket laid over its foot -->
+    <div class="hero-side">
+    <figure class="hero-shot">
+      <Image src={roomShot} alt="The room from the doorway: the projection screen on one side, a decorated backdrop and fog over a floor of balloons on the other."
+             widths={[480, 720, 1080]} sizes="(max-width: 860px) 92vw, 46vw" loading="eager" fetchpriority="high" />
+      <figcaption class="hero-shot-tag">The room, dressed for a birthday</figcaption>
+    </figure>
 
     <form class="ticket" id="quickStart" novalidate>
       <div class="ticket-head">
@@ -75,6 +84,9 @@ import { homeFaq } from '../data/faq';
         <p class="fine center">Under a minute · pay now or later</p>
       </div>
     </form>
+
+    <p class="fine hero-assure">No card details, ever — and a full refund if we can't give you the slot.</p>
+    </div>
   </div>
 </section>
 

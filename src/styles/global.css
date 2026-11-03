@@ -377,13 +377,29 @@ h3{
 }
 .hero-grid{
   position:relative;z-index:1;
-  display:grid;grid-template-columns:1.22fr .78fr;
-  gap:clamp(30px,5vw,72px);align-items:start;
+  display:grid;grid-template-columns:1.08fr .92fr;
+  gap:clamp(30px,5vw,76px);align-items:center;
 }
-.hero-copy{padding-top:clamp(6px,2vw,28px)}
-.lede{margin:0 0 34px;font-size:clamp(1.04rem,1.35vw,1.2rem);color:#C8BFB1;max-width:44ch;line-height:1.56}
+.hero-copy{padding-top:0}
+/* two lines, not four: the headline is set to fit its column */
+.hero .headline{font-size:clamp(2.6rem,4.35vw,3.95rem);margin-bottom:.45em}
+.lede{margin:0 0 32px;font-size:clamp(1.04rem,1.3vw,1.16rem);color:#C8BFB1;max-width:46ch;line-height:1.58}
 
-.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:clamp(34px,4vw,48px)}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:clamp(30px,3.4vw,40px)}
+.hero-copy .suggestion{margin:16px 0 0}
+
+/* the right-hand side: a photograph of the room with the ticket laid over its foot */
+.hero-side{display:flex;flex-direction:column}
+.hero-shot{position:relative;margin:0;aspect-ratio:16/10;overflow:hidden;border-radius:4px;
+  border:1px solid rgba(212,168,95,.35);box-shadow:0 30px 70px -40px rgba(0,0,0,.9)}
+.hero-shot img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-shot::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(10,9,8,0) 45%,rgba(10,9,8,.55) 100%)}
+.hero-shot-tag{position:absolute;left:14px;top:14px;z-index:1;padding:5px 10px;border-radius:999px;
+  background:rgba(10,9,8,.72);backdrop-filter:blur(4px);color:var(--amber-2);
+  font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase}
+.hero-side .ticket{margin:-64px clamp(14px,2.4vw,28px) 0;z-index:1}
+.hero-assure{margin:16px clamp(14px,2.4vw,28px) 0;text-align:center}
 
 /* the spec rail — four facts, set like a film's technical credits */
 .hero-spec{
@@ -1232,6 +1248,7 @@ h3{
    ============================================================= */
 @media (max-width:1080px){
   .hero-grid{grid-template-columns:1fr;gap:clamp(34px,5vw,50px)}
+  .hero-side{max-width:620px}
   .ticket{max-width:520px}
   .prog{grid-template-columns:44px 150px 1fr;row-gap:18px}
   .prog-cta{grid-column:3;justify-self:start}
