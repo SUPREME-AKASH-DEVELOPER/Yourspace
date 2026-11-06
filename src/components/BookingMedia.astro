@@ -59,7 +59,10 @@ const media: { key: string; src: ImageMetadata; alt: string; sample?: boolean }[
 <template id="bkMedia">
   {media.map((m) => (
     <Image src={m.src} alt={m.alt} data-media={m.key} data-sample={m.sample ? '' : undefined}
-           widths={[360, 720]} sizes="(max-width: 640px) 92vw, 340px"
+           {...(m.key.startsWith('addon-')
+             // add-on cards are small portrait tiles: two across on a phone, 190px wide at most
+             ? { widths: [200, 400], sizes: '(max-width: 640px) 46vw, 190px', quality: 72 }
+             : { widths: [360, 720], sizes: '(max-width: 640px) 92vw, 340px' })}
            loading="lazy" decoding="async" />
   ))}
 </template>

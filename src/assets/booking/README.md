@@ -12,7 +12,7 @@ Drop the owner's photographs here, named by key, and rebuild. No code changes.
 | `addon-cake-strawberry.jpg` / `addon-cake-chocolate.jpg` | The cakes |
 | `addon-photo-15.jpg` | The 15-minute photoshoot |
 
-`.jpg`, `.jpeg`, `.png` and `.webp` all work. Use a 4:3 landscape picture
+`.jpg`, `.jpeg`, `.png` and `.webp` all work. Use a 3:4 portrait picture
 for add-ons and 16:10 for setups, at least 1440px wide; the build resizes and
 converts it to WebP.
 
@@ -25,6 +25,8 @@ bouquet. When the real photograph comes, save it under the plain name
 (`addon-bouquet-s.jpg`); it takes over automatically. Then delete the sample. A new add-on or setup added in
 `src/data/booking.ts` gets the key `addon-<id>` or `setup-<id>`.
 
-**In place as samples:** the three bouquets (`addon-bouquet-s/m/l.sample.webp` — sunflowers, pink roses and lilies, red roses), AI-generated.
+**In place as samples (AI-generated, badged "Sample image"):** the three bouquets
+(sunflowers, pink roses and lilies, red roses), both cakes (strawberry, chocolate)
+and the photoshoot (a vintage camera set-up, no people) — all `*.sample.webp`.
 
-**Still to come from the owner:** the real bouquet photographs, the photoshoot, the cakes, and the setup photographs.
+**Still to come from the owner:** real photographs of every add-on, and the setup photographs.

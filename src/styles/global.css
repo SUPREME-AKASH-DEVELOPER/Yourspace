@@ -1169,7 +1169,7 @@ h3{
 .sc.is-blocked:hover{transform:none;box-shadow:none;border-color:var(--rule-2)}
 
 .sc-media,.dc-media,.ad-media{position:relative;display:block;aspect-ratio:16/10;overflow:hidden;background:var(--ink)}
-.ad-media{aspect-ratio:4/3}
+.ad-media{aspect-ratio:3/4}
 .vis-sample{
   position:absolute;left:8px;bottom:8px;padding:3px 7px;border-radius:2px;
   font-family:var(--mono);font-size:.56rem;text-transform:uppercase;letter-spacing:.12em;
@@ -1222,7 +1222,9 @@ h3{
 .ad-group{margin-bottom:28px}
 .ad-group>h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0 0 12px;font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
 .ad-group>h3 span{font-weight:400;font-size:.86rem;color:var(--grey)}
-.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));gap:10px;margin-bottom:8px}
+.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),190px));gap:10px;margin-bottom:8px}
+/* portrait cards: two across on a phone, so nobody scrolls past three posters */
+@media (max-width:640px){ .ad-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .ad-body{padding:10px 12px 12px;gap:3px}
 .ad-body strong{font-size:.92rem;font-weight:600}
 .ad-price{font-family:var(--mono);font-size:.72rem;color:var(--amber)}
