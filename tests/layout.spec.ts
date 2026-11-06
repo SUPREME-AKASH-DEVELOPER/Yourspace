@@ -158,6 +158,41 @@ test.describe('layout', () => {
     }
   });
 
+  /**
+   * An error message in the booking footer takes a line of its own. Before the
+   * footer was allowed to wrap at every width, it shoved Back, the total and
+   * Continue clean off the right edge of the panel — the buttons were still
+   * there, just not on screen, so the flow looked like a dead end.
+   */
+  test('an error in the booking footer never pushes the buttons off the panel', async ({ page }) => {
+    for (const width of [1440, 1280, 1024, 820, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/book/');
+      await page.evaluate(() => localStorage.clear());
+      await page.reload();
+
+      await page.locator('[data-exp-pick="date"]').click();
+      await page.locator('[data-date-pick]').nth(2).click();
+      await page.locator('[data-bk-next]').click();
+      await page.locator('[data-slot-pick="s6"]').click();
+      await page.locator('[data-bk-next]').click();        // no setup picked yet
+      await expect(page.locator('.bk-flash')).toContainText('Choose a setup');
+
+      const panel = (await page.locator('.bk-panel').boundingBox())!;
+      for (const sel of ['[data-bk-back]', '[data-bk-next]']) {
+        const btn = (await page.locator(sel).boundingBox())!;
+        expect(Math.round(btn.x), `${sel} starts left of the panel at ${width}px`)
+          .toBeGreaterThanOrEqual(Math.round(panel.x) - 1);
+        expect(Math.round(btn.x + btn.width), `${sel} runs past the panel at ${width}px`)
+          .toBeLessThanOrEqual(Math.round(panel.x + panel.width) + 1);
+        await expect(page.locator(sel), `${sel} hidden at ${width}px`).toBeInViewport();
+      }
+      // and it still works: the message does not swallow the tap
+      await page.locator('[data-setup-pick="movie"]').click();
+      await expect(page.locator('#bkTitle')).toContainText('Your details');
+    }
+  });
+
   test('no gradient reference is left dangling', async ({ page }) => {
     await page.goto('/');
     const broken = await page.evaluate(() => {

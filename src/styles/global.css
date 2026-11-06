@@ -977,7 +977,10 @@ h3{
 .bk-sub{margin:0 0 26px;color:var(--grey);font-size:.95rem;max-width:58ch}
 
 .bk-foot{
-  display:flex;align-items:center;gap:14px;
+  /* wraps at every width, not just on phones: an error message takes a line of
+     its own (.bk-flash is flex:1 0 100%), and with nowrap it pushed Back, the
+     total and Continue clean off the right edge of the panel */
+  display:flex;flex-wrap:wrap;align-items:center;gap:14px;
   padding:14px clamp(18px,2.6vw,30px) calc(14px + env(safe-area-inset-bottom));
   border-top:1px solid var(--rule);background:rgba(12,11,9,.6);
 }
@@ -1367,10 +1370,8 @@ h3{
   .hero-actions .btn{width:100%}
   .bk-grid{grid-template-columns:repeat(2,1fr);gap:8px}
   .slots{grid-template-columns:repeat(2,1fr)}
-  .bk-foot{flex-wrap:wrap}
   .bk-foot .btn{flex:1 1 auto;order:2}
   .bk-total{order:1;flex:1 0 100%;text-align:left;margin:0 0 4px}
-  .seat{width:34px;height:34px}
   .seat{width:40px;height:40px}
   .seat-beanbag{width:42px;height:42px}
   .seat-row{gap:8px}
