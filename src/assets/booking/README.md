@@ -25,4 +25,6 @@ bouquet. When the real photograph comes, save it under the plain name
 (`addon-bouquet-s.jpg`); it takes over automatically. Then delete the sample. A new add-on or setup added in
 `src/data/booking.ts` gets the key `addon-<id>` or `setup-<id>`.
 
-**Still to come from the owner:** every file in the table above.
+**In place as samples:** the three bouquets (`addon-bouquet-s/m/l.sample.webp` — sunflowers, pink roses and lilies, red roses), AI-generated.
+
+**Still to come from the owner:** the real bouquet photographs, the photoshoot, the cakes, and the setup photographs.
