@@ -15,29 +15,30 @@ export const site = {
   hours: 'Opening soon',            // TODO: real opening hours
 
   /**
-   * The line we answer first. The Call buttons use it.
-   * To make the other number primary, swap the two values.
+   * The one number YourSpace publishes. Calls and WhatsApp both come here.
+   * (Akash/Tanishk, Nov 2026: one number everywhere, so nobody has to guess
+   * which line to use. The old +91 94296 90584 is off the site entirely.)
    */
-  phone: '+919429690584',
+  phone: '+917999656039',
 
-  /** A second line, shown alongside the first. Leave '' if there is only one. */
-  phoneAlt: '+917999656039',
+  /** A second line, shown alongside the first. '' — there is only one. */
+  phoneAlt: '',
 
   email: '',                        // TODO: optional box-office email
 
   /**
    * WHATSAPP — "For more information, contact us on WhatsApp"
    *
-   * The number customers message on WhatsApp, with +91. Confirmed by Tanishk
-   * (Nov 2026): WhatsApp is on the second line, not the one we answer calls
-   * on, so it is set explicitly here rather than falling back to `phone`.
-   * Left as '' it would use `phone` above.
+   * Left as '' it follows `phone` above, which is what we want: the same
+   * number for calls and for WhatsApp. Set it only if WhatsApp ever moves to
+   * a different line from the one we answer calls on.
    *
-   * WhatsApp is for questions only. A WhatsApp message is never treated as a
-   * booking or as proof of payment — bookings still go through the booking
-   * form, and payment is checked in the bank app.
+   * WhatsApp carries two things: questions, and a finished booking handed
+   * over from the confirmation screen. Neither is a payment — bookings are
+   * still recorded through the booking form, and payment is checked in the
+   * bank app before anything is confirmed.
    */
-  whatsapp: '+917999656039',
+  whatsapp: '',
   /** What the chat opens with. The customer can edit it before sending. */
   whatsappMessage: "Hi YourSpace, I'd like more information about booking a private session.",
 

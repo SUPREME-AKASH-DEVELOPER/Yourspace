@@ -1,33 +1,45 @@
 import { test, expect } from '@playwright/test';
 import { PAGES } from './pages';
 
-/** Kept in step with src/data/site.ts. */
-const PRIMARY = { raw: '+919429690584', pretty: '+91 94296 90584' };
-const SECOND  = { raw: '+917999656039', pretty: '+91 79996 56039' };
-/** WhatsApp is on the second line (`whatsapp` in site.ts), not the one we call on. */
-const WA = SECOND;
+/**
+ * Kept in step with src/data/site.ts. YourSpace publishes one number: calls
+ * and WhatsApp both come to it (Akash/Tanishk, Nov 2026). RETIRED is the line
+ * that used to be on the site and must not come back by accident.
+ */
+const PRIMARY = { raw: '+917999656039', pretty: '+91 79996 56039' };
+const WA = PRIMARY;
+const RETIRED = '+91 94296 90584';
 
 test.describe('contact details', () => {
-  test('both numbers are published on the contact page', async ({ page }) => {
+  test('the number is published on the contact page', async ({ page }) => {
     await page.goto('/contact/');
-    const info = page.locator('.infolist');          // the footer lists them too
+    const info = page.locator('.infolist');          // the footer lists it too
     await expect(info.locator('[data-phone-text]')).toHaveText(PRIMARY.pretty);
-    await expect(info.locator('[data-phone-alt]')).toHaveText(SECOND.pretty);
   });
 
-  test('both numbers are callable', async ({ page }) => {
+  test('the number is callable', async ({ page }) => {
     await page.goto('/contact/');
-    const info = page.locator('.infolist');
-    await expect(info.locator('a[data-call]')).toHaveAttribute('href', `tel:${PRIMARY.raw}`);
-    await expect(info.locator('a[data-phone-alt]')).toHaveAttribute('href', `tel:${SECOND.raw}`);
+    await expect(page.locator('.infolist a[data-call]')).toHaveAttribute('href', `tel:${PRIMARY.raw}`);
   });
 
-  test('the footer carries both lines on every page', async ({ page }) => {
+  test('the footer carries the number on every page, and no empty second line', async ({ page }) => {
     for (const path of PAGES) {
       await page.goto(path);
       const footer = page.locator('.colophon');
-      await expect(footer.locator('[data-phone-text]'), `primary on ${path}`).toHaveText(PRIMARY.pretty);
-      await expect(footer.locator('[data-phone-alt]'), `second on ${path}`).toHaveText(SECOND.pretty);
+      await expect(footer.locator('[data-phone-text]'), `number on ${path}`).toHaveText(PRIMARY.pretty);
+      // with no second line set, its slot is taken out rather than left blank
+      await expect(footer.locator('[data-phone-alt]'), `no empty slot on ${path}`).toHaveCount(0);
+    }
+  });
+
+  test('the retired line is nowhere on the site', async ({ page }) => {
+    for (const path of PAGES) {
+      await page.goto(path);
+      const body = await page.evaluate(() => document.body.innerText);
+      expect(body.includes(RETIRED), `${RETIRED} still on ${path}`).toBe(false);
+      const links = await page.evaluate(() =>
+        [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href') ?? '').join(' '));
+      expect(links.includes('9429690584'), `a link still points at it on ${path}`).toBe(false);
     }
   });
 
@@ -36,7 +48,7 @@ test.describe('contact details', () => {
    * business details, identical, everywhere they appear.
    */
   test('no page shows a number that is not ours', async ({ page }) => {
-    const allowed = new Set([PRIMARY.pretty, SECOND.pretty]);
+    const allowed = new Set([PRIMARY.pretty]);
     for (const path of PAGES) {
       await page.goto(path);
       const found = await page.evaluate(() => {
@@ -63,10 +75,10 @@ test.describe('contact details', () => {
     }
   });
 
-  test('structured data lists both numbers', async ({ page }) => {
+  test('structured data lists the one number', async ({ page }) => {
     await page.goto('/');
     const data = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent() ?? '{}');
-    expect(data.telephone).toEqual([PRIMARY.raw, SECOND.raw]);
+    expect(data.telephone).toBe(PRIMARY.raw);
   });
 
   test('WhatsApp is offered for information, to the configured number, with a message', async ({ page }) => {

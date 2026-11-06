@@ -195,7 +195,7 @@ automatically; on another host, copy the directives into its header config.
 
 | # | What | Who | Status |
 |---|------|-----|--------|
-| 1 | Confirm both numbers in `src/data/site.ts` (`phone` is the line we answer first; `phoneAlt` is the second, and `whatsapp` is the WhatsApp line) | Client | **Blocking** — Call/WhatsApp buttons stay off until a valid `+91` number is set |
+| 1 | Phone number | Client | **Done** — one number everywhere, +91 79996 56039 (`phone` in `src/data/site.ts`; `whatsapp` is empty so WhatsApp follows it). Set `phoneAlt` if a second line is ever published |
 | 2 | Full address, map link and opening hours (`site.ts`) | Client | **Blocking** for local SEO and the schema |
 | 3 | Set the real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Blocking** — canonical URLs, sitemap and OG image URLs derive from it |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
@@ -213,7 +213,7 @@ automatically; on another host, copy the directives into its header config.
 | 18 | Owner's photographs for Movie Space, Karaoke, Watch Party and every add-on (see `src/assets/booking/README.md`) | Client | High |
 | 19 | Upgrade Astro 5 → 7 to clear the remaining `npm audit` advisories (build-time only; none reach the static site) | Dev | Medium |
 | 7 | Room specs: projector, sound, AC (seating is set: 5 recliners + 2 bean bags, `SEATING` in `src/data/booking.ts`, and each seat is picked individually) | Client | High |
-| 20 | WhatsApp number | Client | **Done** — confirmed as +91 79996 56039 (the second line), set as `whatsapp` in `src/data/site.ts` |
+| 20 | WhatsApp number | Client | **Done** — +91 79996 56039, the same line as calls |
 | 21 | New Aesthetic decoration photographs from Tanishk — steps at the top of `src/data/decorations.ts` | Client | High |
 | 22 | Temporary bouquet and photoshoot pictures as `*.sample.jpg` in `src/assets/booking/` (badged "Sample image"), then the real ones | Both | High |
 | 23 | Payment gateway KYC — see "Payment gateway KYC" below | Client | Before any gateway |
@@ -231,10 +231,11 @@ Desktop on computers, with an editable opening message. The number and message a
 `whatsapp` and `whatsappMessage` in `src/data/site.ts`; the component is
 `src/components/WhatsApp.astro`. With no valid number set, every WhatsApp button hides.
 
-The number in use is **+91 79996 56039** — the second line, confirmed by Tanishk. Calls
-go to `phone` (+91 94296 90584) and WhatsApp to `whatsapp`, so the two are set
-separately and `tests/contact.spec.ts` checks every `wa.me` link on the site points at
-the WhatsApp one.
+The number in use is **+91 79996 56039**, confirmed by Tanishk, and it is the only
+number the site publishes — calls and WhatsApp both come to it. `whatsapp` is left empty
+so it follows `phone`; set it only if WhatsApp ever moves to a different line.
+`tests/contact.spec.ts` checks every `wa.me` and `tel:` link agrees with the printed
+number, and that the retired +91 94296 90584 appears nowhere on the site.
 
 ### Finishing a booking in the chat
 
