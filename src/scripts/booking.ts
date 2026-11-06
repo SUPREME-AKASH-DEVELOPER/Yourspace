@@ -4,7 +4,7 @@ import { site, phoneNumbers } from '../data/site';
 import { deliver, envelope } from './deliver';
 import {
   experiences, slots, setups, addonGroups, stepNames, OTHER,
-  MAX_GUESTS, setupOf, setupPrice, addonOf, quote, addMinutes,
+  MAX_GUESTS, SEATING, seatingLabel, setupOf, setupPrice, addonOf, quote, addMinutes,
   type Setup, type Quote,
 } from '../data/booking';
 import { decorations, DECOR_INCLUDED } from '../data/decorations';
@@ -404,7 +404,12 @@ function photo(key?: string): string {
   if (!key) return '';
   const tpl = document.getElementById('bkMedia') as HTMLTemplateElement | null;
   const img = tpl?.content.querySelector(`[data-media="${CSS.escape(key)}"]`);
-  return img ? img.outerHTML : '';
+  if (!img) return '';
+  // a stand-in picture (AI-generated or stock) is labelled as one, so nobody books
+  // expecting exactly what they saw
+  return img.hasAttribute('data-sample')
+    ? img.outerHTML + '<span class="vis-sample">Sample image</span>'
+    : img.outerHTML;
 }
 
 /** The picture at the top of a card: a photograph when we have one, drawn otherwise. */
@@ -439,25 +444,36 @@ function step0() {
     (resumed ? `<p class="fine">Picked up where you left off. <button type="button" data-bk-reset class="linkish">Start over</button></p>` : '');
 }
 
-/* the seat picker: you choose seats, not a number in a box */
+/* the seat picker: you choose seats, not a number in a box.
+   It is drawn as the room is: two bean bags in front, nearer the screen, and
+   five recliners behind them. Recliners are square, bean bags round. Seats are
+   numbered in the order they fill — recliners 1–5, then bean bags 6–7 — so a
+   couple gets recliners, and the bean bags come in only for six or seven. */
+/** How many seats were taken before the last tap, so only the newly taken ones animate. */
+let seatWas = MAX_GUESTS;
+
 function seatmap() {
-  let i = 0;
-  const rows = [['A', 4], ['B', MAX_GUESTS - 4]] as const;
-  const html = rows.map(([letter, count]) => {
-    let r = `<div class="seat-row"><i>${letter}</i>`;
-    for (let c = 0; c < count; c++) {
-      i++;
-      r += `<button type="button" class="seat ${i <= S.guests ? 'is-taken' : ''}" data-seat="${i}" aria-pressed="${i <= S.guests}"
-              aria-label="Seat ${letter}${c + 1}"></button>`;
-    }
-    return r + '</div>';
-  }).join('');
+  const seat = (n: number, kind: 'recliner' | 'beanbag', label: string) =>
+    `<button type="button" class="seat seat-${kind}${n <= S.guests ? ' is-taken' : ''}${n > seatWas && n <= S.guests ? ' is-new' : ''}" data-seat="${n}"
+             data-kind="${kind}" aria-pressed="${n <= S.guests}" aria-label="${label}"></button>`;
+  const beanBags = Array.from({ length: SEATING.beanBags }, (_, c) =>
+    seat(SEATING.recliners + c + 1, 'beanbag', `Bean bag ${c + 1}, front row`)).join('');
+  const recliners = Array.from({ length: SEATING.recliners }, (_, c) =>
+    seat(c + 1, 'recliner', `Recliner ${c + 1}, back row`)).join('');
 
   return `<div class="seatmap">
     <div class="seat-screen"><span aria-hidden="true"></span><em>Screen</em></div>
-    <div class="seat-rows">${html}</div>
+    <div class="seat-rows">
+      <div class="seat-row seat-row-front"><i>Front</i>${beanBags}</div>
+      <div class="seat-row seat-row-back"><i>Back</i>${recliners}</div>
+    </div>
+    <p class="seat-kinds">
+      <span><b class="sk-recliner" aria-hidden="true"></b>${SEATING.recliners} Recliners</span>
+      <span><b class="sk-beanbag" aria-hidden="true"></b>${SEATING.beanBags} Bean Bags</span>
+      <span class="sk-total">Total Capacity: ${MAX_GUESTS} People</span>
+    </p>
     <p class="seat-legend">
-      <span><b class="k"></b>${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}</span>
+      <span><b class="k"></b>${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · ${seatingLabel(S.guests)}</span>
       <span><b></b>Free seat</span>
     </p></div>`;
 }
@@ -466,7 +482,7 @@ function step1() {
   const said = notice;
   notice = '';
   return head(2, "When's the night, and who's coming?",
-    `Tap a seat for every guest — up to ${MAX_GUESTS}. The price for your group shows when you choose a setup.`) +
+    `Tap a seat for every guest — up to ${MAX_GUESTS}: ${SEATING.recliners} recliners at the back and ${SEATING.beanBags} bean bags in front. The price for your group shows when you choose a setup.`) +
     (said ? `<div class="bk-note" role="status" style="margin-bottom:22px"><i>Note</i><span>${esc(said)}</span></div>` : '') +
     seatmap() +
     '<p class="bk-kicker">Pick a date</p>' +
@@ -616,6 +632,7 @@ function summary(q: Quote, final = false) {
     ['Occasion', occasionLabel()],
     ['Date & time', (S.date ? dateLabel(S.date) : '—') + (slotOf() ? ` · ${timeLabel()}` : '')],
     ['Guests', String(S.guests)],
+    ['Seating', seatingLabel(S.guests)],
   ];
   q.lines.forEach((l) => rows.push([l.label, l.amount !== null ? rupee(l.amount) : 'On call']));
   return `<div class="bk-sum">${rows.map(([a, b]) =>
@@ -690,9 +707,11 @@ function onBodyClick(e: Event) {
   // seats fill up to the one you tapped; tapping the last one gives it back
   if ((el = t.closest('[data-seat]'))) {
     const n = Number(el.dataset.seat);
+    seatWas = S.guests;
     S.guests = n === S.guests ? Math.max(1, n - 1) : n;
     save();
     render();
+    seatWas = MAX_GUESTS;
     $<HTMLElement>(`[data-seat="${Math.min(S.guests || 1, MAX_GUESTS)}"]`, root!)?.focus();
   }
 }
@@ -740,6 +759,7 @@ function bookingPayload(): Record<string, string> {
     Occasion: occasionLabel(),
     'Date & time': `${dateLabel(S.date)}, ${timeLabel()}`,
     Guests: String(S.guests),
+    Seating: seatingLabel(S.guests),
     ...Object.fromEntries(q.lines.map((l) => [l.label, l.amount !== null ? rupee(l.amount) : `price on call${l.note ? ` (${l.note})` : ''}`])),
     ...(S.notes.trim() ? { Notes: S.notes.trim() } : {}),
     Total: q.unpriced.length ? `${rupee(q.total)} + ${q.unpriced.join(', ')} (priced on call)` : rupee(q.total),

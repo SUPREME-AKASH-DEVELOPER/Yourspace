@@ -1,4 +1,5 @@
 ---
+import RoomSeats from '../components/RoomSeats.astro';
 import Base from '../layouts/Base.astro';
 import ProgrammeRow from '../components/ProgrammeRow.astro';
 import TicketStub from '../components/TicketStub.astro';
@@ -7,7 +8,7 @@ import Faq from '../components/Faq.astro';
 import PrebookForm from '../components/PrebookForm.astro';
 import Marquee from '../components/Marquee.astro';
 import Reel from '../components/Reel.astro';
-import { experiences, OTHER, ROOM_BASE, RUNTIME, MAX_GUESTS } from '../data/booking';
+import { experiences, OTHER, ROOM_BASE, RUNTIME, MAX_GUESTS, SEATING } from '../data/booking';
 import { homeFaq } from '../data/faq';
 import { Image } from 'astro:assets';
 import roomShot from '../assets/decor/trendy-2.jpeg';
@@ -119,11 +120,7 @@ import roomShot from '../assets/decor/trendy-2.jpeg';
 
 <section class="band band-room" id="room">
   <div class="shell room-grid">
-    <figure class="room-art reveal" aria-hidden="true">
-      <div class="room-screen"><span class="room-glow"></span></div>
-      <div class="room-seats"><span /><span /><span /><span /><span /><span /></div>
-      <figcaption class="fine">Lights down, screen up, seats facing one way.</figcaption>
-    </figure>
+    <RoomSeats />
     <div class="reveal">
       <p class="rule-label"><i>Reel 02</i><span>The room</span></p>
       <h2 class="title">The lights go down.<br />The room is <em>yours</em>.</h2>
@@ -131,7 +128,7 @@ import roomShot from '../assets/decor/trendy-2.jpeg';
       <dl class="credits">
         <div><dt>Privacy</dt><dd>The whole room reserved for your group, start to finish</dd></div>
         <div><dt>Screen &amp; sound</dt><dd>Big-screen projection with a dedicated sound system</dd></div>
-        <div><dt>Seating</dt><dd>Lounge seating arranged around your group</dd></div>
+        <div><dt>Seating</dt><dd>{SEATING.recliners} recliners at the back and {SEATING.beanBags} bean bags in front — {MAX_GUESTS} people in all</dd></div>
         <div><dt>Session</dt><dd>90 minutes, start to finish (karaoke: 30)</dd></div>
       </dl>
       <p class="fine"><a href="/room/">More about the room →</a></p>

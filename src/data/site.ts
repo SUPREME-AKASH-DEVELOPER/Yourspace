@@ -25,6 +25,21 @@ export const site = {
 
   email: '',                        // TODO: optional box-office email
 
+  /**
+   * WHATSAPP — "For more information, contact us on WhatsApp"
+   *
+   * The number customers message on WhatsApp, with +91. Left as '' it uses
+   * `phone` above. Set it here if Tanishk's WhatsApp is on a different number.
+   * TODO(owner): confirm +91 94296 90584 is the WhatsApp line.
+   *
+   * WhatsApp is for questions only. A WhatsApp message is never treated as a
+   * booking or as proof of payment — bookings still go through the booking
+   * form, and payment is checked in the bank app.
+   */
+  whatsapp: '',
+  /** What the chat opens with. The customer can edit it before sending. */
+  whatsappMessage: "Hi YourSpace, I'd like more information about booking a private session.",
+
   /** Optional: a Google Form to send enquiries to instead of WhatsApp. */
   googleForm: '',
 
@@ -90,6 +105,21 @@ const pretty = (n: string) => n.replace(/^(\+91)(\d{5})(\d{5})$/, '$1 $2 $3');
 
 export const prettyPhone = pretty(site.phone);
 export const prettyPhoneAlt = pretty(site.phoneAlt);
+
+/** The WhatsApp number in use: its own if set, otherwise the main line. */
+const waNumber = site.whatsapp || site.phone;
+export const whatsappIsSet = isMobile(waNumber);
+
+/**
+ * WhatsApp's official click-to-chat link (https://wa.me/<number>?text=…).
+ * Opens the app on phones and WhatsApp Web / Desktop on computers.
+ * Empty when no valid number is set, and every WhatsApp button then hides.
+ */
+export function whatsappLink(message: string = site.whatsappMessage): string {
+  if (!whatsappIsSet) return '';
+  const digits = waNumber.replace(/\D/g, '');
+  return `https://wa.me/${digits}${message ? `?text=${encodeURIComponent(message)}` : ''}`;
+}
 
 /** Every number we publish, in the order we want people to try them. */
 export const phoneNumbers = [

@@ -20,8 +20,30 @@ export type ArtKey = 'heart' | 'screen' | 'mic' | 'ring' | 'flame' | 'stage';
 /*  The room                                                           */
 /* ------------------------------------------------------------------ */
 
-/** Nobody books more than this online, whatever the setup. */
-export const MAX_GUESTS = 7;
+/**
+ * The seats, as they physically are (Tanishk, Nov): five recliners in the back
+ * row and two bean bags in front of them, nearer the screen. Seven in all.
+ * The picker, the room drawings and the booking summary all read this, so the
+ * site can never suggest seven recliners.
+ */
+export const SEATING = { recliners: 5, beanBags: 2 } as const;
+
+/** Nobody books more than this online, whatever the setup — one person per seat. */
+export const MAX_GUESTS = SEATING.recliners + SEATING.beanBags;
+
+/** Recliners fill first; bean bags only once all five recliners are taken. */
+export function seatsFor(guests: number): { recliners: number; beanBags: number } {
+  const g = Math.min(MAX_GUESTS, Math.max(0, Math.floor(guests)));
+  const recliners = Math.min(g, SEATING.recliners);
+  return { recliners, beanBags: g - recliners };
+}
+
+/** "2 recliners", "5 recliners + 1 bean bag". */
+export function seatingLabel(guests: number): string {
+  const { recliners, beanBags } = seatsFor(guests);
+  const r = `${recliners} ${recliners === 1 ? 'recliner' : 'recliners'}`;
+  return beanBags ? `${r} + ${beanBags} ${beanBags === 1 ? 'bean bag' : 'bean bags'}` : r;
+}
 
 /** The lowest price anything starts from — used for "From ₹…" on the marketing pages. */
 export const ROOM_BASE = 1500;

@@ -16,6 +16,12 @@
  *   in src/data/booking.ts, so a new cake added there gets its own key too.
  *   The alt text comes from the item's name. Anything without a photograph
  *   shows a drawn gold card in its place.
+ *
+ * TEMPORARY / AI-GENERATED PICTURES
+ *   Name them with ".sample" before the extension — addon-bouquet-s.sample.jpg.
+ *   They show with a "Sample image" badge, so nobody books expecting exactly
+ *   that bouquet. When the real photograph arrives, save it without ".sample"
+ *   (addon-bouquet-s.jpg): it wins automatically. Then delete the sample.
  */
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
@@ -32,11 +38,15 @@ const names: Record<string, string> = {
 const dropped = Object.entries(
   import.meta.glob<{ default: ImageMetadata }>('../assets/booking/*.{jpg,jpeg,png,webp}', { eager: true }),
 ).map(([path, mod]) => {
-  const key = path.split('/').pop()!.replace(/\.[^.]+$/, '');
-  return { key, src: mod.default, alt: names[key] ?? key };
-});
+  const base = path.split('/').pop()!.replace(/\.[^.]+$/, '');
+  const sample = base.endsWith('.sample');
+  const key = base.replace(/\.sample$/, '');
+  return { key, src: mod.default, alt: (names[key] ?? key) + (sample ? ' (sample image)' : ''), sample };
+})
+  // a real photograph comes after its sample, so it wins the de-duplication below
+  .sort((a, b) => Number(b.sample) - Number(a.sample));
 
-const media: { key: string; src: ImageMetadata; alt: string }[] = [
+const media: { key: string; src: ImageMetadata; alt: string; sample?: boolean }[] = [
   ...decorations.map((d) => ({ key: `decor-${d.id}`, src: d.photos[0].src, alt: d.photos[0].alt })),
   {
     key: 'setup-date', src: room,
@@ -48,7 +58,7 @@ const media: { key: string; src: ImageMetadata; alt: string }[] = [
 ---
 <template id="bkMedia">
   {media.map((m) => (
-    <Image src={m.src} alt={m.alt} data-media={m.key}
+    <Image src={m.src} alt={m.alt} data-media={m.key} data-sample={m.sample ? '' : undefined}
            widths={[360, 720]} sizes="(max-width: 640px) 92vw, 340px"
            loading="lazy" decoding="async" />
   ))}

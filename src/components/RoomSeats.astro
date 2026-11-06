@@ -1,0 +1,18 @@
+---
+/**
+ * The room drawn as it is: the screen, two bean bags (round) in front of it
+ * and five recliners (square) behind them. Counts come from SEATING in
+ * src/data/booking.ts, so this cannot disagree with the booking flow.
+ */
+import { SEATING, MAX_GUESTS } from '../data/booking';
+---
+<figure class="room-art reveal">
+  <div aria-hidden="true">
+    <div class="room-screen"><span class="room-glow"></span></div>
+    <div class="room-seats">
+      <div>{Array.from({ length: SEATING.beanBags }, () => <span class="rs-bag" />)}</div>
+      <div>{Array.from({ length: SEATING.recliners }, () => <span />)}</div>
+    </div>
+  </div>
+  <figcaption class="fine">{SEATING.beanBags} bean bags in front, {SEATING.recliners} recliners behind — {MAX_GUESTS} seats in all.</figcaption>
+</figure>

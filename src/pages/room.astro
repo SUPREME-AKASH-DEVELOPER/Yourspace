@@ -1,9 +1,10 @@
 ---
+import RoomSeats from '../components/RoomSeats.astro';
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
 import Notice from '../components/Notice.astro';
 import Reel from '../components/Reel.astro';
-import { MAX_GUESTS, ROOM_BASE } from '../data/booking';
+import { MAX_GUESTS, ROOM_BASE, SEATING } from '../data/booking';
 ---
 <Base title="The Room — YourSpace Jabalpur"
       description="One private room in Jabalpur: big-screen projection, dedicated sound, lounge seating, and nobody else in it but your group.">
@@ -14,23 +15,19 @@ import { MAX_GUESTS, ROOM_BASE } from '../data/booking';
 
   <section class="band">
     <div class="shell room-grid">
-      <figure class="room-art reveal" aria-hidden="true">
-        <div class="room-screen"><span class="room-glow"></span></div>
-        <div class="room-seats"><span /><span /><span /><span /><span /><span /></div>
-        <figcaption class="fine">Lights down, screen up, seats facing one way.</figcaption>
-      </figure>
+      <RoomSeats />
       <div class="reveal">
         <p class="rule-label"><i>Spec</i><span>What's in it</span></p>
         <h2 class="title">Built for one group<br />at a <em>time</em>.</h2>
         <dl class="credits">
           <div><dt>Privacy</dt><dd>The whole room reserved for your group, start to finish. No shared seating, no second booking running alongside yours.</dd></div>
           <div><dt>Screen &amp; sound</dt><dd>Big-screen projection with a dedicated sound system.</dd></div>
-          <div><dt>Seating</dt><dd>Lounge seating arranged around your group.</dd></div>
+          <div><dt>Seating</dt><dd>{SEATING.recliners} recliners at the back and {SEATING.beanBags} bean bags in front — {MAX_GUESTS} people in all</dd></div>
           <div><dt>Capacity</dt><dd>Up to {MAX_GUESTS} guests. Sessions start at ₹{ROOM_BASE.toLocaleString('en-IN')}; the tickets page has the price for each setup.</dd></div>
           <div><dt>Session</dt><dd>90 minutes, start to finish. Karaoke is 30.</dd></div>
           <div><dt>Make it yours</dt><dd>Decoration, cake, flowers and a photoshoot available with Date Night.</dd></div>
         </dl>
-        <p class="fine">Exact equipment and seating details are being finalised — we'll confirm them with you when we call.</p>
+        <p class="fine">Exact equipment details are being finalised — we'll confirm them with you when we call.</p>
       </div>
     </div>
   </section>

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import WhatsApp from '../components/WhatsApp.astro';
 ---
 <Base title="Book a Slot — YourSpace Jabalpur"
       description="Book a private session at YourSpace Jabalpur. Pick your occasion, date, guests, time and setup, then pay by UPI.">
@@ -13,6 +14,7 @@ import PageHead from '../components/PageHead.astro';
     <div class="shell">
       <!-- the booking flow mounts here, inline instead of as a modal -->
       <div id="bookMount"></div>
+      <WhatsApp message="Hi YourSpace, I have a question before I book." />
     </div>
   </section>
 

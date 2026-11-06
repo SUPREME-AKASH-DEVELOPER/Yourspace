@@ -29,6 +29,17 @@
  */
 import type { ImageMetadata } from 'astro';
 
+/*
+ * REPLACING THE AESTHETIC PHOTOGRAPHS (Tanishk is sending new ones, Nov)
+ *   1. Overwrite src/assets/decor/aesthetic-1.jpeg, -2 and -3 with the new
+ *      pictures, keeping those names (any count: add aesthetic-4.jpeg and an
+ *      import + entry below for more, or drop an entry for fewer).
+ *      aesthetic-1 is the one the booking flow shows on the Aesthetic card.
+ *   2. Rewrite each `alt` under Aesthetic to describe the new picture.
+ *   3. If the new setup looks different, update its `blurb` and `includes`.
+ *   Price and booking logic do not change. Use only photographs of our own
+ *   room and our own work — never an AI or stock picture presented as ours.
+ */
 import aesthetic1 from '../assets/decor/aesthetic-1.jpeg';
 import aesthetic2 from '../assets/decor/aesthetic-2.jpeg';
 import aesthetic3 from '../assets/decor/aesthetic-3.jpeg';

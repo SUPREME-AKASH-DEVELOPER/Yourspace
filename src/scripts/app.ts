@@ -371,7 +371,8 @@ function wireMenu() {
 /* ---------- the standalone forms (pre-book, contact, callback, enquiry) ----------
    One validator serves them all: fields declare data-req / data-phone.
    A valid submission is POSTed to formEndpoint and arrives as email. That is
-   the only route: nothing is handed off to WhatsApp or anywhere else. The
+   the only route: no form is handed off to WhatsApp or anywhere else (the
+   separate "contact us on WhatsApp" link is for questions, not bookings). The
    visitor's own copy is kept in their browser, and a failed send leaves the
    form filled in so they can simply try again.                              */
 

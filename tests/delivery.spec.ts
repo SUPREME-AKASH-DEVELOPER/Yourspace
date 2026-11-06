@@ -310,14 +310,16 @@ test.describe('submissions actually go somewhere', () => {
     await expect(page.locator('#bkSendState')).toContainText("didn't reach us", { timeout: 15_000 });
   });
 
-  test('nothing anywhere hands the visitor off to WhatsApp', async ({ page }) => {
+  test('no form hands the visitor off to WhatsApp — the WhatsApp link is for questions only', async ({ page }) => {
     for (const path of ['/', '/prebook/', '/contact/', '/book/', '/thanks/', '/tickets/']) {
       await page.goto(path);
-      const wa = await page.evaluate(() =>
-        [...document.querySelectorAll('a[href]')]
-          .map((a) => a.getAttribute('href') ?? '')
+      const stray = await page.evaluate(() =>
+        [...document.querySelectorAll('form a[href], form[action], a[href]')]
+          .filter((el) => !el.hasAttribute('data-whatsapp'))
+          .map((el) => el.getAttribute('href') ?? el.getAttribute('action') ?? '')
           .filter((h) => h.includes('wa.me') || h.includes('whatsapp')));
-      expect(wa, `${path} should offer no WhatsApp route`).toEqual([]);
+      expect(stray, `${path} should send nothing to WhatsApp except the contact link`).toEqual([]);
+      await expect(page.locator('form a[data-whatsapp]'), path).toHaveCount(0);
     }
   });
 

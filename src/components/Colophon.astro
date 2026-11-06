@@ -1,5 +1,6 @@
 ---
 import Logo from './Logo.astro';
+import WhatsApp from './WhatsApp.astro';
 import { experiences } from '../data/booking';
 import { site } from '../data/site';
 const year = new Date().getFullYear();
@@ -27,6 +28,7 @@ const year = new Date().getFullYear();
         <p class="col-head">Box office</p>
         <a data-call href="#" data-phone-text></a>
         <a data-phone-alt href="#"></a>
+        <WhatsApp variant="link" />
         <a href="/contact/">Contact</a>
         <p class="fine">{site.city}, {site.region}<br />{site.address || site.hours}</p>
       </div>

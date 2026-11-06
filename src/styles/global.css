@@ -643,11 +643,13 @@ h3{
   background:repeating-linear-gradient(0deg,rgba(0,0,0,.26) 0 1px,transparent 1px 3px);
 }
 /* the seats, facing the one direction that matters */
-.room-seats{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.room-seats{display:grid;gap:12px;justify-items:center;margin-top:18px}
+.room-seats div{display:flex;justify-content:center;gap:12px}
 .room-seats span{
-  width:34px;height:26px;border-radius:9px 9px 3px 3px;
+  width:30px;height:30px;border-radius:4px;
   border:1px solid var(--rule-2);background:rgba(237,230,216,.04);
 }
+.room-seats .rs-bag{border-radius:50%;width:34px;height:34px;border-color:var(--amber);background:rgba(212,168,95,.1)}
 .room-art figcaption{margin-top:14px;text-align:center}
 
 /* programme credits: label left, fact right, hairline between */
@@ -1066,28 +1068,65 @@ h3{
   font-style:normal;font-family:var(--mono);font-size:.62rem;
   text-transform:uppercase;letter-spacing:.24em;color:var(--grey);
 }
-.seat-rows{display:grid;gap:9px;justify-content:center}
-.seat-row{display:flex;align-items:center;gap:7px}
+.seat-rows{display:grid;gap:14px;justify-content:center}
+.seat-row{display:flex;align-items:center;justify-content:center;gap:9px}
 .seat-row>i{
-  font-style:normal;font-family:var(--mono);font-size:.62rem;color:var(--grey);
-  width:14px;text-align:center;letter-spacing:.1em;
+  font-style:normal;font-family:var(--mono);font-size:.58rem;color:var(--grey);
+  width:40px;text-align:right;letter-spacing:.12em;text-transform:uppercase;margin-right:4px;
 }
+/* the front row is centred under the screen; pad the right so its label doesn't push it off */
+.seat-row-front{padding-right:44px}
+.seat-row-back{padding-right:44px}
 .seat{
-  width:36px;height:29px;cursor:pointer;
-  border:1px solid var(--rule-2);border-radius:9px 9px 3px 3px;
+  width:38px;height:38px;cursor:pointer;padding:0;
+  border:1px solid var(--rule-2);
   background:rgba(237,230,216,.03);
-  transition:background .2s var(--ease),border-color .2s var(--ease),transform .2s var(--ease);
+  transition:background .2s var(--ease),border-color .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease);
 }
+/* recliners: square, with a backrest along the rear edge */
+.seat-recliner{border-radius:5px;box-shadow:inset 0 -6px 0 rgba(237,230,216,.06)}
+/* bean bags: round, and a little lower-slung */
+.seat-beanbag{border-radius:50%;width:42px;height:42px}
 .seat:hover{border-color:var(--amber);transform:translateY(-2px)}
 .seat.is-taken{background:var(--amber);border-color:var(--amber)}
+.seat-recliner.is-taken{box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
+.seat-beanbag.is-taken{box-shadow:0 0 0 4px rgba(212,168,95,.16)}
+.seat.is-new{animation:seat-in .42s var(--ease) both}
+@keyframes seat-in{0%{transform:scale(.7);box-shadow:0 0 0 0 rgba(212,168,95,.55)}60%{transform:scale(1.08)}100%{transform:none;box-shadow:0 0 0 10px rgba(212,168,95,0)}}
 .seat[disabled]{opacity:.28;cursor:not-allowed;transform:none}
+.seat-kinds{
+  display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:center;margin:20px 0 0;
+  font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.11em;color:var(--paper);
+}
+.seat-kinds span{display:inline-flex;align-items:center;gap:7px}
+.seat-kinds b{display:block;width:12px;height:12px;border:1px solid var(--amber)}
+.seat-kinds .sk-recliner{border-radius:2px}
+.seat-kinds .sk-beanbag{border-radius:50%}
+.seat-kinds .sk-total{color:var(--amber)}
 .seat-legend{
-  display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:20px 0 0;
+  display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:12px 0 0;
   font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:var(--grey);
 }
 .seat-legend span{display:inline-flex;align-items:center;gap:7px}
-.seat-legend b{width:13px;height:11px;border-radius:4px 4px 2px 2px;border:1px solid var(--rule-2);display:block}
+.seat-legend b{width:12px;height:12px;border-radius:3px;border:1px solid var(--rule-2);display:block}
 .seat-legend b.k{background:var(--amber);border-color:var(--amber)}
+
+/* WhatsApp — "for more information". Gold like everything else, not WhatsApp green. */
+.wa-strip{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;
+  margin-top:28px;padding:18px 20px;border:1px solid var(--rule);border-radius:2px;
+  background:rgba(237,230,216,.02);
+}
+.wa-strip p{margin:0;color:#C8BFB1;font-size:.95rem;max-width:44ch}
+.wa-kicker{
+  display:block;margin-bottom:4px;font-family:var(--mono);font-size:.64rem;
+  text-transform:uppercase;letter-spacing:.16em;color:var(--amber);
+}
+.wa-btn svg,.wa-link svg{width:18px;height:18px;flex:none}
+.wa-btn{gap:10px}
+.wa-link{display:inline-flex;align-items:center;gap:8px}
+.wa-strip>*{min-width:0}
+@media (max-width:640px){ .wa-btn{width:100%;justify-content:center;white-space:normal;text-align:center;padding-inline:14px} }
 
 /* summary + notes */
 .bk-sum{border:1px solid var(--rule);border-radius:2px;margin-bottom:20px}
@@ -1131,6 +1170,11 @@ h3{
 
 .sc-media,.dc-media,.ad-media{position:relative;display:block;aspect-ratio:16/10;overflow:hidden;background:var(--ink)}
 .ad-media{aspect-ratio:4/3}
+.vis-sample{
+  position:absolute;left:8px;bottom:8px;padding:3px 7px;border-radius:2px;
+  font-family:var(--mono);font-size:.56rem;text-transform:uppercase;letter-spacing:.12em;
+  background:rgba(12,11,9,.78);color:var(--paper);pointer-events:none;
+}
 .sc-media img,.dc-media img,.ad-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
 .sc:hover img,.dc:hover img,.ad:hover img{transform:scale(1.04)}
 
@@ -1270,11 +1314,14 @@ h3{
   .bk-foot{flex-wrap:wrap}
   .bk-foot .btn{flex:1 1 auto;order:2}
   .bk-total{order:1;flex:1 0 100%;text-align:left;margin:0 0 4px}
-  .seat{width:30px;height:25px}
+  .seat{width:34px;height:34px}
+  .seat-beanbag{width:38px;height:38px}
+  .seat-row{gap:7px}
   .stub-meta{grid-template-columns:1fr 1fr}
 }
 
 @media (prefers-reduced-motion:reduce){
+  .seat.is-new{animation:none}
   .js .reveal{opacity:1;transform:none;transition:none}
   .grain,.beam,.marquee-track,.plate-dot,.art-flame::before{animation:none}
   .ys-glint{animation:none;opacity:0}

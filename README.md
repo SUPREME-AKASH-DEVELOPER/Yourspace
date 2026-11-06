@@ -197,10 +197,72 @@ automatically; on another host, copy the directives into its header config.
 | 17 | Razorpay and a booking database, for automatic payment checks and double-booking protection | Both | When ready |
 | 18 | Owner's photographs for Movie Space, Karaoke, Watch Party and every add-on (see `src/assets/booking/README.md`) | Client | High |
 | 19 | Upgrade Astro 5 → 7 to clear the remaining `npm audit` advisories (build-time only; none reach the static site) | Dev | Medium |
-| 7 | Room specs: projector, sound, seat count, AC | Client | High |
+| 7 | Room specs: projector, sound, AC (seating is set: 5 recliners + 2 bean bags, `SEATING` in `src/data/booking.ts`) | Client | High |
+| 20 | Confirm +91 94296 90584 is the WhatsApp number (`whatsapp` in `src/data/site.ts`; empty = uses `phone`) | Client | High |
+| 21 | New Aesthetic decoration photographs from Tanishk — steps at the top of `src/data/decorations.ts` | Client | High |
+| 22 | Temporary bouquet and photoshoot pictures as `*.sample.jpg` in `src/assets/booking/` (badged "Sample image"), then the real ones | Both | High |
+| 23 | Payment gateway KYC — see "Payment gateway KYC" below | Client | Before any gateway |
+| 24 | Domain: see "Connecting the domain" below | Both | Blocking |
 | 8 | Decide where bookings land (Google Form or an API) | Both | High |
 
 Everything above is also marked `TODO` in the code.
+
+## WhatsApp
+
+"For more information — contact us on WhatsApp" sits on the contact page, under the
+booking flow, and in every page's footer. It uses WhatsApp's official click-to-chat link
+(`https://wa.me/<number>?text=…`), which opens the app on phones and WhatsApp Web or
+Desktop on computers, with an editable opening message. The number and message are
+`whatsapp` and `whatsappMessage` in `src/data/site.ts`; the component is
+`src/components/WhatsApp.astro`. With no valid number set, every WhatsApp button hides.
+
+WhatsApp is for questions. Bookings still go through the booking flow, and a WhatsApp
+message is never treated as a booking or as proof of payment.
+
+## Payment gateway KYC
+
+There is **no payment gateway in the code yet**: payment is UPI to the ID in `site.ts`,
+checked by hand. The activation error — *"You selected Media and Entertainment. Event
+Ticket Reseller doesn't currently support this category"* — is about the gateway account,
+not the site, and nothing here needs changing for it.
+
+The likely cause: YourSpace was registered as an **Event Ticket Reseller**, and the
+gateway doesn't onboard that sub-category. It is also not what the business does. It
+doesn't resell tickets to someone else's events. It rents a private room by the hour for
+screenings, celebrations and karaoke, with decoration add-ons.
+
+Next steps:
+
+1. Contact the gateway's support (or the activation form's "change category" option) and
+   describe the business in those plain words. Ask which category and sub-category they
+   use for a **private venue / party room rental** or **recreation / entertainment
+   services**. Don't pick one just because it gets approved: a category that doesn't
+   match the business can get the account frozen later, with payouts held.
+2. Have ready: PAN, bank account, GST (if registered), the business address, and the live
+   website with Terms, Privacy and Refund pages on the new domain. Gateways check those
+   pages exist.
+3. Expect questions about screening films and matches. Showing copyrighted content to
+   paying groups can need a public-performance licence, and a reviewer may ask. Have an
+   answer (for example, customers stream from their own accounts on a private booking)
+   checked with whoever advises the business.
+4. Until the account is active, UPI as it works now stays the only online payment. When
+   it is active, the integration plan is under "Payment" above (server-created order,
+   signature check, webhook). Nothing is marked paid on the client.
+
+## Connecting the domain
+
+The site is static, so there are no API URLs, payment callbacks, webhooks or CORS
+settings yet. What depends on the domain:
+
+| What | Where | Action |
+|---|---|---|
+| Canonical URLs, sitemap, robots.txt, OG image, structured data | `SITE_URL` in `astro.config.mjs` | Set `PUBLIC_SITE_URL=https://<domain>` in Vercel (Production), or edit the fallback there. Then rebuild. |
+| Domain itself | Vercel → Project → Domains | Add the apex and `www`, set the DNS records Vercel shows at the registrar, pick one to redirect to the other. |
+| Customer email template link | `email/customer-confirmation.html` | Replace `yourspace-jabalpur.example` |
+| Form delivery | Web3Forms dashboard | If the key is restricted to domains, add the new one. Send a test booking afterwards. |
+| HSTS `preload` | `vercel.json` | Already on. Only submit to hstspreload.org once HTTPS works on every subdomain. |
+| WhatsApp links, image paths | — | Nothing to do. They don't depend on the domain. |
+| Future payment gateway | Gateway dashboard | Callback and webhook URLs go on the new domain, e.g. `https://<domain>/api/razorpay/webhook`. |
 
 ## Where bookings go
 
@@ -220,7 +282,7 @@ Alongside that:
 
 - the visitor's own copy is kept in their browser under `ys-requests`, so a failed
   send never loses the details;
-- if the post fails, they are handed a WhatsApp draft rather than a dead end;
+- if the post fails, the form stays filled in and they can try again or call;
 - a hidden decoy field catches bots without a captcha;
 - anyone who leaves an email address gets a written confirmation back.
 

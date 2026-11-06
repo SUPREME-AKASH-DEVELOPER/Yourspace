@@ -67,13 +67,32 @@ test.describe('contact details', () => {
     expect(data.telephone).toEqual([PRIMARY.raw, SECOND.raw]);
   });
 
-  test('no WhatsApp route is offered anywhere — email is the only one', async ({ page }) => {
-    for (const path of ['/contact/', '/', '/prebook/', '/thanks/']) {
+  test('WhatsApp is offered for information, to the configured number, with a message', async ({ page }) => {
+    for (const path of ['/contact/', '/book/']) {
       await page.goto(path);
-      await expect(page.locator('a[data-wa]'), `${path}`).toHaveCount(0);
+      const strip = page.locator('.wa-strip');
+      await expect(strip, path).toContainText('For more information');
+      const a = strip.locator('a[data-whatsapp]');
+      await expect(a).toContainText('Contact us on WhatsApp');
+      await expect(a).toHaveAttribute('target', '_blank');
+      await expect(a).toHaveAttribute('rel', /noopener/);
+      const href = new URL((await a.getAttribute('href'))!);
+      expect(href.origin + href.pathname).toBe(`https://wa.me/${PRIMARY.raw.replace('+', '')}`);
+      expect(href.searchParams.get('text')).toMatch(/^Hi YourSpace/);
+    }
+  });
+
+  test('every WhatsApp link on a page is one of ours — no stray numbers', async ({ page }) => {
+    for (const path of ['/', '/contact/', '/prebook/', '/thanks/', '/tickets/']) {
+      await page.goto(path);
       const hrefs = await page.evaluate(() =>
-        [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href') ?? ''));
-      expect(hrefs.filter((h) => h.includes('wa.me')), `${path}`).toEqual([]);
+        [...document.querySelectorAll('a[href*="wa.me"], a[href*="whatsapp"]')]
+          .map((a) => [a.getAttribute('href') ?? '', a.hasAttribute('data-whatsapp')] as const));
+      expect(hrefs.length, `${path} has the footer link`).toBeGreaterThan(0);
+      for (const [h, tagged] of hrefs) {
+        expect(tagged, `${path}: ${h}`).toBe(true);
+        expect(h.startsWith(`https://wa.me/${PRIMARY.raw.replace('+', '')}`), `${path}: ${h}`).toBe(true);
+      }
     }
   });
 });
