@@ -28,15 +28,16 @@ export const site = {
   /**
    * WHATSAPP — "For more information, contact us on WhatsApp"
    *
-   * The number customers message on WhatsApp, with +91. Left as '' it uses
-   * `phone` above. Set it here if Tanishk's WhatsApp is on a different number.
-   * TODO(owner): confirm +91 94296 90584 is the WhatsApp line.
+   * The number customers message on WhatsApp, with +91. Confirmed by Tanishk
+   * (Nov 2026): WhatsApp is on the second line, not the one we answer calls
+   * on, so it is set explicitly here rather than falling back to `phone`.
+   * Left as '' it would use `phone` above.
    *
    * WhatsApp is for questions only. A WhatsApp message is never treated as a
    * booking or as proof of payment — bookings still go through the booking
    * form, and payment is checked in the bank app.
    */
-  whatsapp: '',
+  whatsapp: '+917999656039',
   /** What the chat opens with. The customer can edit it before sending. */
   whatsappMessage: "Hi YourSpace, I'd like more information about booking a private session.",
 

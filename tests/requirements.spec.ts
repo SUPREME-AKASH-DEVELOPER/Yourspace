@@ -6,7 +6,7 @@
  * real booking flow in a browser for the behaviour around those rules.
  */
 import { test, expect, type Page } from '@playwright/test';
-import { mockDelivery, ENDPOINT, readBody } from './helpers';
+import { mockDelivery, ENDPOINT, readBody, pickSeats } from './helpers';
 import { PAGES } from './pages';
 import {
   setups, slots, addonGroups, priceList, setupPrice, quote, CALL_US, MAX_GUESTS, addMinutes,
@@ -114,7 +114,7 @@ async function fresh(page: Page) {
 
 async function toSetup(page: Page, guests = 2) {
   await page.locator('[data-exp-pick="date"]').click();
-  if (guests !== 2) await page.locator(`[data-seat="${guests}"]`).click();
+  await pickSeats(page, guests);
   await page.locator('[data-date-pick]').nth(2).click();
   await page.locator('[data-bk-next]').click();
   await page.locator('[data-slot-pick="s6"]').click();

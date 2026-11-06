@@ -31,6 +31,22 @@ export const SEATING = { recliners: 5, beanBags: 2 } as const;
 /** Nobody books more than this online, whatever the setup — one person per seat. */
 export const MAX_GUESTS = SEATING.recliners + SEATING.beanBags;
 
+/**
+ * Every seat has a number, and the number says which kind it is: 1–5 are the
+ * recliners in the back row, 6 and 7 the bean bags in front. The picker lets
+ * people choose the seats they actually want — any one of them on its own —
+ * so these two helpers are what everything else reads.
+ */
+export const SEAT_IDS: readonly number[] = Array.from({ length: MAX_GUESTS }, (_, i) => i + 1);
+
+export type SeatKind = 'recliner' | 'beanbag';
+
+export const seatKind = (n: number): SeatKind => (n <= SEATING.recliners ? 'recliner' : 'beanbag');
+
+/** A seat number this room really has. Saved progress is checked against it. */
+export const isSeatId = (n: unknown): n is number =>
+  typeof n === 'number' && Number.isInteger(n) && n >= 1 && n <= MAX_GUESTS;
+
 /** Recliners fill first; bean bags only once all five recliners are taken. */
 export function seatsFor(guests: number): { recliners: number; beanBags: number } {
   const g = Math.min(MAX_GUESTS, Math.max(0, Math.floor(guests)));
@@ -38,12 +54,35 @@ export function seatsFor(guests: number): { recliners: number; beanBags: number 
   return { recliners, beanBags: g - recliners };
 }
 
-/** "2 recliners", "5 recliners + 1 bean bag". */
-export function seatingLabel(guests: number): string {
+/**
+ * The seats to start someone off with when all we have is a head count — from
+ * the home page, say, or older saved progress. Recliners first, as before.
+ */
+export function defaultSeats(guests: number): number[] {
   const { recliners, beanBags } = seatsFor(guests);
-  const r = `${recliners} ${recliners === 1 ? 'recliner' : 'recliners'}`;
-  return beanBags ? `${r} + ${beanBags} ${beanBags === 1 ? 'bean bag' : 'bean bags'}` : r;
+  return [
+    ...Array.from({ length: recliners }, (_, i) => i + 1),
+    ...Array.from({ length: beanBags }, (_, i) => SEATING.recliners + i + 1),
+  ];
 }
+
+/** Tidy a list of seats: real seats only, no duplicates, in room order. */
+export const cleanSeats = (seats: unknown): number[] =>
+  Array.isArray(seats) ? [...new Set(seats.filter(isSeatId))].sort((a, b) => a - b) : [];
+
+/** "2 recliners", "1 recliner + 1 bean bag" — from the seats actually chosen. */
+export function seatsLabel(seats: number[]): string {
+  const recliners = seats.filter((n) => seatKind(n) === 'recliner').length;
+  const beanBags = seats.length - recliners;
+  const parts = [
+    ...(recliners ? [`${recliners} ${recliners === 1 ? 'recliner' : 'recliners'}`] : []),
+    ...(beanBags ? [`${beanBags} ${beanBags === 1 ? 'bean bag' : 'bean bags'}`] : []),
+  ];
+  return parts.join(' + ') || 'no seats yet';
+}
+
+/** "2 recliners", "5 recliners + 1 bean bag" — from a head count alone. */
+export const seatingLabel = (guests: number): string => seatsLabel(defaultSeats(guests));
 
 /** The lowest price anything starts from — used for "From ₹…" on the marketing pages. */
 export const ROOM_BASE = 1500;

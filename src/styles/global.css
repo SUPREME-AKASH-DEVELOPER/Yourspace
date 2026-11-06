@@ -1068,34 +1068,65 @@ h3{
   font-style:normal;font-family:var(--mono);font-size:.62rem;
   text-transform:uppercase;letter-spacing:.24em;color:var(--grey);
 }
-.seat-rows{display:grid;gap:14px;justify-content:center}
-.seat-row{display:flex;align-items:center;justify-content:center;gap:9px}
+.seat-rows{display:grid;gap:18px;justify-content:center}
+.seat-row{display:flex;align-items:center;justify-content:center;gap:10px}
 .seat-row>i{
-  font-style:normal;font-family:var(--mono);font-size:.58rem;color:var(--grey);
-  width:40px;text-align:right;letter-spacing:.12em;text-transform:uppercase;margin-right:4px;
+  font-style:normal;font-family:var(--mono);font-size:.56rem;color:var(--grey);
+  width:40px;text-align:right;letter-spacing:.14em;text-transform:uppercase;margin-right:6px;
 }
-/* the front row is centred under the screen; pad the right so its label doesn't push it off */
-.seat-row-front{padding-right:44px}
-.seat-row-back{padding-right:44px}
+/* both rows are padded by the width of the label, so the seats stay centred
+   under the screen however many are in the row */
+.seat-row-front,.seat-row-back{padding-right:46px}
+.seat-group{display:inline-flex;align-items:center;gap:10px}
+/* the bean bags sit a little apart, as they do in the room */
+.seat-row-front .seat-group{gap:16px}
+
 .seat{
-  width:38px;height:38px;cursor:pointer;padding:0;
+  position:relative;width:44px;height:42px;cursor:pointer;padding:0;
+  display:inline-flex;align-items:center;justify-content:center;
   border:1px solid var(--rule-2);
-  background:rgba(237,230,216,.03);
-  transition:background .2s var(--ease),border-color .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease);
+  background:linear-gradient(180deg,rgba(237,230,216,.055),rgba(237,230,216,.02));
+  transition:background .22s var(--ease),border-color .22s var(--ease),
+             transform .22s var(--ease),box-shadow .22s var(--ease),color .22s var(--ease);
 }
-/* recliners: square, with a backrest along the rear edge */
-.seat-recliner{border-radius:5px;box-shadow:inset 0 -6px 0 rgba(237,230,216,.06)}
-/* bean bags: round, and a little lower-slung */
-.seat-beanbag{border-radius:50%;width:42px;height:42px}
-.seat:hover{border-color:var(--amber);transform:translateY(-2px)}
+/* the seat's number, quiet until the seat is taken */
+.seat-tag{
+  font-family:var(--mono);font-size:.6rem;line-height:1;color:var(--grey);
+  transition:color .22s var(--ease);
+}
+/* recliners: square, with armrests either side and a backrest along the rear edge */
+.seat-recliner{border-radius:6px 6px 4px 4px;box-shadow:inset 0 -7px 0 rgba(237,230,216,.05)}
+.seat-recliner::before,.seat-recliner::after{
+  content:'';position:absolute;bottom:5px;width:4px;height:17px;border-radius:2px;
+  background:var(--rule-2);transition:background .22s var(--ease);
+}
+.seat-recliner::before{left:-2px}
+.seat-recliner::after{right:-2px}
+/* bean bags: round, lower-slung, no armrests */
+.seat-beanbag{width:46px;height:46px;border-radius:50%;box-shadow:inset 0 -5px 10px rgba(237,230,216,.045)}
+
+.seat:hover{border-color:var(--amber);transform:translateY(-3px)}
+.seat:hover .seat-tag{color:var(--paper)}
+.seat:hover::before,.seat:hover::after{background:var(--amber)}
+.seat:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+
 .seat.is-taken{background:var(--amber);border-color:var(--amber)}
-.seat-recliner.is-taken{box-shadow:inset 0 -6px 0 rgba(0,0,0,.18)}
-.seat-beanbag.is-taken{box-shadow:0 0 0 4px rgba(212,168,95,.16)}
+.seat.is-taken .seat-tag{color:var(--ink)}
+.seat-recliner.is-taken{box-shadow:inset 0 -7px 0 rgba(0,0,0,.2)}
+.seat-recliner.is-taken::before,.seat-recliner.is-taken::after{background:var(--amber)}
+.seat-beanbag.is-taken{box-shadow:0 0 0 4px rgba(212,168,95,.16),inset 0 -5px 10px rgba(0,0,0,.14)}
+.seat.is-taken:hover{transform:translateY(-3px);background:var(--amber-2)}
+
 .seat.is-new{animation:seat-in .42s var(--ease) both}
-@keyframes seat-in{0%{transform:scale(.7);box-shadow:0 0 0 0 rgba(212,168,95,.55)}60%{transform:scale(1.08)}100%{transform:none;box-shadow:0 0 0 10px rgba(212,168,95,0)}}
+@keyframes seat-in{0%{transform:scale(.72)}55%{transform:scale(1.1)}100%{transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .seat,.seat.is-new{transition:none;animation:none}
+  .seat:hover,.seat.is-taken:hover{transform:none}
+}
 .seat[disabled]{opacity:.28;cursor:not-allowed;transform:none}
+
 .seat-kinds{
-  display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:center;margin:20px 0 0;
+  display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:center;margin:22px 0 0;
   font-family:var(--mono);font-size:.68rem;text-transform:uppercase;letter-spacing:.11em;color:var(--paper);
 }
 .seat-kinds span{display:inline-flex;align-items:center;gap:7px}
@@ -1103,13 +1134,23 @@ h3{
 .seat-kinds .sk-recliner{border-radius:2px}
 .seat-kinds .sk-beanbag{border-radius:50%}
 .seat-kinds .sk-total{color:var(--amber)}
+
+/* what they have chosen, counted back to them as they tap */
+.seat-tally{
+  margin:14px 0 0;text-align:center;font-family:var(--mono);font-size:.7rem;
+  text-transform:uppercase;letter-spacing:.12em;color:var(--paper);
+}
+.seat-tally b{color:var(--amber);font-weight:500}
+.seat-tally em{display:block;margin-top:5px;font-style:normal;font-size:.64rem;color:var(--grey);letter-spacing:.1em}
+
 .seat-legend{
-  display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:12px 0 0;
-  font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.11em;color:var(--grey);
+  display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin:14px 0 0;
+  font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.11em;color:var(--grey);
 }
 .seat-legend span{display:inline-flex;align-items:center;gap:7px}
 .seat-legend b{width:12px;height:12px;border-radius:3px;border:1px solid var(--rule-2);display:block}
 .seat-legend b.k{background:var(--amber);border-color:var(--amber)}
+.seat-legend-hint{text-transform:none;letter-spacing:.04em;font-size:.66rem}
 
 /* WhatsApp — "for more information". Gold like everything else, not WhatsApp green. */
 .wa-strip{
@@ -1127,6 +1168,19 @@ h3{
 .wa-link{display:inline-flex;align-items:center;gap:8px}
 .wa-strip>*{min-width:0}
 @media (max-width:640px){ .wa-btn{width:100%;justify-content:center;white-space:normal;text-align:center;padding-inline:14px} }
+
+/* the WhatsApp hand-off on the confirmation screen: the booking is already
+   with us, this just carries it into the chat */
+.bk-wa{
+  margin:22px 0 20px;padding:18px 20px;text-align:left;
+  border:1px solid rgba(212,168,95,.3);border-radius:2px;background:rgba(212,168,95,.05);
+}
+.bk-wa-say{margin:0 0 14px;color:#C8BFB1;font-size:.93rem}
+.bk-wa-say b{color:var(--paper);font-family:var(--mono);font-size:.86em}
+.bk-wa-btn{display:inline-flex;align-items:center;gap:10px;justify-content:center}
+.bk-wa-btn .wa-i{width:18px;height:18px;flex:none}
+.bk-wa .fine{margin:12px 0 0}
+@media (max-width:640px){ .bk-wa-btn{width:100%;white-space:normal;text-align:center;padding-inline:14px} }
 
 /* summary + notes */
 .bk-sum{border:1px solid var(--rule);border-radius:2px;margin-bottom:20px}
@@ -1317,8 +1371,13 @@ h3{
   .bk-foot .btn{flex:1 1 auto;order:2}
   .bk-total{order:1;flex:1 0 100%;text-align:left;margin:0 0 4px}
   .seat{width:34px;height:34px}
-  .seat-beanbag{width:38px;height:38px}
-  .seat-row{gap:7px}
+  .seat{width:40px;height:40px}
+  .seat-beanbag{width:42px;height:42px}
+  .seat-row{gap:8px}
+  .seat-group{gap:8px}
+  .seat-row-front .seat-group{gap:14px}
+  .seat-row>i{width:32px;margin-right:4px}
+  .seat-row-front,.seat-row-back{padding-right:36px}
   .stub-meta{grid-template-columns:1fr 1fr}
 }
 

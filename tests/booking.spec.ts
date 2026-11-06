@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mockDelivery } from './helpers';
+import { mockDelivery, pickSeats } from './helpers';
 
 /** Each test starts from an empty flow — the saved-progress behaviour is tested separately. */
 async function freshFlow(page: Page) {
@@ -13,8 +13,7 @@ async function freshFlow(page: Page) {
 /** Occasion, guests, date and time — everything up to the setup step. */
 async function toSetup(page: Page, guests: number, occasion = 'date') {
   await page.locator(`[data-exp-pick="${occasion}"]`).click();
-  // two seats are filled to start with; tapping seat 2 when two are taken hands one back
-  if (guests !== 2) await page.locator(`[data-seat="${guests}"]`).click();
+  await pickSeats(page, guests);
   await page.locator('[data-date-pick]').nth(2).click();
   await page.locator('[data-bk-next]').click();
   await page.locator('[data-slot-pick="s6"]').click();
@@ -94,7 +93,7 @@ test.describe('booking flow', () => {
     await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹1,500');
     await page.locator('[data-bk-back]').click();
     await page.locator('[data-bk-back]').click();
-    await page.locator('[data-seat="6"]').click();
+    await pickSeats(page, 6);
     await page.locator('[data-bk-next]').click();
     await page.locator('[data-slot-pick="s6"]').click();
     await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹1,700');
@@ -120,7 +119,7 @@ test.describe('booking flow', () => {
 
     await page.locator('[data-bk-back]').click();
     await page.locator('[data-bk-back]').click();
-    await page.locator('[data-seat="3"]').click();
+    await pickSeats(page, 3);
     await page.locator('[data-bk-next]').click();
     await page.locator('[data-slot-pick="s6"]').click();
     await expect(card.locator('.sc-price')).toHaveText('₹450');
@@ -265,6 +264,38 @@ test.describe('booking flow', () => {
     await page.locator('#quickStart button[type=submit]').click();
     await expect(page.locator('#bkTotal')).toContainText('Karaoke');
     await expect(page.locator('#bkTotal')).toContainText('5 guests');
+  });
+
+  /* Tanishk wanted people to be able to carry a filled-in booking straight into
+     his chat. It is an extra way through, so the email must still go, and the
+     chat must never be made to look like a payment. */
+  test('the confirmation hands the whole booking over to WhatsApp', async ({ page }) => {
+    const sent = await freshFlow(page);
+    await toSetup(page, 3);
+    await page.locator('[data-setup-pick="movie"]').click();
+    await details(page, 'later');
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('#bkSendState')).toContainText('reached us', { timeout: 10_000 });
+
+    const ref = (await page.locator('.bk-ref b').textContent())!.trim();
+    const wa = page.locator('a[data-wa-booking]');
+    await expect(wa).toContainText('Send my booking on WhatsApp');
+    await expect(wa).toHaveAttribute('target', '_blank');
+    await expect(wa).toHaveAttribute('rel', /noopener/);
+
+    const href = new URL((await wa.getAttribute('href'))!);
+    expect(href.origin + href.pathname, 'the business WhatsApp line')
+      .toBe('https://wa.me/917999656039');
+    const text = href.searchParams.get('text') ?? '';
+    expect(text, 'the booking is written out for them').toContain(ref);
+    expect(text).toContain('Akash Rai');
+    expect(text).toContain('3 recliners');
+    expect(text).toMatch(/Movie Space/);
+    expect(text).not.toContain('UNVERIFIED');
+
+    // the hand-off is as well as the email, not instead of it
+    expect(sent, 'the booking still reached the inbox').toHaveLength(1);
+    await expect(page.locator('.bk-done')).toContainText('already with us');
   });
 
   test('survives localStorage being unavailable', async ({ browser }) => {

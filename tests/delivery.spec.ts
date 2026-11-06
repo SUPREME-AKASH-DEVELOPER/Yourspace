@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { readBody } from './helpers';
+import { readBody, pickSeats } from './helpers';
 
 const ENDPOINT = /formsubmit\.co|api\.web3forms\.com/;
 
@@ -248,7 +248,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.reload();
 
     await page.locator('[data-exp-pick="karaoke"]').click();
-    await page.locator('[data-seat="5"]').click();
+    await pickSeats(page, 5);
     await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
     await page.locator('[data-slot-pick="s4"]').click();

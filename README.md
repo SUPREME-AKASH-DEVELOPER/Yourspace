@@ -53,7 +53,7 @@ switches UPI off for that booking, because we cannot ask for an amount we don't 
 | Step | What | Notes |
 |---|---|---|
 | 1 | Occasion | Each occasion suggests a setup on step 4 |
-| 2 | Date and guests | Up to 7 seats |
+| 2 | Date and seats | Pick the seats themselves — 5 recliners, 2 bean bags |
 | 3 | Time | Eight 90-minute slots, 12 PM to 12 AM; slots already started today are disabled |
 | 4 | Setup | Photo cards with the price for *this* group size. Date Night opens the three decorations underneath |
 | 5 | Add-ons | Bouquet, cake, photoshoot, one of each. Date Night only; the step is skipped otherwise |
@@ -79,6 +79,21 @@ would offer yesterday between midnight and 5:30 AM in India.
 Saved progress is read back from the visitor's browser, so every value is checked
 against what the flow could have produced before it is used, and the cleaned state is
 written back.
+
+### The seats
+
+The room is five recliners in a back row and two bean bags in front, nearer the screen —
+seven in all. `SEATING` in `src/data/booking.ts` is the only place those numbers live, so
+the picker, the room drawing, the home and room pages, the booking summary and the email
+to the team cannot disagree with each other.
+
+In the picker each seat is **its own toggle**: one tap takes that seat and nothing else.
+(It used to fill every seat up to the one you tapped, which made tapping a bean bag look
+as though it had taken all five recliners with it.) Recliners are square with armrests,
+bean bags are round, and the seats someone actually picks are what the summary and the
+email say — "1 recliner + 2 bean bags", not just a head count. The chosen seats live in
+`state.seats`; `state.guests` is only ever `seats.length`, and `setSeats()` is the one
+function that writes either, so the two cannot drift apart.
 
 ### Payment
 
@@ -180,7 +195,7 @@ automatically; on another host, copy the directives into its header config.
 
 | # | What | Who | Status |
 |---|------|-----|--------|
-| 1 | Confirm both numbers in `src/data/site.ts` (`phone` is the line we answer first and the one WhatsApp uses; `phoneAlt` is the second) | Client | **Blocking** — Call/WhatsApp buttons stay off until a valid `+91` number is set |
+| 1 | Confirm both numbers in `src/data/site.ts` (`phone` is the line we answer first; `phoneAlt` is the second, and `whatsapp` is the WhatsApp line) | Client | **Blocking** — Call/WhatsApp buttons stay off until a valid `+91` number is set |
 | 2 | Full address, map link and opening hours (`site.ts`) | Client | **Blocking** for local SEO and the schema |
 | 3 | Set the real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Blocking** — canonical URLs, sitemap and OG image URLs derive from it |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
@@ -197,8 +212,8 @@ automatically; on another host, copy the directives into its header config.
 | 17 | Razorpay and a booking database, for automatic payment checks and double-booking protection | Both | When ready |
 | 18 | Owner's photographs for Movie Space, Karaoke, Watch Party and every add-on (see `src/assets/booking/README.md`) | Client | High |
 | 19 | Upgrade Astro 5 → 7 to clear the remaining `npm audit` advisories (build-time only; none reach the static site) | Dev | Medium |
-| 7 | Room specs: projector, sound, AC (seating is set: 5 recliners + 2 bean bags, `SEATING` in `src/data/booking.ts`) | Client | High |
-| 20 | Confirm +91 94296 90584 is the WhatsApp number (`whatsapp` in `src/data/site.ts`; empty = uses `phone`) | Client | High |
+| 7 | Room specs: projector, sound, AC (seating is set: 5 recliners + 2 bean bags, `SEATING` in `src/data/booking.ts`, and each seat is picked individually) | Client | High |
+| 20 | WhatsApp number | Client | **Done** — confirmed as +91 79996 56039 (the second line), set as `whatsapp` in `src/data/site.ts` |
 | 21 | New Aesthetic decoration photographs from Tanishk — steps at the top of `src/data/decorations.ts` | Client | High |
 | 22 | Temporary bouquet and photoshoot pictures as `*.sample.jpg` in `src/assets/booking/` (badged "Sample image"), then the real ones | Both | High |
 | 23 | Payment gateway KYC — see "Payment gateway KYC" below | Client | Before any gateway |
@@ -216,8 +231,26 @@ Desktop on computers, with an editable opening message. The number and message a
 `whatsapp` and `whatsappMessage` in `src/data/site.ts`; the component is
 `src/components/WhatsApp.astro`. With no valid number set, every WhatsApp button hides.
 
-WhatsApp is for questions. Bookings still go through the booking flow, and a WhatsApp
-message is never treated as a booking or as proof of payment.
+The number in use is **+91 79996 56039** — the second line, confirmed by Tanishk. Calls
+go to `phone` (+91 94296 90584) and WhatsApp to `whatsapp`, so the two are set
+separately and `tests/contact.spec.ts` checks every `wa.me` link on the site points at
+the WhatsApp one.
+
+### Finishing a booking in the chat
+
+On the confirmation screen there is also **"Send my booking on WhatsApp"**, which opens
+the chat with the whole booking — reference, occasion, date and time, seats, add-ons and
+total — already written out. Tanishk asked for it so someone who would rather talk than
+wait for the call can carry their booking straight into the chat.
+
+It is an extra way through, never the only one. By the time the button appears the
+booking has already been emailed to the team, so nothing is lost if it is never tapped,
+and `tests/booking.spec.ts` checks both happen. A WhatsApp message is still not a
+payment: the UPI panel, the "nothing has been charged" wording and the call to confirm
+are all unchanged.
+
+WhatsApp is for questions and for that hand-off. No form posts to WhatsApp instead of
+the inbox, and a message is never treated as proof of payment.
 
 ## Payment gateway KYC
 
@@ -303,7 +336,11 @@ plus the edge cases around them (time zones, going back, tampered saved state).
   dialog and on each step of the booking flow; focus visibility, `inert` background,
   focus trap, reduced motion, and the no-JavaScript path
 - **Booking** — the full flow, seat pricing, validation, confirmation wording, resuming
-  after a reload, and behaviour when `localStorage` throws
+  after a reload, the WhatsApp hand-off on the confirmation screen, and behaviour when
+  `localStorage` throws
+- **Seats** (`tests/seats.spec.ts`) — five recliners and two bean bags, told apart by
+  shape; one tap takes one seat and no other; the last seat cannot be given back; the
+  seats chosen are what the summary and the email say; a tampered seat list is cleaned
 - **Forms** — all four forms: empty, invalid, valid, reset, double submit, overlong input,
   and that text is readable on the paper sections
 - **Layout** — no horizontal overflow at 320–2560px, no visible text cut off, the full

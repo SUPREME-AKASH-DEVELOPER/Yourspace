@@ -4,6 +4,8 @@ import { PAGES } from './pages';
 /** Kept in step with src/data/site.ts. */
 const PRIMARY = { raw: '+919429690584', pretty: '+91 94296 90584' };
 const SECOND  = { raw: '+917999656039', pretty: '+91 79996 56039' };
+/** WhatsApp is on the second line (`whatsapp` in site.ts), not the one we call on. */
+const WA = SECOND;
 
 test.describe('contact details', () => {
   test('both numbers are published on the contact page', async ({ page }) => {
@@ -77,7 +79,7 @@ test.describe('contact details', () => {
       await expect(a).toHaveAttribute('target', '_blank');
       await expect(a).toHaveAttribute('rel', /noopener/);
       const href = new URL((await a.getAttribute('href'))!);
-      expect(href.origin + href.pathname).toBe(`https://wa.me/${PRIMARY.raw.replace('+', '')}`);
+      expect(href.origin + href.pathname).toBe(`https://wa.me/${WA.raw.replace('+', '')}`);
       expect(href.searchParams.get('text')).toMatch(/^Hi YourSpace/);
     }
   });
@@ -91,7 +93,7 @@ test.describe('contact details', () => {
       expect(hrefs.length, `${path} has the footer link`).toBeGreaterThan(0);
       for (const [h, tagged] of hrefs) {
         expect(tagged, `${path}: ${h}`).toBe(true);
-        expect(h.startsWith(`https://wa.me/${PRIMARY.raw.replace('+', '')}`), `${path}: ${h}`).toBe(true);
+        expect(h.startsWith(`https://wa.me/${WA.raw.replace('+', '')}`), `${path}: ${h}`).toBe(true);
       }
     }
   });

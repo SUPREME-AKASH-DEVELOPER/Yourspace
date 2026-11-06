@@ -1,13 +1,17 @@
 import qrcode from 'qrcode-generator';
 import { $, $$, rupee, esc, dateLabel, nextDays, stash, venueNow, venueToday, isIsoDate } from './dom';
-import { site, phoneNumbers } from '../data/site';
+import { site, phoneNumbers, whatsappLink, whatsappIsSet } from '../data/site';
 import { deliver, envelope } from './deliver';
 import {
   experiences, slots, setups, addonGroups, stepNames, OTHER,
-  MAX_GUESTS, SEATING, seatingLabel, setupOf, setupPrice, addonOf, quote, addMinutes,
+  MAX_GUESTS, SEATING, SEAT_IDS, seatKind, cleanSeats, defaultSeats, seatsLabel,
+  setupOf, setupPrice, addonOf, quote, addMinutes,
   type Setup, type Quote,
 } from '../data/booking';
 import { decorations, DECOR_INCLUDED } from '../data/decorations';
+
+/** The same WhatsApp mark as WhatsApp.astro, for the hand-off on the confirmation screen. */
+const WA_ICON = '<svg class="wa-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2.2a9.8 9.8 0 0 0-8.4 14.9L2.2 21.8l4.8-1.3A9.8 9.8 0 1 0 12 2.2Zm0 17.8a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.9 2c0 1.2.9 2.4 1 2.5.1.2 1.7 2.6 4.2 3.7 1.6.7 2.2.7 3 .6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.5-.5Z"/></svg>';
 
 /* Line-art marks for the occasion tiles — drawn, not emoji. */
 const ICON: Record<string, string> = {
@@ -24,7 +28,15 @@ type Pay = '' | 'upi' | 'later';
 type Send = '' | 'sending' | 'sent' | 'failed';
 
 interface State {
-  step: number; exp: string; date: string; guests: number;
+  step: number; exp: string; date: string;
+  /**
+   * The seat numbers they picked — 1–5 recliners, 6–7 bean bags. This is the
+   * truth about who is coming; `guests` is only ever `seats.length`, kept
+   * alongside it because the prices are worked out per head. Change seats
+   * through setSeats() and the two can never drift apart.
+   */
+  seats: number[];
+  guests: number;
   slot: string; setup: string; decor: string; addons: string[];
   name: string; phone: string; email: string; notes: string;
   /** Filled in when the occasion is "Something else". */
@@ -39,7 +51,7 @@ interface State {
   utrSend: Send;
 }
 const BLANK: State = {
-  step: 0, exp: '', date: '', guests: 2, slot: '', setup: '', decor: '', addons: [],
+  step: 0, exp: '', date: '', seats: [1, 2], guests: 2, slot: '', setup: '', decor: '', addons: [],
   name: '', phone: '', email: '', notes: '', customOccasion: '',
   pay: '', ref: '', send: '', utr: '', utrSend: '',
 };
@@ -55,6 +67,21 @@ let resumed = false;
 let busy = false;
 /** The pay panel has been on screen long enough to take a tap. */
 let armed = false;
+
+/**
+ * The only way seats are set. It tidies the list and keeps `guests` in step,
+ * so no caller can leave the head count saying one thing and the seat map
+ * another. Returns true if anything changed.
+ */
+function setSeats(seats: number[]): boolean {
+  const next = cleanSeats(seats);
+  const same = next.length === S.seats.length && next.every((n, i) => n === S.seats[i]);
+  // both are written every time, even when the seats themselves did not move:
+  // a head count left over from somewhere else must never survive this call
+  S.seats = next;
+  S.guests = next.length;
+  return !same;
+}
 
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
 const clearSaved = () => { try { localStorage.removeItem(KEY); } catch {} };
@@ -96,7 +123,12 @@ function load() {
     // the page went away mid-send: we cannot know if it arrived, so offer a resend
     if (S.send === 'sending') S.send = 'failed';
     if (S.utrSend === 'sending') S.utrSend = 'failed';
-    S.guests = Math.min(MAX_GUESTS, Math.max(1, S.guests | 0 || 2));
+    // Seats are the truth. A saved list from this browser is checked seat by
+    // seat; progress saved before seats existed leaves only a head count, so
+    // the seats are worked out from that. Either way one seat is the minimum.
+    const saved = cleanSeats((o as { seats?: unknown }).seats);
+    setSeats(saved.length ? saved : defaultSeats(Math.min(MAX_GUESTS, Math.max(1, S.guests | 0 || 2))));
+    if (!S.seats.length) setSeats([1]);
     resumed = Boolean(S.exp || S.setup || S.date);
     save();   // write the cleaned state back, so what is stored is always valid
   } catch {}
@@ -252,7 +284,7 @@ export function prefillBooking(opts: { exp?: string; custom?: string; date?: str
   }
   if (opts.date && opts.date >= today()) S.date = opts.date;
   if (opts.guests && opts.guests > 0) {
-    S.guests = Math.min(MAX_GUESTS, Math.max(1, Math.floor(opts.guests)));
+    setSeats(defaultSeats(Math.min(MAX_GUESTS, Math.max(1, Math.floor(opts.guests)))));
     if (opts.guests > MAX_GUESTS) {
       notice = `You asked for ${Math.floor(opts.guests)} guests. Online bookings are for up to ${MAX_GUESTS}, so we have set ${MAX_GUESTS} — for a bigger group, call us on ${tel()?.pretty ?? 'the number on our contact page'}.`;
     }
@@ -444,37 +476,57 @@ function step0() {
     (resumed ? `<p class="fine">Picked up where you left off. <button type="button" data-bk-reset class="linkish">Start over</button></p>` : '');
 }
 
-/* the seat picker: you choose seats, not a number in a box.
-   It is drawn as the room is: two bean bags in front, nearer the screen, and
-   five recliners behind them. Recliners are square, bean bags round. Seats are
-   numbered in the order they fill — recliners 1–5, then bean bags 6–7 — so a
-   couple gets recliners, and the bean bags come in only for six or seven. */
-/** How many seats were taken before the last tap, so only the newly taken ones animate. */
-let seatWas = MAX_GUESTS;
+/* The seat picker: you choose the seats themselves, not a number in a box.
+   It is drawn as the room is — two bean bags in front, nearer the screen, and
+   five recliners behind them. Recliners are square, bean bags round.
+
+   Each seat is its own toggle: tapping one takes that seat and nothing else.
+   (It used to fill every seat up to the one you tapped, so tapping a bean bag
+   looked like it had taken all five recliners too — Tanishk flagged it, and
+   this is the fix.) The seats chosen are what the summary and the email say,
+   so a couple who want the bean bags get the bean bags. */
+
+/** The seat just turned on, so only that one plays the pop animation. */
+let seatJustOn: number | null = null;
+
+function seatButton(n: number) {
+  const kind = seatKind(n);
+  const nth = kind === 'recliner' ? n : n - SEATING.recliners;
+  const name = kind === 'recliner' ? `Recliner ${nth}` : `Bean bag ${nth}`;
+  const row = kind === 'recliner' ? 'back row' : 'front row';
+  const on = S.seats.includes(n);
+  return `<button type="button" class="seat seat-${kind}${on ? ' is-taken' : ''}${seatJustOn === n ? ' is-new' : ''}"
+    data-seat="${n}" data-kind="${kind}" aria-pressed="${on}"
+    aria-label="${name}, ${row}${on ? ' — taken, tap to give it back' : ''}"
+    title="${name} · ${row}"><span class="seat-tag" aria-hidden="true">${nth}</span></button>`;
+}
 
 function seatmap() {
-  const seat = (n: number, kind: 'recliner' | 'beanbag', label: string) =>
-    `<button type="button" class="seat seat-${kind}${n <= S.guests ? ' is-taken' : ''}${n > seatWas && n <= S.guests ? ' is-new' : ''}" data-seat="${n}"
-             data-kind="${kind}" aria-pressed="${n <= S.guests}" aria-label="${label}"></button>`;
-  const beanBags = Array.from({ length: SEATING.beanBags }, (_, c) =>
-    seat(SEATING.recliners + c + 1, 'beanbag', `Bean bag ${c + 1}, front row`)).join('');
-  const recliners = Array.from({ length: SEATING.recliners }, (_, c) =>
-    seat(c + 1, 'recliner', `Recliner ${c + 1}, back row`)).join('');
+  const beanBags = SEAT_IDS.filter((n) => seatKind(n) === 'beanbag').map(seatButton).join('');
+  const recliners = SEAT_IDS.filter((n) => seatKind(n) === 'recliner').map(seatButton).join('');
+  const picked = (k: 'recliner' | 'beanbag') => S.seats.filter((n) => seatKind(n) === k).length;
+  const r = picked('recliner');
+  const b = picked('beanbag');
 
   return `<div class="seatmap">
     <div class="seat-screen"><span aria-hidden="true"></span><em>Screen</em></div>
     <div class="seat-rows">
-      <div class="seat-row seat-row-front"><i>Front</i>${beanBags}</div>
-      <div class="seat-row seat-row-back"><i>Back</i>${recliners}</div>
+      <div class="seat-row seat-row-front"><i>Front</i><span class="seat-group">${beanBags}</span></div>
+      <div class="seat-row seat-row-back"><i>Back</i><span class="seat-group">${recliners}</span></div>
     </div>
     <p class="seat-kinds">
       <span><b class="sk-recliner" aria-hidden="true"></b>${SEATING.recliners} Recliners</span>
       <span><b class="sk-beanbag" aria-hidden="true"></b>${SEATING.beanBags} Bean Bags</span>
       <span class="sk-total">Total Capacity: ${MAX_GUESTS} People</span>
     </p>
+    <p class="seat-tally" role="status" aria-live="polite">
+      <b class="num">${S.guests}</b> ${S.guests === 1 ? 'guest' : 'guests'}
+      <em>${r} of ${SEATING.recliners} recliners${b ? ` · ${b} of ${SEATING.beanBags} bean bags` : ''}</em>
+    </p>
     <p class="seat-legend">
-      <span><b class="k"></b>${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · ${seatingLabel(S.guests)}</span>
-      <span><b></b>Free seat</span>
+      <span><b class="k"></b>Yours</span>
+      <span><b></b>Free</span>
+      <span class="seat-legend-hint">Tap a seat to take it or give it back</span>
     </p></div>`;
 }
 
@@ -482,7 +534,7 @@ function step1() {
   const said = notice;
   notice = '';
   return head(2, "When's the night, and who's coming?",
-    `Tap a seat for every guest — up to ${MAX_GUESTS}: ${SEATING.recliners} recliners at the back and ${SEATING.beanBags} bean bags in front. The price for your group shows when you choose a setup.`) +
+    `Pick the seats you want — one tap each, up to ${MAX_GUESTS}. ${SEATING.recliners} recliners at the back, ${SEATING.beanBags} bean bags in front. The price for your group shows when you choose a setup.`) +
     (said ? `<div class="bk-note" role="status" style="margin-bottom:22px"><i>Note</i><span>${esc(said)}</span></div>` : '') +
     seatmap() +
     '<p class="bk-kicker">Pick a date</p>' +
@@ -632,7 +684,7 @@ function summary(q: Quote, final = false) {
     ['Occasion', occasionLabel()],
     ['Date & time', (S.date ? dateLabel(S.date) : '—') + (slotOf() ? ` · ${timeLabel()}` : '')],
     ['Guests', String(S.guests)],
-    ['Seating', seatingLabel(S.guests)],
+    ['Seating', seatsLabel(S.seats)],
   ];
   q.lines.forEach((l) => rows.push([l.label, l.amount !== null ? rupee(l.amount) : 'On call']));
   return `<div class="bk-sum">${rows.map(([a, b]) =>
@@ -704,15 +756,18 @@ function onBodyClick(e: Event) {
   if (t.closest('[data-bk-reset]')) return resetFlow();
   if (t.closest('[data-bk-resend]')) { void sendBooking(); return; }
 
-  // seats fill up to the one you tapped; tapping the last one gives it back
+  // one tap, one seat: take it, or give that same one back
   if ((el = t.closest('[data-seat]'))) {
     const n = Number(el.dataset.seat);
-    seatWas = S.guests;
-    S.guests = n === S.guests ? Math.max(1, n - 1) : n;
+    if (!SEAT_IDS.includes(n)) return;
+    const had = S.seats.includes(n);
+    if (had && S.seats.length === 1) return flash('Someone has to sit somewhere — tap another seat first.');
+    seatJustOn = had ? null : n;
+    setSeats(had ? S.seats.filter((x) => x !== n) : [...S.seats, n]);
     save();
     render();
-    seatWas = MAX_GUESTS;
-    $<HTMLElement>(`[data-seat="${Math.min(S.guests || 1, MAX_GUESTS)}"]`, root!)?.focus();
+    seatJustOn = null;
+    $<HTMLElement>(`[data-seat="${n}"]`, root!)?.focus();
   }
 }
 
@@ -759,7 +814,7 @@ function bookingPayload(): Record<string, string> {
     Occasion: occasionLabel(),
     'Date & time': `${dateLabel(S.date)}, ${timeLabel()}`,
     Guests: String(S.guests),
-    Seating: seatingLabel(S.guests),
+    Seating: seatsLabel(S.seats),
     ...Object.fromEntries(q.lines.map((l) => [l.label, l.amount !== null ? rupee(l.amount) : `price on call${l.note ? ` (${l.note})` : ''}`])),
     ...(S.notes.trim() ? { Notes: S.notes.trim() } : {}),
     Total: q.unpriced.length ? `${rupee(q.total)} + ${q.unpriced.join(', ')} (priced on call)` : rupee(q.total),
@@ -774,6 +829,34 @@ function bookingText() {
   return [`YourSpace ${site.city} — booking ${S.ref}`,
     ...Object.entries(bookingPayload()).filter(([k]) => k !== 'Received' && k !== 'Booking ref' && k !== 'Payment')
       .map(([k, v]) => `${k}: ${v}`)].join('\n');
+}
+
+/* ---------- the WhatsApp hand-off ---------- */
+
+/* Tanishk asked for this (Nov 2026): once someone has filled the flow in, they
+   land in his chat with the whole booking already typed out, so they can finish
+   it in WhatsApp instead of waiting for the call. It is an extra way through,
+   not the only one — the booking has already been emailed to the team by the
+   time this button appears, so nothing is lost if they never tap it, and a
+   WhatsApp message is still not a payment: the UPI panel and the "we will call
+   you" line stay exactly as they were. */
+function bookingWhatsAppText() {
+  const q = totals();
+  const upi = S.pay === 'upi' && canPayOnline(q);
+  return [
+    `Hi YourSpace, I'd like to book. My booking reference is ${S.ref}.`,
+    '',
+    ...Object.entries(bookingPayload())
+      .filter(([k]) => k !== 'Received' && k !== 'Booking ref' && k !== 'Payment' && k !== 'Email')
+      .map(([k, v]) => `${k}: ${v}`),
+    '',
+    upi ? 'I have chosen to pay by UPI.' : 'Please confirm the slot and tell me how to pay.',
+  ].join('\n');
+}
+
+/** '' when no WhatsApp number is set, and the button then hides. */
+function bookingWhatsAppLink() {
+  return whatsappIsSet ? whatsappLink(bookingWhatsAppText()) : '';
 }
 
 async function submit() {
@@ -825,7 +908,8 @@ function paintSendState(reason = '') {
     S.send === 'sending' ? 'Sending your booking…'
     : S.send === 'sent' ? 'Your booking has reached us, and a copy is on its way to you.'
     : `${reason === 'busy' ? "We're getting a lot of bookings right now, so this one hasn't reached us yet."
-        : "That didn't reach us."} <button type="button" class="linkish" data-bk-resend>Try again</button> or call ${callLink()} and quote <b>${esc(S.ref)}</b>.`;
+        : "That didn't reach us."} <button type="button" class="linkish" data-bk-resend>Try again</button>${
+        bookingWhatsAppLink() ? ', send it on WhatsApp below,' : ''} or call ${callLink()} and quote <b>${esc(S.ref)}</b>.`;
 }
 
 function upiLink(amount: number) {
@@ -910,6 +994,7 @@ function renderDone() {
   const q = totals();
   const first = esc(S.name.split(' ')[0] || 'friend');
   const upi = S.pay === 'upi' && canPayOnline(q);
+  const wa = bookingWhatsAppLink();
   $('#bkSteps')!.innerHTML = '';
   ($('#bkBar') as HTMLElement).style.width = '100%';
   ($('#bkFoot') as HTMLElement).style.display = 'none';
@@ -925,6 +1010,17 @@ function renderDone() {
       <p class="fine center" id="bkSendState" role="status"></p>
       ${upi ? payPanel(q) : ''}
       ${summary(q, true)}
+      ${wa ? `
+        <div class="bk-wa">
+          <p class="bk-wa-say"><span class="wa-kicker">Finish on WhatsApp</span>
+            Your booking is already with us. Want to talk it through, or send it straight to
+            ${esc(site.name)} yourself? This opens WhatsApp with every detail of booking
+            <b>${esc(S.ref)}</b> already written out.</p>
+          <a class="btn btn-key bk-wa-btn" href="${esc(wa)}" target="_blank" rel="noopener" data-whatsapp data-wa-booking>
+            ${WA_ICON}Send my booking on WhatsApp<span class="sr-only"> (opens WhatsApp)</span></a>
+          <p class="fine">${upi ? 'Sending it on WhatsApp is not a payment — pay above to hold your slot.'
+            : 'We will still call you on ' + esc(S.phone) + ' to confirm.'}</p>
+        </div>` : ''}
       <div class="bk-actions">
         <button class="btn btn-line" type="button" id="bkCopy">Copy my details</button>
         ${mode === 'modal' ? '<button class="btn btn-line" type="button" data-bk-close>Done</button>'
