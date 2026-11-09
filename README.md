@@ -6,7 +6,7 @@ A private screening room in Jabalpur. Marketing site plus a six-step booking flo
 [Playwright](https://playwright.dev) · no UI framework.
 
 Pages ship as static HTML with ~24 KB of JavaScript. No cookies, no analytics,
-no third-party requests at all.
+no third-party requests from the browser.
 
 ```bash
 npm install
@@ -197,7 +197,7 @@ automatically; on another host, copy the directives into its header config.
 |---|------|-----|--------|
 | 1 | Phone number | Client | **Done** — one number everywhere, +91 79996 56039 (`phone` in `src/data/site.ts`; `whatsapp` is empty so WhatsApp follows it). Set `phoneAlt` if a second line is ever published |
 | 2 | Full address, map link and opening hours (`site.ts`) | Client | **Blocking** for local SEO and the schema |
-| 3 | Set the real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Blocking** — canonical URLs, sitemap and OG image URLs derive from it |
+| 3 | Real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Done** — https://www.yourspacejbp.com |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
 | 5 | Legal review of `/terms`, `/privacy`, `/refunds` | Client | **Blocking** — drafts, with the refund windows as placeholders |
 | 6 | Confirm the decoration photographs are ours to publish, and add pictures of the empty room | Client | **Blocking** — see note below |
@@ -218,7 +218,7 @@ automatically; on another host, copy the directives into its header config.
 | 22 | Temporary bouquet and photoshoot pictures as `*.sample.jpg` in `src/assets/booking/` (badged "Sample image"), then the real ones | Both | High |
 | 23 | Payment gateway KYC — see "Payment gateway KYC" below | Client | Before any gateway |
 | 24 | Domain: see "Connecting the domain" below | Both | Blocking |
-| 8 | Decide where bookings land (Google Form or an API) | Both | High |
+| 8 | Where bookings land | Dev | **Done** — emailed through `/api/send`, see below |
 
 Everything above is also marked `TODO` in the code.
 
@@ -285,32 +285,24 @@ Next steps:
 
 ## Connecting the domain
 
-The site is static, so there are no API URLs, payment callbacks, webhooks or CORS
-settings yet. What depends on the domain:
+The pages are static and the one server route is `/api/send`, so there are no payment
+callbacks or webhooks yet. What depends on the domain:
 
 | What | Where | Action |
 |---|---|---|
 | Canonical URLs, sitemap, robots.txt, OG image, structured data | `SITE_URL` in `astro.config.mjs` | Set `PUBLIC_SITE_URL=https://<domain>` in Vercel (Production), or edit the fallback there. Then rebuild. |
 | Domain itself | Vercel → Project → Domains | Add the apex and `www`, set the DNS records Vercel shows at the registrar, pick one to redirect to the other. |
-| Customer email template link | `email/customer-confirmation.html` | Replace `yourspace-jabalpur.example` |
-| Form delivery | Web3Forms dashboard | If the key is restricted to domains, add the new one. Send a test booking afterwards. |
+| Form delivery | Resend, Vercel | See `email/README.md`. Send a test booking afterwards. |
 | HSTS `preload` | `vercel.json` | Already on. Only submit to hstspreload.org once HTTPS works on every subdomain. |
 | WhatsApp links, image paths | — | Nothing to do. They don't depend on the domain. |
 | Future payment gateway | Gateway dashboard | Callback and webhook URLs go on the new domain, e.g. `https://<domain>/api/razorpay/webhook`. |
 
 ## Where bookings go
 
-Every form now **posts the submission to a real inbox**. It goes through
-[FormSubmit](https://formsubmit.co), which is free and needs no account:
-`formEndpoint` in `src/data/site.ts` points at the address that receives them.
-
-**One step before it works:** submit any form once, then open the confirmation email
-FormSubmit sends to that address and click the link. Nothing is delivered until that
-is done — it is how they stop people pointing forms at strangers.
-
-After that, swap `formEndpoint` for the hashed URL FormSubmit gives you
-(`https://formsubmit.co/ajax/<random-string>`) so the address is not sitting in the
-page source for scrapers.
+Every form posts to **`/api/send`**, a Vercel function that emails the lead to the
+team and a confirmation to the customer through Resend. If it is unavailable, the
+site falls back to Web3Forms so the lead still arrives. Setup needs `RESEND_API_KEY`
+in Vercel: see [`email/README.md`](email/README.md).
 
 Alongside that:
 
@@ -320,8 +312,7 @@ Alongside that:
 - a hidden decoy field catches bots without a captcha;
 - anyone who leaves an email address gets a written confirmation back.
 
-The emails themselves are in [`email/`](email/) — see that folder's README for how to
-switch to a provider that renders them.
+The emails themselves are in `api/_email.js`, with rendered samples in [`email/`](email/).
 
 ## Testing
 

@@ -17,7 +17,7 @@ export async function pickSeats(page: Page, n: number) {
 }
 
 /** Forms post to a real service; tests must never actually email anyone. */
-export const ENDPOINT = /formsubmit\.co|api\.web3forms\.com/;
+export const ENDPOINT = /\/api\/send|formsubmit\.co|api\.web3forms\.com/;
 
 
 /** The site posts JSON to FormSubmit and multipart to Web3Forms; read either. */

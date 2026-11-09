@@ -1,169 +1,69 @@
 <!DOCTYPE html>
-<!--
-  YourSpace — notification to the team when someone books or enquires.
-
-  Built the way email actually has to be built: tables, inline styles, no
-  flexbox or grid, 600px wide, so it holds together in Gmail, Outlook and
-  Apple Mail. Placeholders are {{like_this}} — most services substitute them.
-
-  Placeholders: {{kind}} {{name}} {{phone}} {{email}} {{occasion}} {{custom}}
-                {{date}} {{guests}} {{message}} {{notes}} {{received}} {{source}} {{payment}}
-  Leave a row out entirely if its value is empty.
--->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{kind}} — {{name}}</title>
+<meta name="color-scheme" content="dark light">
+<title>YourSpace Jabalpur</title>
 </head>
 <body style="margin:0;padding:0;background:#0C0B09;">
-  <!-- the line that shows in the inbox preview, before the body -->
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-    {{name}} · {{phone}} · {{occasion}} · {{date}}
-  </div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Riya Sharma · 9876543210</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0C0B09;padding:20px 8px;">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:#131110;border:1px solid #2A2724;border-radius:4px;">
 
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-         style="background:#0C0B09;padding:28px 12px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-               style="width:600px;max-width:100%;background:#131110;border:1px solid #2A2724;border-radius:4px;">
-
-          <!-- sprocket rail, the way the site marks a header -->
-          <tr>
-            <td style="height:10px;line-height:10px;font-size:0;background:#0C0B09;
-                       border-bottom:1px solid #2A2724;">&nbsp;</td>
-          </tr>
-
-          <!-- masthead -->
-          <tr>
-            <td style="padding:24px 28px 18px;border-bottom:1px solid #2A2724;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                <tr>
-                  <td style="font-family:Helvetica,Arial,sans-serif;font-size:17px;font-weight:bold;
-                             letter-spacing:-0.3px;color:#EDE6D8;">
-                    YourSpace
-                    <span style="display:block;font-family:'Courier New',Courier,monospace;font-size:10px;
-                                 letter-spacing:3px;text-transform:uppercase;color:#8E857A;padding-top:5px;">
-                      Jabalpur
-                    </span>
-                  </td>
-                  <td align="right"
-                      style="font-family:'Courier New',Courier,monospace;font-size:11px;
-                             letter-spacing:1.6px;text-transform:uppercase;color:#E0A542;">
-                    {{kind}}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- who it is from -->
-          <tr>
-            <td style="padding:26px 28px 6px;">
-              <div style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2.4px;
-                          text-transform:uppercase;color:#8E857A;padding-bottom:8px;">From</div>
-              <div style="font-family:Helvetica,Arial,sans-serif;font-size:26px;font-weight:bold;
-                          letter-spacing:-0.6px;color:#EDE6D8;line-height:1.15;">{{name}}</div>
-              <div style="padding-top:10px;">
-                <a href="tel:{{phone}}"
-                   style="font-family:'Courier New',Courier,monospace;font-size:15px;color:#E0A542;
-                          text-decoration:none;">{{phone}}</a>
-              </div>
-            </td>
-          </tr>
-
-          <!-- the details, as a slip -->
-          <tr>
-            <td style="padding:22px 28px 8px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;
-                             text-transform:uppercase;color:#8E857A;padding:11px 0;width:38%;
-                             border-top:1px solid #2A2724;">Occasion</td>
-                  <td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;
-                             padding:11px 0;border-top:1px solid #2A2724;">{{occasion}}</td>
-                </tr>
-                <tr>
-                  <td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;
-                             text-transform:uppercase;color:#8E857A;padding:11px 0;
-                             border-top:1px solid #2A2724;">Date</td>
-                  <td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;
-                             padding:11px 0;border-top:1px solid #2A2724;">{{date}}</td>
-                </tr>
-                <tr>
-                  <td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;
-                             text-transform:uppercase;color:#8E857A;padding:11px 0;
-                             border-top:1px solid #2A2724;">Guests</td>
-                  <td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;
-                             padding:11px 0;border-top:1px solid #2A2724;">{{guests}}</td>
-                </tr>
-                <tr>
-                  <td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;
-                             text-transform:uppercase;color:#8E857A;padding:11px 0;
-                             border-top:1px solid #2A2724;">Email</td>
-                  <td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;
-                             padding:11px 0;border-top:1px solid #2A2724;">{{email}}</td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- anything they wrote, in their own words -->
-          <tr>
-            <td style="padding:14px 28px 4px;">
-              <div style="border:1px solid #4A3A1C;border-left:3px solid #E0A542;border-radius:3px;
-                          background:#17140F;padding:16px 18px;">
-                <div style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2.2px;
-                            text-transform:uppercase;color:#E0A542;padding-bottom:9px;">In their words</div>
-                <div style="font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.62;
-                            color:#C8BFB1;">{{message}}{{custom}}{{notes}}</div>
-              </div>
-            </td>
-          </tr>
-
-          <!-- what to do about it -->
-          <tr>
-            <td style="padding:24px 28px 8px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td style="background:#E0A542;border-radius:3px;">
-                    <a href="tel:{{phone}}"
-                       style="display:inline-block;padding:14px 26px;font-family:'Courier New',Courier,monospace;
-                              font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#0C0B09;
-                              text-decoration:none;font-weight:bold;">Call {{name}}</a>
-                  </td>
-                  <td style="width:10px;">&nbsp;</td>
-                  <td style="border:1px solid #3A3633;border-radius:3px;">
-                    <a href="https://wa.me/91{{phone}}"
-                       style="display:inline-block;padding:13px 24px;font-family:'Courier New',Courier,monospace;
-                              font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#EDE6D8;
-                              text-decoration:none;">WhatsApp</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- footer -->
-          <tr>
-            <td style="padding:22px 28px 26px;border-top:1px solid #2A2724;">
-              <div style="font-family:'Courier New',Courier,monospace;font-size:10px;line-height:1.7;
-                          letter-spacing:0.6px;color:#8E857A;">
-                Received {{received}} · from {{source}}<br>
-                Payment: {{payment}}<br>
-                A UPI payment is never confirmed by the website — find it in the bank app first.
-              </div>
-            </td>
-          </tr>
-
-          <tr>
-            <td style="height:10px;line-height:10px;font-size:0;background:#0C0B09;
-                       border-top:1px solid #2A2724;">&nbsp;</td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+<tr><td style="padding:24px 28px 18px;border-bottom:1px solid #2A2724;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"><tr>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:17px;font-weight:bold;letter-spacing:-0.3px;color:#EDE6D8;">YourSpace
+<div style="font-family:'Courier New',Courier,monospace;font-size:10px;font-weight:normal;letter-spacing:3px;text-transform:uppercase;color:#8E857A;padding-top:5px;">Jabalpur</div></td>
+<td align="right" style="font-family:'Courier New',Courier,monospace;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:#E0A542;">Booking</td>
+</tr></table></td></tr>
+<tr><td style="padding:26px 28px 4px;">
+<div style="font-family:Helvetica,Arial,sans-serif;font-size:26px;font-weight:bold;letter-spacing:-0.6px;line-height:1.15;color:#EDE6D8;">Riya Sharma</div>
+<div style="padding-top:8px;font-family:'Courier New',Courier,monospace;font-size:15px;color:#E0A542;">9876543210</div>
+</td></tr>
+<tr><td style="padding:22px 28px 6px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #2A2724;border-radius:3px;"><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8E857A;padding:12px 12px 12px 16px;width:36%;">Booking ref</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;">YS-7K3M9Q</td>
+</tr><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8E857A;padding:12px 12px 12px 16px;width:36%;border-top:1px solid #2A2724;">Occasion</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;border-top:1px solid #2A2724;">Birthday</td>
+</tr><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8E857A;padding:12px 12px 12px 16px;width:36%;border-top:1px solid #2A2724;">Date &amp; time</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;border-top:1px solid #2A2724;">Sat, 14 Nov, 7:30 PM – 9:00 PM</td>
+</tr><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8E857A;padding:12px 12px 12px 16px;width:36%;border-top:1px solid #2A2724;">Guests</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;border-top:1px solid #2A2724;">4</td>
+</tr><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8E857A;padding:12px 12px 12px 16px;width:36%;border-top:1px solid #2A2724;">Seating</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;border-top:1px solid #2A2724;">4 recliners</td>
+</tr><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8E857A;padding:12px 12px 12px 16px;width:36%;border-top:1px solid #2A2724;">Movie Space</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;border-top:1px solid #2A2724;">₹1,500</td>
+</tr><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#E0A542;padding:12px 12px 12px 16px;width:36%;border-top:1px solid #2A2724;background:#17140F;">Total</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;border-top:1px solid #2A2724;background:#17140F;font-weight:bold;">₹1,500</td>
+</tr><tr>
+<td style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#8E857A;padding:12px 12px 12px 16px;width:36%;border-top:1px solid #2A2724;">Email</td>
+<td style="font-family:Helvetica,Arial,sans-serif;font-size:15px;color:#EDE6D8;padding:12px 16px;word-break:break-word;border-top:1px solid #2A2724;">riya@example.com</td>
+</tr></table>
+</td></tr>
+<tr><td style="padding:14px 28px 4px;">
+<div style="border:1px solid #4A3A1C;border-left:3px solid #E0A542;border-radius:3px;background:#17140F;padding:16px 18px;">
+<div style="font-family:'Courier New',Courier,monospace;font-size:10px;letter-spacing:2.2px;text-transform:uppercase;color:#E0A542;padding-bottom:9px;">In their words</div>
+<div style="font-family:Helvetica,Arial,sans-serif;font-size:15px;line-height:1.62;color:#C8BFB1;white-space:pre-wrap;">Please keep a knife for the cake.</div>
+</div></td></tr>
+<tr><td style="padding:14px 28px 4px;font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#C8BFB1;"><b style="color:#E0A542;">Payment:</b> After the call. Nothing paid.</td></tr>
+<tr><td style="padding:22px 28px 22px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+<td style="background:#E0A542;border-radius:3px;"><a href="tel:+919876543210" style="display:inline-block;padding:13px 22px;font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;font-weight:bold;color:#0C0B09;text-decoration:none;">Call</a></td>
+<td style="width:10px;">&nbsp;</td>
+<td style="border:1px solid #3A3633;border-radius:3px;"><a href="https://wa.me/919876543210" style="display:inline-block;padding:13px 22px;font-family:'Courier New',Courier,monospace;font-size:12px;letter-spacing:1.6px;text-transform:uppercase;font-weight:bold;color:#EDE6D8;text-decoration:none;">WhatsApp</a></td>
+</tr></table></td></tr>
+<tr><td style="padding:22px 28px 26px;border-top:1px solid #2A2724;font-family:'Courier New',Courier,monospace;font-size:11px;line-height:1.7;letter-spacing:0.3px;color:#8E857A;">Received Monday, 9 November 2026 at 6:30 pm<br>A UPI payment is never confirmed by the website. Find it in the bank app first.</td></tr>
+</table>
+</td></tr>
+</table>
 </body>
 </html>

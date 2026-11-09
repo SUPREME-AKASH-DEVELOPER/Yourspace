@@ -896,9 +896,13 @@ async function sendBooking() {
   });
   busy = false;
   S.send = outcome.ok ? 'sent' : 'failed';
+  copySent = outcome.ok && outcome.copied;
   save();
   paintSendState(outcome.ok ? '' : outcome.reason);
 }
+
+/** Only say a copy is on its way when one really was sent. */
+let copySent = false;
 
 function paintSendState(reason = '') {
   const state = $('#bkSendState');
@@ -906,7 +910,7 @@ function paintSendState(reason = '') {
   state.className = S.send === 'failed' ? 'fine center bk-send-failed' : 'fine center';
   state.innerHTML =
     S.send === 'sending' ? 'Sending your booking…'
-    : S.send === 'sent' ? 'Your booking has reached us, and a copy is on its way to you.'
+    : S.send === 'sent' ? (copySent ? 'Your booking has reached us, and a copy is on its way to you.' : 'Your booking has reached us.')
     : `${reason === 'busy' ? "We're getting a lot of bookings right now, so this one hasn't reached us yet."
         : "That didn't reach us."} <button type="button" class="linkish" data-bk-resend>Try again</button>${
         bookingWhatsAppLink() ? ', send it on WhatsApp below,' : ''} or call ${callLink()} and quote <b>${esc(S.ref)}</b>.`;

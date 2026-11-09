@@ -13,6 +13,7 @@
     "test:ui": "playwright test --ui",
     "test:chromium": "playwright test --project=chromium",
     "check": "astro check",
+    "email:preview": "node scripts/email-preview.mjs",
     "verify": "astro check && playwright test"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readBody, pickSeats } from './helpers';
 
-const ENDPOINT = /formsubmit\.co|api\.web3forms\.com/;
+const ENDPOINT = /\/api\/send|formsubmit\.co|api\.web3forms\.com/;
 
 /** Pretend the service accepted it, and record what we sent. */
 async function acceptAndCapture(page: Page, sink: Record<string, unknown>[]) {
