@@ -52,7 +52,7 @@ export const faqSections: FaqSection[] = [
     n: '05', label: 'Finding us',
     items: [
       { q: 'Where are you, and when are you open?',
-        a: "We're in Jabalpur and opening soon. Pre-book now and we'll share the exact address and your confirmed slot when we call you." },
+        a: "We're at 325, Jai Nagar Rd, near Indore Sweet, above Olympus Cafe, 2nd Floor, Labour Chowk, Jabalpur. Sessions run 12 PM to 12 AM, all 7 days, and we confirm your slot when we call you." },
       { q: 'Can I see the room before I book?',
         a: "Once we're open, yes — just ask on the call. Before that there isn't much to see, so we'd rather not waste your trip." },
     ],

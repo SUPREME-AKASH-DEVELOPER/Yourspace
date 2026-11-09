@@ -196,7 +196,7 @@ automatically; on another host, copy the directives into its header config.
 | # | What | Who | Status |
 |---|------|-----|--------|
 | 1 | Phone number | Client | **Done** — one number everywhere, +91 79996 56039 (`phone` in `src/data/site.ts`; `whatsapp` is empty so WhatsApp follows it). Set `phoneAlt` if a second line is ever published |
-| 2 | Full address, map link and opening hours (`site.ts`) | Client | **Blocking** for local SEO and the schema |
+| 2 | Full address, map link and opening hours (`site.ts`) | Client | **Done**, but confirm the hours (Tanishk wrote "12am to 12pm"; the site says 12 PM to 12 AM) and the spelling of Olympus Cafe |
 | 3 | Real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Done** — https://www.yourspacejbp.com |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
 | 5 | Legal review of `/terms`, `/privacy`, `/refunds` | Client | **Blocking** — drafts, with the refund windows as placeholders |

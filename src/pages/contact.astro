@@ -30,6 +30,7 @@ import { site } from '../data/site';
             <dt>Where</dt>
             <dd>{site.city}, {site.region}<br />
               <span class="fine" style="margin:0">{site.address || 'Full address shared when we confirm your booking'}</span>
+              {site.mapsUrl && <><br /><a href={site.mapsUrl} target="_blank" rel="noopener">Open in Google Maps</a></>}
             </dd>
           </div>
           <div><dt>Hours</dt><dd>{site.hours}</dd></div>

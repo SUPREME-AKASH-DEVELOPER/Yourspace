@@ -9,10 +9,12 @@ export const site = {
   city: 'Jabalpur',
   region: 'Madhya Pradesh',
 
-  /** Full address, shown once the space is ready. */
-  address: '',                      // TODO: add before launch
-  mapsUrl: '',                      // TODO: Google Maps link
-  hours: 'Opening soon',            // TODO: real opening hours
+  /** Full address, from Tanishk (Nov 2026). */
+  address: '325, Jai Nagar Rd, near Indore Sweet, above Olympus Cafe, 2nd Floor, Labour Chowk, Yadav Colony, Jabalpur, Madhya Pradesh 482002',
+  postalCode: '482002',
+  mapsUrl: 'https://maps.app.goo.gl/hzK3Ksn7iNr3ubXH8',
+  /** TODO(Tanishk): he wrote "12am to 12pm"; this assumes he meant the slots we sell. */
+  hours: '12 PM to 12 AM, all 7 days',
 
   /**
    * The one number YourSpace publishes. Calls and WhatsApp both come here.
