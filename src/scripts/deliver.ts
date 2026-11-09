@@ -86,14 +86,13 @@ export async function deliver(payload: Record<string, string>): Promise<Outcome>
  */
 export function envelope(subject: string, replyTo?: string): Record<string, string> {
   if (useWeb3Forms) {
-    // Web3Forms delivers to the address the key was created with, so both
-    // of our people go on the copy line rather than one being "primary".
-    const copies = [site.notifyPrimary, site.notifyCc].filter(Boolean).join(', ');
+    // Web3Forms delivers to the address the key was created with. Its free plan
+    // refuses the whole submission if ccemail is present, so it is never sent.
+    // /api/send is what copies the rest of the team.
     return {
       access_key: site.web3formsKey,
       subject,
       from_name: `${site.name} ${site.city}`,
-      ...(copies ? { ccemail: copies } : {}),
       ...(replyTo ? { replyto: replyTo } : {}),
     };
   }

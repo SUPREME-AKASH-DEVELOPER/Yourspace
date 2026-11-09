@@ -204,7 +204,7 @@ test.describe('submissions actually go somewhere', () => {
     expect(addresses.sort()).toEqual(['badalakki11@gmail.com', 'tanishkofficial27@gmail.com']);
   });
 
-  test('the team is copied in on every submission', async ({ page }) => {
+  test('replies reach the visitor, and the browser names no one to copy', async ({ page }) => {
     const sent: Record<string, unknown>[] = [];
     await acceptAndCapture(page, sent);
     await page.goto('/contact/');
@@ -215,9 +215,9 @@ test.describe('submissions actually go somewhere', () => {
     await expect(page.locator('#callbackForm .form-note')).toContainText('Thanks');
 
     const body = sent[0] as Record<string, string>;
-    const cc = body._cc ?? body.ccemail ?? '';
-    expect(cc, 'Tanishk copied').toContain('tanishkofficial27@gmail.com');
-    expect(cc, 'Badal copied').toContain('badalakki11@gmail.com');
+    // who is copied is decided on the server (tests/email-api.spec.ts). The
+    // browser must not send ccemail: Web3Forms' free plan refuses the lot if it does.
+    expect(body.ccemail, 'never sent').toBeUndefined();
     expect(body._replyto ?? body.replyto, 'replying reaches the visitor').toBe('akash@example.com');
   });
 
@@ -273,7 +273,6 @@ test.describe('submissions actually go somewhere', () => {
     expect(body.Total).toBe('₹750');
     expect(body.Payment).toContain('Nothing paid');
     expect(body['Booking ref']).toMatch(/^YS-/);
-    expect(body._cc ?? body.ccemail).toContain('badalakki11@gmail.com');
     expect(body._autoresponse).toContain('Thanks Tanishk');
   });
 
