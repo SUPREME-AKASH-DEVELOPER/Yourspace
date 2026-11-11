@@ -13,8 +13,8 @@ test.describe('the deck of setups', () => {
     await page.goto('/tickets/');
     await expect(page.locator('#aesthetic .card-price-chip')).toHaveText('₹1,000');
     await expect(page.locator('#elite .card-price-chip')).toHaveText('₹2,000');
-    // the Royal price was never given — say so rather than guess
-    await expect(page.locator('#royal .card-price-chip')).toHaveText('On request');
+    // Royal was quoted on 11 Nov; before that the card said "On request"
+    await expect(page.locator('#royal .card-price-chip')).toHaveText('₹5,000');
   });
 
   test('a card turns over and announces that it did', async ({ page }) => {

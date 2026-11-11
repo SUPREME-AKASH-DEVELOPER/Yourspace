@@ -355,12 +355,16 @@ export const addonGroups: AddonGroup[] = [
     ],
   },
   {
-    id: 'photo', name: 'Photoshoot', art: 'ring',
-    blurb: 'Fifteen minutes of photographs during your session.',
+    /* Tanishk, 11 Nov 2026: this was listed as a photoshoot by mistake. It is a
+       video — we film the celebration and hand back a 15-minute edited film.
+       The ids stay as they are: they key the photographs in BookingMedia and
+       any booking already saved in someone's browser. */
+    id: 'photo', name: 'Celebration video', art: 'ring',
+    blurb: 'We film your celebration and edit it into a 15-minute video.',
     options: [
-      { id: 'photo-15', name: '15-minute photoshoot', price: null, priceNote: '₹400–₹500' },
+      { id: 'photo-15', name: '15-minute edited video', price: null, priceNote: '₹400–₹500' },
     ],
-    callFor: 'Want something more elaborate? Custom shoots are arranged by phone, not online.',
+    callFor: 'Want something more elaborate? Longer films are arranged by phone, not online.',
   },
 ];
 

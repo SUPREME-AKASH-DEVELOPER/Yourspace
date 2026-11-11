@@ -26,7 +26,12 @@ export const site = {
   /** A second line, shown alongside the first. '' — there is only one. */
   phoneAlt: '',
 
-  email: '',                        // TODO: optional box-office email
+  /**
+   * The address customers write to, shown on the contact page and in the
+   * structured data (Tanishk, 11 Oct). Bookings are still delivered by Resend
+   * from bookings@yourspacejbp.com — this is the box customers reply to.
+   */
+  email: 'yourspacejbp@gmail.com',
 
   /**
    * WHATSAPP — "For more information, contact us on WhatsApp"

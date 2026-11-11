@@ -191,8 +191,10 @@ test.describe('submissions actually go somewhere', () => {
     await expect(page.locator('#callbackForm .form-note')).toContainText('your email');
   });
 
-  test('only the two intended addresses are ever used', async ({ page }) => {
-    // the endpoint is built from notifyPrimary, so check both in one place
+  test('only the intended addresses are ever used', async ({ page }) => {
+    // the endpoint is built from notifyPrimary, so check them in one place.
+    // yourspacejbp@gmail.com is the address we publish for customers to write
+    // to; the other two are where submissions are delivered.
     await page.goto('/');
     const bundle = await page.evaluate(async () => {
       const src = [...document.querySelectorAll('script[src]')]
@@ -201,7 +203,9 @@ test.describe('submissions actually go somewhere', () => {
     });
     const addresses = [...new Set(bundle.match(/[\w.+-]+@[\w.-]+\.\w+/g) ?? [])]
       .filter((a) => !a.endsWith('example.com'));
-    expect(addresses.sort()).toEqual(['badalakki11@gmail.com', 'tanishkofficial27@gmail.com']);
+    expect(addresses.sort()).toEqual([
+      'badalakki11@gmail.com', 'tanishkofficial27@gmail.com', 'yourspacejbp@gmail.com',
+    ]);
   });
 
   test('replies reach the visitor, and the browser names no one to copy', async ({ page }) => {

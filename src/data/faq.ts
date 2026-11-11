@@ -6,7 +6,7 @@ export const faqSections: FaqSection[] = [
     n: '01', label: 'Money',
     items: [
       { q: 'What does it cost?',
-        a: 'Movie Space is ₹1,500 for up to 5 guests and ₹1,700 for 6 or 7. Celebration & Date Night is ₹1,500 plus the decoration you choose. Karaoke is ₹150 per person for 30 minutes, with a minimum of 3. Cake, flowers and a photoshoot are optional extras, and taxes and applicable charges are additional.' },
+        a: 'Movie Space is ₹1,500 for up to 5 guests and ₹1,700 for 6 or 7. Celebration & Date Night is ₹1,500 plus the decoration you choose. Karaoke is ₹150 per person for 30 minutes, with a minimum of 3. Cake, flowers and a video of your celebration are optional extras, and taxes and applicable charges are additional.' },
       { q: 'When and how do I pay?',
         a: "By UPI. When you finish a booking you can pay straight away — we show you a QR code and a pay link with the amount filled in — or choose to pay after we call. Either way we confirm the slot with you, and if we can't give it to you, you get a full refund. We never ask for card details." },
       { q: 'I paid — is my booking confirmed?',

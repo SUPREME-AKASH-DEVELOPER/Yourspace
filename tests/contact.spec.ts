@@ -32,6 +32,17 @@ test.describe('contact details', () => {
     }
   });
 
+  test('the email address is published and writable', async ({ page }) => {
+    await page.goto('/contact/');
+    const link = page.locator('.infolist a[data-email]');
+    await expect(link).toHaveText('yourspacejbp@gmail.com');
+    await expect(link).toHaveAttribute('href', 'mailto:yourspacejbp@gmail.com');
+    // and search engines are told the same address
+    await page.goto('/');
+    const data = JSON.parse(await page.locator('script[type="application/ld+json"]').textContent() ?? '{}');
+    expect(data.email).toBe('yourspacejbp@gmail.com');
+  });
+
   test('the retired line is nowhere on the site', async ({ page }) => {
     for (const path of PAGES) {
       await page.goto(path);

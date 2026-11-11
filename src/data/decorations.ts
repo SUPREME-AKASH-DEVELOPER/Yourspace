@@ -4,9 +4,9 @@
  * The three packages are Elite, Royal and Aesthetic (owner's walkthrough, Nov).
  * Every one includes fog entry and candlelight — see DECOR_INCLUDED.
  *
- * Prices are Tanishk's (WhatsApp, 11 Oct): Aesthetic ₹1,000 and Trendy ₹2,000.
- * The Royal price was not given, so it is left null and the site says
- * "price on request" rather than guessing a number.
+ * Prices are Tanishk's (WhatsApp): Aesthetic ₹1,000 and Trendy ₹2,000 on
+ * 11 Oct, Royal ₹5,000 on 11 Nov. Each is the price of the decoration, added
+ * on top of the ₹1,500 Date Night session — so Royal comes to ₹6,500.
  *
  * ASSUMPTION — TODO(owner): "Elite" is the package that was called "Trendy" on
  * 11 Oct, so it keeps Trendy's photographs and ₹2,000. If that is wrong, swap
@@ -23,7 +23,8 @@
  *      Publishing those without that person's written permission is not ours to
  *      do. Get consent, or swap both for a setup shot taken with no guests and
  *      no personal messages in frame.
- *   1. Set ROYAL's price.
+ *   1. Royal is ₹5,000 (11 Nov). Confirm it is the decoration price on top of
+ *      the session, like the other two, and not ₹5,000 all in.
  *   2. These prices sit alongside the package prices in booking.ts, which were
  *      placeholders. Decide which is the real offer and reconcile the two.
  */
@@ -113,7 +114,7 @@ export const decorations: Decoration[] = [
   {
     id: 'royal',
     name: 'Royal',
-    price: null,                     // TODO: Tanishk to confirm
+    price: 5000,                     // Tanishk, 11 Nov 2026
     tagline: 'With your own message and photographs',
     blurb:
       'Deep red roses, velvet drapes and candlelight, plus a written message and printed photographs of the two of you — the most personal of the three.',

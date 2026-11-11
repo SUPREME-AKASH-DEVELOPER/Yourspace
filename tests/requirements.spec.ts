@@ -73,9 +73,16 @@ test.describe('rules from the call', () => {
   });
 
   test('an unpriced choice is never counted as a guess', () => {
-    const q = quote({ setup: 'date', guests: 2, decor: { name: 'Royal', price: null }, addons: ['photo-15'] });
+    // every decoration is priced now, so this stands in for one that is not
+    const q = quote({ setup: 'date', guests: 2, decor: { name: 'Bespoke', price: null }, addons: ['photo-15'] });
     expect(q.total).toBe(1500);
-    expect(q.unpriced).toEqual(['Royal decoration', 'Photoshoot: 15-minute photoshoot']);
+    expect(q.unpriced).toEqual(['Bespoke decoration', 'Celebration video: 15-minute edited video']);
+  });
+
+  test('a priced decoration is added to the session, not swapped for it', () => {
+    const q = quote({ setup: 'date', guests: 2, decor: { name: 'Royal', price: 5000 }, addons: [] });
+    expect(q.total, 'the ₹1,500 session plus the ₹5,000 decoration').toBe(6500);
+    expect(q.unpriced).toEqual([]);
   });
 
   test('Movie Space and Karaoke carry no decoration and no add-ons', () => {
@@ -86,7 +93,7 @@ test.describe('rules from the call', () => {
     expect(setups.filter((s) => s.hasDecor || s.hasAddons).map((s) => s.id)).toEqual(['date']);
   });
 
-  test('add-ons are bouquet, cake and photoshoot — and nothing the owner ruled out', () => {
+  test('add-ons are bouquet, cake and the celebration video — and nothing the owner ruled out', () => {
     expect(addonGroups.map((g) => g.id)).toEqual(['bouquet', 'cake', 'photo']);
     expect(addonGroups[0].options.map((o) => o.price)).toEqual([200, 250, 300]);
     expect(addonGroups[2].options[0]).toMatchObject({ price: null, priceNote: '₹400–₹500' });
@@ -310,7 +317,10 @@ test.describe('the booking journey', () => {
     for (const path of PAGES) {
       await page.goto(path);
       const text = (await page.locator('body').innerText()).toLowerCase();
-      for (const gone of ['bubble entry', 'snack platter', 'led balloon', 'balloon & led', 'rose petal']) {
+      // "photoshoot" is retired too: it was listed by mistake and the service
+      // is a video of the celebration (Tanishk, 11 Nov)
+      for (const gone of ['bubble entry', 'snack platter', 'led balloon', 'balloon & led',
+                          'rose petal', 'photoshoot']) {
         expect(text, `${path}: ${gone}`).not.toContain(gone);
       }
     }
