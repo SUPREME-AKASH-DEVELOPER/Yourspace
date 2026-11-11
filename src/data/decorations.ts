@@ -23,8 +23,8 @@
  *      Publishing those without that person's written permission is not ours to
  *      do. Get consent, or swap both for a setup shot taken with no guests and
  *      no personal messages in frame.
- *   1. Royal is ₹5,000 (11 Nov). Confirm it is the decoration price on top of
- *      the session, like the other two, and not ₹5,000 all in.
+ *   1. Royal is ₹5,000 (11 Nov), the decoration on top of the ₹1,500 session
+ *      like the other two, so a Royal Date Night is ₹6,500. Confirmed 11 Nov.
  *   2. These prices sit alongside the package prices in booking.ts, which were
  *      placeholders. Decide which is the real offer and reconcile the two.
  */
