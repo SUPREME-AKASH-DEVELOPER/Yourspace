@@ -10,6 +10,7 @@ import { mockDelivery, ENDPOINT, readBody, pickSeats } from './helpers';
 import { PAGES } from './pages';
 import {
   setups, slots, addonGroups, priceList, setupPrice, quote, CALL_US, MAX_GUESTS, addMinutes,
+  BUFFER_MINUTES,
 } from '../src/data/booking';
 
 /* ------------------------------------------------------------------ */
@@ -22,11 +23,17 @@ test.describe('rules from the call', () => {
     expect(setups.find((s) => s.id === 'watch')!.closed).toBeTruthy();
   });
 
-  test('eight 90-minute slots from noon, the last ending at midnight', () => {
-    expect(slots).toHaveLength(8);
+  test('seven 90-minute slots from noon, 15 minutes apart, the last ending at midnight', () => {
+    expect(slots).toHaveLength(7);
     expect(slots[0].start).toBe('12:00 PM');
     for (const s of slots) expect(addMinutes(s.start, 90), s.id).toBe(s.end);
-    expect(slots[7]).toMatchObject({ start: '10:30 PM', end: '12:00 AM' });
+    expect(slots[6]).toMatchObject({ start: '10:30 PM', end: '12:00 AM' });
+    // nobody arrives while the group before them is still leaving
+    expect(BUFFER_MINUTES).toBe(15);
+    for (let i = 1; i < slots.length; i++) {
+      expect(addMinutes(slots[i - 1].end, BUFFER_MINUTES), `gap before ${slots[i].id}`)
+        .toBe(slots[i].start);
+    }
   });
 
   test('durations: 90 minutes, karaoke 30', () => {
@@ -138,9 +145,9 @@ test.describe('the booking journey', () => {
     await expect(page.locator('[data-date-pick]').first()).toHaveAttribute('data-date-pick', '2026-11-03');
     await page.locator('[data-date-pick="2026-11-03"]').click();
     await page.locator('[data-bk-next]').click();
-    // every slot up to 9:00 PM has started in Jabalpur; only 10:30 PM is left
-    for (const s of ['s1', 's4', 's7']) await expect(page.locator(`[data-slot-pick="${s}"]`)).toBeDisabled();
-    await expect(page.locator('[data-slot-pick="s8"]')).toBeEnabled();
+    // every slot up to 8:45 PM has started in Jabalpur; only 10:30 PM is left
+    for (const s of ['s1', 's4', 's6']) await expect(page.locator(`[data-slot-pick="${s}"]`)).toBeDisabled();
+    await expect(page.locator('[data-slot-pick="s7"]')).toBeEnabled();
     await ctx.close();
   });
 

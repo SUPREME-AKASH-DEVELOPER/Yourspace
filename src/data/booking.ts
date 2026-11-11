@@ -162,31 +162,62 @@ export const OTHER = {
 export interface Slot { id: string; start: string; end: string }
 
 /**
- * Eight 90-minute slots, noon to midnight.
+ * The quarter of an hour we keep clear between one booking and the next, so
+ * the room can be reset and nobody arrives while the last group is still
+ * leaving (Tanishk, 11 Nov 2026). Change this one number and every start
+ * time, and the number of slots in a day, follow.
+ */
+export const BUFFER_MINUTES = 15;
+
+/** When the room opens and closes. The slots are worked out between them. */
+const OPENS_AT = '12:00 PM';
+const CLOSES_AT = '12:00 AM';
+
+const clockToMinutes = (clock: string): number => {
+  const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(clock);
+  if (!m) return 0;
+  return ((Number(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)) * 60 + Number(m[2]);
+};
+
+const minutesToClock = (total: number): string => {
+  const t = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
+  const h24 = Math.floor(t / 60), mm = t % 60;
+  return `${h24 % 12 || 12}:${String(mm).padStart(2, '0')} ${h24 < 12 ? 'AM' : 'PM'}`;
+};
+
+/**
+ * The slots, worked out rather than typed in: each is SESSION_MINUTES long,
+ * and the next one starts BUFFER_MINUTES after the one before it ends. With a
+ * 90-minute session and a 15-minute gap that is seven slots between noon and
+ * midnight, the last finishing exactly at closing — one fewer than when they
+ * ran back to back, which is the cost of the gap.
+ *
+ * Start times are deliberately not on the hour. The booking flow says why, so
+ * nobody reads 1:45 PM as a mistake.
+ *
  * TODO(owner): confirm every slot is open for every setup.
  * Karaoke runs 30 minutes from the start of whichever slot is chosen —
- * also to confirm.
+ * also to confirm. The room is still held for the whole slot, so the gap
+ * after it is unchanged.
  */
-export const slots: Slot[] = [
-  { id: 's1', start: '12:00 PM', end: '1:30 PM' },
-  { id: 's2', start: '1:30 PM',  end: '3:00 PM' },
-  { id: 's3', start: '3:00 PM',  end: '4:30 PM' },
-  { id: 's4', start: '4:30 PM',  end: '6:00 PM' },
-  { id: 's5', start: '6:00 PM',  end: '7:30 PM' },
-  { id: 's6', start: '7:30 PM',  end: '9:00 PM' },
-  { id: 's7', start: '9:00 PM',  end: '10:30 PM' },
-  { id: 's8', start: '10:30 PM', end: '12:00 AM' },
-];
+export const slots: Slot[] = (() => {
+  const close = clockToMinutes(CLOSES_AT) || 24 * 60;
+  const out: Slot[] = [];
+  for (let start = clockToMinutes(OPENS_AT); start + SESSION_MINUTES <= close;
+       start += SESSION_MINUTES + BUFFER_MINUTES) {
+    out.push({
+      id: `s${out.length + 1}`,
+      start: minutesToClock(start),
+      end: minutesToClock(start + SESSION_MINUTES),
+    });
+  }
+  return out;
+})();
 
 /** "7:30 PM" plus 30 minutes is "8:00 PM". Only used for the shorter karaoke session. */
 export function addMinutes(clock: string, mins: number): string {
-  const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(clock);
-  if (!m) return clock;
-  let total = ((Number(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)) * 60 + Number(m[2]) + mins;
-  total %= 24 * 60;
-  const h24 = Math.floor(total / 60), mm = total % 60;
-  const h12 = h24 % 12 || 12;
-  return `${h12}:${String(mm).padStart(2, '0')} ${h24 < 12 ? 'AM' : 'PM'}`;
+  if (!/^\d{1,2}:\d{2} (AM|PM)$/.test(clock)) return clock;
+  return minutesToClock(clockToMinutes(clock) + mins);
 }
 
 /* ------------------------------------------------------------------ */

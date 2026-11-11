@@ -87,7 +87,7 @@ test.describe('accessibility', () => {
     await page.locator('[data-date-pick]').first().click();
     await page.locator('[data-bk-next]').click();
     await audit('time');
-    await page.locator('[data-slot-pick="s8"]').click();
+    await page.locator('[data-slot-pick="s7"]').click();
     await audit('setup');
     await page.locator('[data-setup-pick="date"]').click();
     await audit('decoration');

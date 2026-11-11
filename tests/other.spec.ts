@@ -48,7 +48,7 @@ test.describe('"Something else" — writing your own occasion', () => {
 
     await page.locator('[data-date-pick]').first().click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s8"]').click();
+    await page.locator('[data-slot-pick="s7"]').click();
     await page.locator('[data-setup-pick="movie"]').click();
     await expect(page.locator('.bk-sum-row').first()).toContainText(STORY);
 

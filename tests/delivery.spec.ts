@@ -273,7 +273,7 @@ test.describe('submissions actually go somewhere', () => {
     expect(body.Occasion).toBe('Karaoke');
     expect(body.Guests).toBe('5');
     expect(body.Karaoke).toBe('₹750');
-    expect(body['Date & time']).toContain('4:30 PM – 5:00 PM');
+    expect(body['Date & time']).toContain('5:15 PM – 5:45 PM');
     expect(body.Total).toBe('₹750');
     expect(body.Payment).toContain('Nothing paid');
     expect(body['Booking ref']).toMatch(/^YS-/);
@@ -287,7 +287,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.locator('[data-exp-pick="date"]').click();
     await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s8"]').click();
+    await page.locator('[data-slot-pick="s7"]').click();
     await page.locator('[data-setup-pick="movie"]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9429690584');
@@ -303,7 +303,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.locator('[data-exp-pick="date"]').click();
     await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s8"]').click();
+    await page.locator('[data-slot-pick="s7"]').click();
     await page.locator('[data-setup-pick="movie"]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9429690584');

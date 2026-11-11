@@ -28,15 +28,18 @@ async function details(page: Page, pay?: 'upi' | 'later') {
 }
 
 test.describe('booking flow', () => {
-  test('offers eight 90-minute slots from noon to midnight', async ({ page }) => {
+  test('offers seven 90-minute slots from noon to midnight, 15 minutes apart', async ({ page }) => {
     await freshFlow(page);
     await page.locator('[data-exp-pick="date"]').click();
     await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await expect(page.locator('[data-slot-pick]')).toHaveCount(8);
+    await expect(page.locator('[data-slot-pick]')).toHaveCount(7);
     await expect(page.locator('[data-slot-pick="s1"]')).toContainText('12:00 PM');
-    await expect(page.locator('[data-slot-pick="s8"]')).toContainText('10:30 PM');
-    await expect(page.locator('[data-slot-pick="s8"]')).toContainText('12:00 AM');
+    await expect(page.locator('[data-slot-pick="s2"]'), 'starts 15 min after the first ends')
+      .toContainText('1:45 PM');
+    await expect(page.locator('[data-slot-pick="s7"]')).toContainText('10:30 PM');
+    await expect(page.locator('[data-slot-pick="s7"]')).toContainText('12:00 AM');
+    await expect(page.locator('.bk-body')).toContainText('15 minutes between bookings');
   });
 
   test('no more than seven guests can be chosen', async ({ page }) => {
@@ -128,7 +131,7 @@ test.describe('booking flow', () => {
 
     await card.click();
     // a 30-minute session, from the start of the slot
-    await expect(page.locator('.bk-sum')).toContainText('7:30 PM – 8:00 PM');
+    await expect(page.locator('.bk-sum')).toContainText('8:45 PM – 9:15 PM');
   });
 
   test('Karaoke for six or seven is not given a guessed price', async ({ page }) => {

@@ -23,7 +23,7 @@ export const faqSections: FaqSection[] = [
       { q: 'How many people can come?',
         a: "Up to 7 can book online. Karaoke needs at least 3 — for fewer, call us and we'll see what we can do. Date Night is set up for two." },
       { q: 'How long is a session?',
-        a: '90 minutes from the time your slot starts, and 30 minutes for karaoke. If you need longer, ask us — if the slot after yours is free, we can usually work something out.' },
+        a: '90 minutes from the time your slot starts, and 30 minutes for karaoke. We leave 15 minutes between bookings to reset the room, so you are never waiting on the group before you. If you need longer, ask us — if the slot after yours is free, we can usually work something out.' },
       { q: 'Can we choose what to watch?',
         a: "Yes — bring whatever you want to play, and we'll help you get it on the screen. Please make sure you have the right to play it." },
     ],

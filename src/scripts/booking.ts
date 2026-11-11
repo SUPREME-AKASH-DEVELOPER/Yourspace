@@ -4,7 +4,7 @@ import { site, phoneNumbers, whatsappLink, whatsappIsSet } from '../data/site';
 import { deliver, envelope } from './deliver';
 import {
   experiences, slots, setups, addonGroups, stepNames, OTHER,
-  MAX_GUESTS, SEATING, SEAT_IDS, seatKind, cleanSeats, defaultSeats, seatsLabel,
+  BUFFER_MINUTES, MAX_GUESTS, SEATING, SEAT_IDS, seatKind, cleanSeats, defaultSeats, seatsLabel,
   setupOf, setupPrice, addonOf, quote, addMinutes,
   type Setup, type Quote,
 } from '../data/booking';
@@ -548,6 +548,7 @@ function step1() {
 function step2() {
   return head(3, 'Choose your time',
     `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Karaoke runs 30 minutes from the start of the slot.`) +
+    `<p class="fine" style="margin:-14px 0 18px">We leave ${BUFFER_MINUTES} minutes between bookings to reset the room, so the start times are not on the hour — the space is yours for the whole slot, with nobody waiting at the door.</p>` +
     `<div class="slots">${slots.map((s) => {
       const gone = slotPassed(s.start);
       return `
