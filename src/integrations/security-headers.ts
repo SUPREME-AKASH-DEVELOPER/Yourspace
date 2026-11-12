@@ -41,12 +41,14 @@ export default function securityHeaders(): AstroIntegration {
 
         const csp = [
           "default-src 'self'",
-          `script-src 'self' ${[...hashes].join(' ')}`.trim(),
+          // Razorpay Checkout: its script, its payment window, and its calls home
+          `script-src 'self' https://checkout.razorpay.com ${[...hashes].join(' ')}`.trim(),
+          'frame-src https://api.razorpay.com https://checkout.razorpay.com',
           // style attributes in the markup still need unsafe-inline for styles
           "style-src 'self' 'unsafe-inline'",
           "font-src 'self'",
-          "img-src 'self' data:",
-          `connect-src 'self'${formOrigin ? ' ' + formOrigin : ''}`.trim(),
+          "img-src 'self' data: https://cdn.razorpay.com",
+          `connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com${formOrigin ? ' ' + formOrigin : ''}`.trim(),
           ['form-action', "'self'", formOrigin].filter(Boolean).join(' '),
           "frame-ancestors 'none'",
           "base-uri 'self'",
@@ -59,9 +61,9 @@ export default function securityHeaders(): AstroIntegration {
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(self "https://api.razorpay.com" "https://checkout.razorpay.com"), usb=(), interest-cohort=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
   X-DNS-Prefetch-Control: off
 
 /_astro/*

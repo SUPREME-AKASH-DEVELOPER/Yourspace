@@ -289,11 +289,11 @@ test.describe('the booking journey', () => {
     await page.fill('#bPhone', '9876543210');
     await page.fill('#bEmail', 'a@example.com');
     await page.fill('#bNotes', 'Name on the screen: Riya');
-    await page.locator('input[name=bkPay][value=upi]').check();
+    await page.locator('input[name=bkPay][value=online]').check();
     await page.locator('[data-bk-next]').click();
     const sum = page.locator('.bk-done .bk-sum');
     await expect(sum).toContainText('Name on the screen: Riya');
-    await expect(sum).toContainText('UPI — awaiting payment');
+    await expect(sum).toContainText('Online — awaiting payment');
   });
 
   test('a send that fails can be retried, and goes once', async ({ page }) => {
@@ -361,7 +361,7 @@ test.describe('the journey on a phone and a tablet', () => {
       await page.fill('#bName', 'Akash Rai');
       await page.fill('#bPhone', '9876543210');
       await page.fill('#bEmail', 'a@example.com');
-      await page.locator('input[name=bkPay][value=upi]').check();
+      await page.locator('input[name=bkPay][value=online]').check();
       await fits('details');
       await page.locator('[data-bk-next]').click();
       await expect(page.locator('.paybox')).toBeVisible();

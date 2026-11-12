@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mockDelivery, pickSeats } from './helpers';
+import { mockDelivery, mockRazorpay, pickSeats } from './helpers';
 
 /** Each test starts from an empty flow — the saved-progress behaviour is tested separately. */
 async function freshFlow(page: Page) {
@@ -20,7 +20,7 @@ async function toSetup(page: Page, guests: number, occasion = 'date') {
   await expect(page.locator('#bkTitle')).toContainText('Choose your setup');
 }
 
-async function details(page: Page, pay?: 'upi' | 'later') {
+async function details(page: Page, pay?: 'online' | 'later') {
   await page.fill('#bName', 'Akash Rai');
   await page.fill('#bPhone', '9876543210');
   await page.fill('#bEmail', 'a@example.com');
@@ -187,49 +187,101 @@ test.describe('booking flow', () => {
     expect(await page.evaluate(() => localStorage.getItem('ys-requests'))).toContain('booking-flow');
   });
 
-  test('UPI: the amount, a QR code and a pay link — and never "paid"', async ({ page }) => {
+  test('pay online: Razorpay opens for the right amount, and "paid" only once verified', async ({ page }) => {
     const sent = await freshFlow(page);
+    const calls = await mockRazorpay(page, 'pay');
     await toSetup(page, 2);
     await page.locator('[data-setup-pick="movie"]').click();
-    await details(page, 'upi');
+    await details(page, 'online');
     await expect(page.locator('[data-bk-next]')).toContainText('₹1,500');
     await page.locator('[data-bk-next]').click();
 
-    await expect(page.locator('.paybox')).toBeVisible();
-    await expect(page.locator('.paybox-qr svg')).toBeVisible();
-    const href = await page.locator('.paybox-app').getAttribute('href');
-    expect(href).toMatch(/^upi:\/\/pay\?pa=[^&]+@[^&]+&/);
-    expect(href).toContain('am=1500.00');
-    expect(href).toContain('cu=INR');
-    const ref = (await page.locator('.bk-ref b').innerText()).trim();
-    expect(ref).toMatch(/^YS-[A-Z0-9]{6}$/);
-    expect(decodeURIComponent(href!)).toContain(ref);
-
+    // the booking is emailed first, marked as not paid yet
     await expect(page.locator('#bkSendState')).toContainText('reached us');
     expect(sent).toHaveLength(1);
-    expect(sent[0].Payment).toContain('NOT VERIFIED');
+    expect(sent[0].Payment).toContain('Not paid yet');
 
-    // the reference is checked before it is sent
-    await page.fill('#bUtr', '123');
-    await page.locator('[data-bk-paid]').click();
-    await expect(page.locator('#bkUtrState')).toContainText('12 digits');
+    // then the checkout opens by itself, for this booking, and is verified
+    await expect(page.locator('.paybox-done')).toContainText('pay_TEST12345678');
+    await expect(page.locator('#bkTitle')).toContainText('paid and on the list');
+    const ref = (await page.locator('.bk-ref b').innerText()).trim();
+    expect(calls[0]).toMatchObject({ step: 'order', ref, setup: 'movie', guests: 2, expected: 1500 });
+    expect(calls[1]).toMatchObject({ step: 'verify', order_id: 'order_TEST123', payment_id: 'pay_TEST12345678' });
+    const opts = await page.evaluate(() => (window as any).__rzpOptions);
+    expect(opts).toMatchObject({ order_id: 'order_TEST123', amount: 150000, currency: 'INR' });
+    expect(opts.prefill).toMatchObject({ contact: '9876543210', email: 'a@example.com' });
+    await expect(page.locator('.bk-sum')).toContainText('Paid online');
+  });
 
-    await page.fill('#bUtr', '412345678901');
-    await page.locator('[data-bk-paid]').click();
-    await expect(page.locator('.paybox-done')).toContainText('awaiting confirmation');
-    expect(sent).toHaveLength(2);
-    expect(sent[1]['UPI reference (UTR)']).toBe('412345678901');
-    expect(sent[1].Status).toContain('UNVERIFIED');
+  test('decoration only at the decorator\'s hours: none at noon, none at 10:30 PM', async ({ page }) => {
+    await freshFlow(page);
+    await page.locator('[data-exp-pick="date"]').click();
+    await pickSeats(page, 2);
+    await page.locator('[data-date-pick]').nth(2).click();
+    await page.locator('[data-bk-next]').click();
+    // the decorated times are marked: 3:30, 5:15, 7:00 and 8:45 PM
+    for (const s of ['s3', 's4', 's5', 's6']) await expect(page.locator(`[data-slot-pick="${s}"] .slot-decor`)).toHaveCount(1);
+    for (const s of ['s1', 's2', 's7']) await expect(page.locator(`[data-slot-pick="${s}"] .slot-decor`)).toHaveCount(0);
 
-    // nothing on the page claims the money arrived
-    await expect(page.locator('.bk-done')).not.toContainText(/payment (received|confirmed)|\bis paid\b/i);
+    await page.locator('[data-slot-pick="s1"]').click();
+    await expect(page.locator('#bkTitle')).toContainText('Choose your setup');
+    await expect(page.locator('.bk-body')).toContainText('only set up for sessions starting between 2:30 PM and 9:30 PM');
+    await expect(page.locator('[data-setup-pick="date"]')).toContainText('no decoration at this time');
+    await page.locator('[data-setup-pick="date"]').click();
+    // straight on to add-ons: no decoration to pick, and none charged
+    await expect(page.locator('[data-decor-pick]')).toHaveCount(0);
+    await expect(page.locator('#bkTitle')).toContainText('Make it yours');
+    await expect(page.locator('.bk-sum')).not.toContainText('decoration');
+    await expect(page.locator('.bk-sum .is-total')).toContainText('₹1,500');
+
+    // back to a decorated time, and the decoration is offered again
+    await page.locator('[data-bk-back]').click();
+    await page.locator('[data-bk-retime]').click();
+    await page.locator('[data-slot-pick="s4"]').click();
+    await page.locator('[data-setup-pick="date"]').click();
+    await expect(page.locator('[data-decor-pick]')).toHaveCount(3);
+  });
+
+  test('closing the checkout leaves the booking unpaid, with a way to pay', async ({ page }) => {
+    await freshFlow(page);
+    await mockRazorpay(page, 'dismiss');
+    await toSetup(page, 2);
+    await page.locator('[data-setup-pick="movie"]').click();
+    await details(page, 'online');
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('#bkPayState')).toContainText('Payment not made');
+    await expect(page.locator('[data-bk-pay]')).toBeEnabled();
+    await expect(page.locator('.bk-done')).not.toContainText(/payment received|paid and on the list/i);
+    await expect(page.locator('.bk-sum')).toContainText('Online — awaiting payment');
+  });
+
+  test('a payment the server cannot verify is never called paid', async ({ page }) => {
+    await freshFlow(page);
+    await mockRazorpay(page, 'unverified');
+    await toSetup(page, 2);
+    await page.locator('[data-setup-pick="movie"]').click();
+    await details(page, 'online');
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('#bkPayState')).toContainText('Do not pay again');
+    await expect(page.locator('.paybox-done')).toHaveCount(0);
+  });
+
+  test('without Razorpay keys, nothing is charged and they are told so', async ({ page }) => {
+    await freshFlow(page);
+    await mockRazorpay(page, 'unavailable');
+    await toSetup(page, 2);
+    await page.locator('[data-setup-pick="movie"]').click();
+    await details(page, 'online');
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('#bkPayState')).toContainText('not available right now');
   });
 
   test('a double tap sends one booking, and a reload does not send it again', async ({ page }) => {
     const sent = await freshFlow(page);
     await toSetup(page, 2);
     await page.locator('[data-setup-pick="movie"]').click();
-    await details(page, 'upi');
+    await mockRazorpay(page, 'dismiss');
+    await details(page, 'online');
     await page.locator('[data-bk-next]').dblclick();
     await expect(page.locator('#bkSendState')).toContainText('reached us');
     const ref = await page.locator('.bk-ref b').innerText();

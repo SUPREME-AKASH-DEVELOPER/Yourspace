@@ -214,6 +214,26 @@ export const slots: Slot[] = (() => {
   return out;
 })();
 
+/**
+ * When decoration can be booked (12 Nov 2026). There is one decorator, there
+ * for about seven hours, so decoration is only set up for sessions STARTING
+ * from 2:30 PM and before 9:30 PM. Not the first two slots of the day, and not
+ * the last. At the other times Date Night can still be booked, without a
+ * decoration, and the flow says so.
+ *
+ * api/_prices.js keeps the same list of slots for the server; the payment
+ * tests fail if the two ever disagree.
+ */
+export const DECOR_FROM = '2:30 PM';
+export const DECOR_UNTIL = '9:30 PM';
+
+export function decorAvailable(slotId: string): boolean {
+  const s = slots.find((x) => x.id === slotId);
+  if (!s) return false;
+  const start = clockToMinutes(s.start);
+  return start >= clockToMinutes(DECOR_FROM) && start < clockToMinutes(DECOR_UNTIL);
+}
+
 /** "7:30 PM" plus 30 minutes is "8:00 PM". Only used for the shorter karaoke session. */
 export function addMinutes(clock: string, mins: number): string {
   if (!/^\d{1,2}:\d{2} (AM|PM)$/.test(clock)) return clock;

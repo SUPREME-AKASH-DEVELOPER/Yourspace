@@ -10,10 +10,10 @@
  */
 import { canEmailCustomer, customerEmail, ownerEmail } from './_email.js';
 
-const FROM = process.env.MAIL_FROM || 'YourSpace Jabalpur <bookings@yourspacejbp.com>';
+export const FROM = process.env.MAIL_FROM || 'YourSpace Jabalpur <bookings@yourspacejbp.com>';
 const list = (value, fallback) => (value ?? fallback).split(',').map((s) => s.trim()).filter(Boolean);
-const TEAM_TO = () => list(process.env.NOTIFY_TO, 'tanishkofficial27@gmail.com');
-const TEAM_CC = () => list(process.env.NOTIFY_CC, 'badalakki11@gmail.com');
+export const TEAM_TO = () => list(process.env.NOTIFY_TO, 'tanishkofficial27@gmail.com');
+export const TEAM_CC = () => list(process.env.NOTIFY_CC, 'badalakki11@gmail.com');
 
 const ALLOWED_ORIGINS = new Set([
   'https://www.yourspacejbp.com',
@@ -21,19 +21,25 @@ const ALLOWED_ORIGINS = new Set([
   'https://yourspace-sand.vercel.app',
 ]);
 
+/** Our own pages, and Vercel's preview deployments of this project. */
+export const allowedOrigin = (origin) =>
+  ALLOWED_ORIGINS.has(origin) || /^https:\/\/yourspace-[\w-]+\.vercel\.app$/.test(origin);
+
 const MAX_BODY = 16_000;
 const MAX_FIELDS = 30;
 const MAX_VALUE = 2_000;
 
-/* Envelope fields for the fallback service, or ones the browser may not choose. */
-const IGNORED = /^(access_key|from_name|ccemail|replyto|subject|botcheck|_.*)$/;
+/* Envelope fields for the fallback service, or ones the browser may not choose.
+   The payment ones only ever come from api/pay.js, after Razorpay has confirmed
+   the money: a browser must not be able to send an email that says "paid". */
+const IGNORED = /^(access_key|from_name|ccemail|replyto|subject|botcheck|_.*|Razorpay payment|Amount paid|Paid by)$/i;
 
 /* Best effort: this lives in one server instance, and resets when it does. */
 const WINDOW_MS = 10 * 60_000;
 const LIMIT_PER_WINDOW = 12;
 const hits = new Map();
 
-function overLimit(key, now = Date.now()) {
+export function overLimit(key, now = Date.now()) {
   const recent = (hits.get(key) ?? []).filter((t) => now - t < WINDOW_MS);
   recent.push(now);
   hits.set(key, recent);
@@ -49,13 +55,14 @@ export function cleanFields(body) {
   const fields = {};
   for (const [key, value] of Object.entries(body)) {
     if (IGNORED.test(key) || typeof value !== 'string' || !value.trim()) continue;
+    if (key === 'Status' && /\bpaid\b.*verified/i.test(value)) continue;
     if (Object.keys(fields).length >= MAX_FIELDS) break;
     fields[key.slice(0, 80)] = value.trim().slice(0, MAX_VALUE);
   }
   return fields;
 }
 
-async function resend(apiKey, message, idempotencyKey) {
+export async function resend(apiKey, message, idempotencyKey) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -70,9 +77,7 @@ async function resend(apiKey, message, idempotencyKey) {
 }
 
 export async function POST(request) {
-  const origin = request.headers.get('origin') ?? '';
-  const preview = /^https:\/\/yourspace-[\w-]+\.vercel\.app$/.test(origin);
-  if (!ALLOWED_ORIGINS.has(origin) && !preview) {
+  if (!allowedOrigin(request.headers.get('origin') ?? '')) {
     return answer(403, { success: false, message: 'Not allowed.' });
   }
 

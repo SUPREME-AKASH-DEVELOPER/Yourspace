@@ -99,11 +99,20 @@ test.describe('the email function', () => {
     expect(html).toContain('&lt;script&gt;');
   });
 
-  test('a UPI booking is never told it was not charged', () => {
-    const { html, text } = customerEmail({ ...booking, Payment: 'Customer chose UPI now (₹1,500). NOT VERIFIED — check your bank app before confirming.' }, booking.subject);
-    expect(html).toContain('awaiting confirmation');
+  test('a booking paying online is never told it was not charged', () => {
+    const { html, text } = customerEmail({ ...booking, Payment: 'Customer chose to pay online now (₹1,500). Not paid yet: a separate "Payment received" email follows once Razorpay confirms it.' }, booking.subject);
+    expect(html).toContain('awaiting payment');
     expect(text).not.toContain('Nothing has been charged');
-    expect(html).not.toContain('NOT VERIFIED');
+  });
+
+  test('a browser cannot send an email that says paid', async () => {
+    const res = await call({ ...booking, 'Razorpay payment': 'pay_FAKE', 'Amount paid': '₹1', Status: 'PAID — ₹1 verified with Razorpay' });
+    expect(res.status).toBe(200);
+    for (const m of sent) {
+      expect(m.subject).not.toMatch(/payment received/i);
+      expect(m.html).not.toContain('pay_FAKE');
+      expect(m.html).not.toMatch(/verified with Razorpay \(/);
+    }
   });
 
   test('a claimed UPI payment reaches the team only, marked unverified', async () => {

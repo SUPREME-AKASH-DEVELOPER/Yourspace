@@ -1028,6 +1028,7 @@ h3{
 .slot:hover{border-color:rgba(212,168,95,.55)}
 .slot strong{font-family:var(--mono);font-size:1.02rem;font-weight:500}
 .slot span{font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;color:var(--grey)}
+.slot .slot-decor{color:var(--amber);letter-spacing:.06em}
 .slot.is-sel{border-color:var(--amber);background:rgba(212,168,95,.1)}
 
 /* packages */
@@ -1299,7 +1300,10 @@ h3{
 .bk-ref{margin:-4px 0 10px;font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;color:var(--grey)}
 .bk-ref b{color:var(--amber);font-weight:500}
 .paybox{margin:22px auto 6px;max-width:680px;text-align:left;padding:clamp(16px,3vw,26px);border:1px solid var(--amber);border-radius:8px;background:rgba(212,168,95,.06)}
-.paybox.is-arming{pointer-events:none}
+.bk-done.is-arming{pointer-events:none}
+.secure-line{display:flex;gap:9px;align-items:flex-start;margin:14px 0 0;font-size:.8rem;line-height:1.5;color:var(--grey)}
+.secure-line b{color:var(--paper);font-weight:600}
+.lock-i{width:16px;height:16px;flex:0 0 auto;margin-top:1px;color:#7FC79A}
 .paybox h3{margin:0 0 16px;font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
 .paybox-grid{display:grid;grid-template-columns:200px 1fr;gap:clamp(16px,3vw,28px);align-items:start}
 .paybox-qr{background:#fff;padding:8px;border-radius:6px;line-height:0}

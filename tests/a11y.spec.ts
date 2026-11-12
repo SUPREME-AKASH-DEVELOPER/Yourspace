@@ -84,10 +84,10 @@ test.describe('accessibility', () => {
     await audit('occasion');
     await page.locator('[data-exp-pick="proposal"]').click();
     await audit('date and seats');
-    await page.locator('[data-date-pick]').first().click();
+    await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
     await audit('time');
-    await page.locator('[data-slot-pick="s7"]').click();
+    await page.locator('[data-slot-pick="s6"]').click();
     await audit('setup');
     await page.locator('[data-setup-pick="date"]').click();
     await audit('decoration');
@@ -99,10 +99,10 @@ test.describe('accessibility', () => {
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9876543210');
     await page.fill('#bEmail', 'a@example.com');
-    await page.locator('input[name=bkPay][value=upi]').check();
+    await page.locator('input[name=bkPay][value=online]').check();
     await page.locator('[data-bk-next]').click();
     await expect(page.locator('.paybox')).toBeVisible();
-    await audit('pay by UPI');
+    await audit('pay online');
   });
 
   test('the skip link is first and shows a visible focus ring', async ({ page }) => {

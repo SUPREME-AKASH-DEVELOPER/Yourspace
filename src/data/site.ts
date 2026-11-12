@@ -87,20 +87,17 @@ export const site = {
   /**
    * HOW PEOPLE PAY
    *
-   * After a booking is sent, the last screen offers UPI: a pay link on phones,
-   * a QR code on computers, and the ID to copy. The amount is filled in.
+   * When every line of a booking has a price, the last step offers "Pay now
+   * online": Razorpay's checkout (UPI, card, netbanking) opens once the booking
+   * is sent. The amount is worked out again on the server (api/_prices.js) and
+   * the payment is checked with Razorpay before anyone is told it is paid —
+   * the team gets a separate "Payment received" email for every real payment.
    *
-   * The site cannot see whether money arrived. It asks for the UPI reference
-   * and emails it to you marked UNVERIFIED — check your bank app before
-   * confirming the booking. Leave upiId empty to switch UPI off entirely.
-   *
-   * TODO(owner): this is a personal account. Google Pay and PhonePe can block
-   * or warn on pay-links to personal IDs, and UPI caps how much a personal ID
-   * receives in a day. A business/merchant UPI ID avoids both.
+   * Needs RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Vercel. Without them the
+   * pay button says online payment is not available, and nothing is charged.
+   * Set this to false to take the option off the booking flow entirely.
    */
-  upiId: 'tanishksharma062004@okhdfcbank',
-  /** The name shown in the payer's UPI app. */
-  upiPayee: 'Tanishk Sharma',
+  onlinePayments: true,
 } as const;
 
 /** A real Indian mobile, and not the placeholder we ship with. */

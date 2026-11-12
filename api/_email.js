@@ -47,6 +47,7 @@ export function detailRows(fields) {
 
 /** What sort of submission this is, from the fields it carries. */
 export function kindOf(fields, subject = '') {
+  if (fields['Razorpay payment']) return 'Payment received';
   if (fields['UPI reference (UTR)']) return 'UPI payment claimed';
   if (fields['Booking ref']) return 'Booking';
   const known = ['Pre-booking', 'Enquiry', 'Message', 'Call-back request'];
@@ -151,7 +152,9 @@ ${button(`https://wa.me/91${digits}`, 'WhatsApp', false)}
 ${footer([
     ...(fields.Received ? [`Received ${esc(fields.Received)}`] : []),
     ...(fields['Came from'] ? [`From the page ${esc(fields['Came from'])}`] : []),
-    'A UPI payment is never confirmed by the website. Find it in the bank app first.',
+    kind === 'Payment received'
+      ? 'Verified with Razorpay. It is in the Razorpay dashboard under Transactions.'
+      : 'Online payments arrive as a separate "Payment received" email, checked with Razorpay. Anything else, find in the bank app first.',
   ])}`);
 
   const text = [
@@ -178,20 +181,25 @@ export function customerEmail(fields, subject) {
   const kind = kindOf(fields, subject);
   const isBooking = kind === 'Booking';
   const first = String(fields.Name ?? '').trim().split(/\s+/)[0] || 'there';
-  const paysByUpi = String(fields.Payment ?? '').startsWith('Customer chose UPI');
-  const noun = kind === 'Message' ? 'message' : kind.toLowerCase();
+  const paid = kind === 'Payment received';
+  const paysByUpi = /^Customer chose (UPI|to pay online)/.test(String(fields.Payment ?? ''));
+  const noun = kind === 'Message' ? 'message' : paid ? 'payment' : kind.toLowerCase();
   const rows = detailRows(fields);
   const ref = fields['Booking ref'];
 
-  const payLine = paysByUpi
-    ? 'Your booking is <b style="color:' + CREAM + ';">awaiting confirmation</b>, not paid. If you have paid by UPI, we confirm it as soon as the payment shows in our account.'
+  const payLine = paid
+    ? 'Your payment of <b style="color:' + CREAM + ';">' + esc(fields['Amount paid']) + '</b> has been received. Keep this email as your receipt.'
+    : paysByUpi
+    ? 'Your booking is <b style="color:' + CREAM + ';">awaiting payment</b>. Once you pay online, a separate email confirms that we have received it.'
     : '<b style="color:' + CREAM + ';">Nothing has been charged</b>, and nothing will be until you have confirmed with us.';
-  const payText = paysByUpi
-    ? 'Your booking is awaiting confirmation, not paid. If you have paid by UPI, we confirm it as soon as the payment shows in our account.'
+  const payText = paid
+    ? `Your payment of ${fields['Amount paid']} has been received. Keep this email as your receipt.`
+    : paysByUpi
+    ? 'Your booking is awaiting payment. Once you pay online, a separate email confirms that we have received it.'
     : 'Nothing has been charged, and nothing will be until you have confirmed with us.';
 
-  const html = shell(paysByUpi ? 'We have your booking. We will call you to confirm.' : "We'll call you to confirm. Nothing has been charged.", `
-${masthead(isBooking && ref ? ref : kind)}
+  const html = shell(paid ? `Payment received: ${fields['Amount paid']}.` : paysByUpi ? 'We have your booking. We will call you to confirm.' : "We'll call you to confirm. Nothing has been charged.", `
+${masthead((isBooking || paid) && ref ? ref : kind)}
 <tr><td align="center" style="padding:30px 34px 4px;font-family:${SANS};font-size:28px;font-weight:bold;letter-spacing:-0.8px;line-height:1.16;color:${CREAM};">Thanks, ${esc(first)}.<br>We have your ${esc(noun)}.</td></tr>
 <tr><td align="center" style="padding:14px 38px 2px;font-family:${SANS};font-size:15px;line-height:1.68;color:${SOFT};">We'll call you on <span style="color:${CREAM};">${esc(fields.Phone ?? 'the number you gave us')}</span> to confirm.</td></tr>
 ${slip(rows)}
@@ -215,7 +223,8 @@ ${footer([`YourSpace · Jabalpur, Madhya Pradesh · ${PHONE_PRETTY}`, 'You are g
 
   return {
     html, text,
-    subject: isBooking && ref ? `Your YourSpace booking ${ref}` : `We have your ${noun} | YourSpace Jabalpur`,
+    subject: paid && ref ? `Payment received for your YourSpace booking ${ref}`
+      : isBooking && ref ? `Your YourSpace booking ${ref}` : `We have your ${noun} | YourSpace Jabalpur`,
   };
 }
 

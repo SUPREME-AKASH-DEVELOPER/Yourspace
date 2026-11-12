@@ -1,17 +1,22 @@
-import qrcode from 'qrcode-generator';
 import { $, $$, rupee, esc, dateLabel, nextDays, stash, venueNow, venueToday, isIsoDate } from './dom';
 import { site, phoneNumbers, whatsappLink, whatsappIsSet } from '../data/site';
 import { deliver, envelope } from './deliver';
+import { openCheckout, type Paid } from './razorpay';
 import {
   experiences, slots, setups, addonGroups, stepNames, OTHER,
   BUFFER_MINUTES, MAX_GUESTS, SEATING, SEAT_IDS, seatKind, cleanSeats, defaultSeats, seatsLabel,
-  setupOf, setupPrice, addonOf, quote, addMinutes,
+  setupOf, setupPrice, addonOf, quote, addMinutes, decorAvailable, DECOR_FROM, DECOR_UNTIL,
   type Setup, type Quote,
 } from '../data/booking';
 import { decorations, DECOR_INCLUDED } from '../data/decorations';
 
 /** The same WhatsApp mark as WhatsApp.astro, for the hand-off on the confirmation screen. */
 const WA_ICON = '<svg class="wa-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M12 2.2a9.8 9.8 0 0 0-8.4 14.9L2.2 21.8l4.8-1.3A9.8 9.8 0 1 0 12 2.2Zm0 17.8a8 8 0 0 1-4.1-1.1l-.3-.2-2.9.8.8-2.8-.2-.3A8 8 0 1 1 12 20Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.6 6.6 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.1 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.6.3 2.7 2.7 0 0 0-.9 2c0 1.2.9 2.4 1 2.5.1.2 1.7 2.6 4.2 3.7 1.6.7 2.2.7 3 .6.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1l-.5-.5Z"/></svg>';
+
+const LOCK = '<svg class="lock-i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="11" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>';
+
+/** Said wherever money is taken. Every claim is Razorpay's own and true. */
+const SECURE = `<p class="secure-line">${LOCK}<span>Secured by <b>Razorpay</b> · PCI DSS compliant · 256-bit encrypted. We never see your card or bank details.</span></p>`;
 
 /* Line-art marks for the occasion tiles — drawn, not emoji. */
 const ICON: Record<string, string> = {
@@ -24,7 +29,7 @@ const ICON: Record<string, string> = {
   other:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20.5 5 16l9.8-9.8a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8L9 20l-5 .5Z"/><path d="M13 7.5 16.5 11"/></svg>',
 };
 
-type Pay = '' | 'upi' | 'later';
+type Pay = '' | 'online' | 'later';
 type Send = '' | 'sending' | 'sent' | 'failed';
 
 interface State {
@@ -46,14 +51,18 @@ interface State {
   ref: string;
   /** Where the booking email got to. A sent booking is never sent again. */
   send: Send;
-  /** The UPI reference they give us. We pass it on; we never call it paid. */
-  utr: string;
-  utrSend: Send;
+  /**
+   * Where the online payment stands. 'sent' means Razorpay took the money AND
+   * our server checked its signature — the only state the page calls "paid".
+   */
+  paid: Send;
+  /** Razorpay's id for the payment, shown on the receipt. */
+  paymentId: string;
 }
 const BLANK: State = {
   step: 0, exp: '', date: '', seats: [1, 2], guests: 2, slot: '', setup: '', decor: '', addons: [],
   name: '', phone: '', email: '', notes: '', customOccasion: '',
-  pay: '', ref: '', send: '', utr: '', utrSend: '',
+  pay: '', ref: '', send: '', paid: '', paymentId: '',
 };
 
 const KEY = 'ys-booking-v3';
@@ -107,11 +116,14 @@ function load() {
     if (S.setup && !setupOf(S.setup)) S.setup = '';
     if (S.decor && !decorations.some((d) => d.id === S.decor)) S.decor = '';
     if (S.exp && S.exp !== OTHER.id && !experiences.some((e) => e.id === S.exp)) S.exp = '';
-    if (!(['', 'upi', 'later'] as string[]).includes(S.pay)) S.pay = '';
+    if ((S.pay as string) === 'upi') S.pay = 'online';   // saved before Razorpay
+    if (!(['', 'online', 'later'] as string[]).includes(S.pay)) S.pay = '';
     if (!(['', 'sending', 'sent', 'failed'] as string[]).includes(S.send)) S.send = '';
-    if (!(['', 'sending', 'sent', 'failed'] as string[]).includes(S.utrSend)) S.utrSend = '';
+    if (!(['', 'sending', 'sent', 'failed'] as string[]).includes(S.paid)) S.paid = '';
     if (S.ref && !/^YS-[A-Z0-9]{6}$/.test(S.ref)) S.ref = '';
-    S.utr = S.utr.replace(/\D/g, '').slice(0, 12);
+    if (!/^pay_\w{6,40}$/.test(S.paymentId)) S.paymentId = '';
+    // "paid" is only ever set by our server's answer, with Razorpay's id beside it
+    if (S.paid === 'sent' && !S.paymentId) S.paid = '';
     if (S.date && S.date < today()) {
       // a finished booking for a day that has gone is of no use to anyone
       if (S.step === DONE) { S = structuredClone(BLANK); clearSaved(); return; }
@@ -122,7 +134,7 @@ function load() {
     if (S.step === DONE && !S.ref) S.step = 5;
     // the page went away mid-send: we cannot know if it arrived, so offer a resend
     if (S.send === 'sending') S.send = 'failed';
-    if (S.utrSend === 'sending') S.utrSend = 'failed';
+    if (S.paid === 'sending') S.paid = 'failed';
     // Seats are the truth. A saved list from this browser is checked seat by
     // seat; progress saved before seats existed leaves only a head count, so
     // the seats are worked out from that. Either way one seat is the minimum.
@@ -144,7 +156,10 @@ function occasionLabel(): string {
 
 const expOf = () => experiences.find((e) => e.id === S.exp) ?? null;
 const slotOf = () => slots.find((s) => s.id === S.slot) ?? null;
-const decorOf = () => decorations.find((d) => d.id === S.decor) ?? null;
+/** The decorator only works certain hours, so a decoration depends on the time picked. */
+const decorHere = () => decorAvailable(S.slot);
+/** The decoration they picked, if this time can have one. */
+const decorOf = () => (decorHere() ? decorations.find((d) => d.id === S.decor) ?? null : null);
 
 /** "6:00 PM – 7:30 PM", or 30 minutes from the start for karaoke. */
 function timeLabel(): string {
@@ -167,7 +182,10 @@ function totals(): Quote {
 
 /** Online payment is only offered when every line has a real price. */
 const canPayOnline = (q: Quote) =>
-  Boolean(site.upiId) && !q.blocked && q.unpriced.length === 0 && q.total > 0;
+  site.onlinePayments && !q.blocked && q.unpriced.length === 0 && q.total > 0;
+
+/** They chose to pay online, and this booking can be. */
+const paysOnline = (q = totals()) => S.pay === 'online' && canPayOnline(q);
 
 /** A slot that has already started today cannot be booked. */
 function slotPassed(start: string): boolean {
@@ -328,8 +346,8 @@ function closeBooking() {
   if (!root || mode === 'inline') return;
   root.hidden = true;
   setBackgroundInert(false);
-  // keep a booking that is still waiting on a UPI payment, so it can be reopened
-  if (S.step === DONE && !(S.pay === 'upi' && S.utrSend !== 'sent')) resetState();
+  // keep a booking that is still waiting on its payment, so it can be reopened
+  if (S.step === DONE && !(paysOnline() && S.paid !== 'sent')) resetState();
   document.body.classList.remove('is-locked');
   save();
   lastFocus?.focus();
@@ -369,7 +387,7 @@ function validate(step: number): string {
     if (!S.setup) return 'Choose a setup to continue.';
     const blocked = setupPrice(S.setup, S.guests).blocked;
     if (blocked) return blocked;
-    if (setupOf(S.setup)?.hasDecor && !decorOf()) return 'Pick a decoration to continue.';
+    if (setupOf(S.setup)?.hasDecor && decorHere() && !decorOf()) return 'Pick a decoration to continue.';
   }
   if (step === 5) {
     if (!S.name.trim()) return 'Please add your name.';
@@ -398,7 +416,7 @@ function updateNext() {
   if (!next) return;
   const q = totals();
   const label = S.step < 5 ? 'Continue'
-    : S.pay === 'upi' && canPayOnline(q) ? `Send & pay ${rupee(q.total)}`
+    : S.pay === 'online' && canPayOnline(q) ? `Send & pay ${rupee(q.total)}`
     : 'Send booking request';
   next.innerHTML = `${label}<span aria-hidden="true">→</span>`;
 }
@@ -549,11 +567,13 @@ function step2() {
   return head(3, 'Choose your time',
     `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Karaoke runs 30 minutes from the start of the slot.`) +
     `<p class="fine" style="margin:-14px 0 18px">We leave ${BUFFER_MINUTES} minutes between bookings to reset the room, so the start times are not on the hour — the space is yours for the whole slot, with nobody waiting at the door.</p>` +
+    (expOf()?.suggests === 'date' ? `<p class="fine" style="margin:-8px 0 18px">Want your room decorated? Decoration is set up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}, marked below.</p>` : '') +
     `<div class="slots">${slots.map((s) => {
       const gone = slotPassed(s.start);
+      const decor = expOf()?.suggests === 'date' && decorAvailable(s.id) && !gone;
       return `
       <button class="slot ${S.slot === s.id ? 'is-sel' : ''}" type="button" data-slot-pick="${s.id}"${gone ? ' disabled' : ''}>
-        <strong>${s.start}</strong><span>${gone ? 'Already started' : `to ${s.end}`}</span>
+        <strong>${s.start}</strong><span>${gone ? 'Already started' : `to ${s.end}`}</span>${decor ? '<span class="slot-decor">Decoration available</span>' : ''}
       </button>`;
     }).join('')}</div>` +
     `<div class="bk-note" style="margin-top:22px"><i>Note</i><span>We check the slot is free as soon as your booking reaches us, and call you if it is not. You are never charged for a slot we cannot give you.</span></div>`;
@@ -562,7 +582,13 @@ function step2() {
 const TONE: Record<string, string> = { date: 'rose', movie: 'night', karaoke: 'neon', watch: 'pitch' };
 
 function setupCard(s: Setup) {
-  const p = setupPrice(s.id, S.guests);
+  const p = { ...setupPrice(s.id, S.guests) };
+  // outside the decorator's hours Date Night is the room without a decoration
+  const undecorated = s.hasDecor && !decorHere();
+  if (undecorated && !p.blocked) p.note = 'no decoration at this time';
+  const includes = undecorated
+    ? s.includes.filter((i) => i !== 'Your choice of decoration' && !DECOR_INCLUDED.includes(i))
+    : s.includes;
   const sel = S.setup === s.id;
   const suggested = expOf()?.suggests === s.id;
   const dur = s.minutes ? `${s.minutes} min` : 'Duration on call';
@@ -580,7 +606,7 @@ function setupCard(s: Setup) {
         <strong class="sc-name">${s.name}</strong>
         <span class="sc-tag">${s.tagline}</span>
         <span class="sc-pricing">${price}${p.note ? `<span class="sc-per">${esc(p.note)}</span>` : ''}</span>
-        <span class="sc-list">${s.includes.map((i) => `<span>${esc(i)}</span>`).join('')}</span>
+        <span class="sc-list">${includes.map((i) => `<span>${esc(i)}</span>`).join('')}</span>
         ${p.blocked ? `<span class="sc-why" id="sc-why-${s.id}">${esc(p.blocked)}</span>` : ''}
         ${s.idealFor && S.guests > s.idealFor && !p.blocked ? `<span class="sc-hint">Set up for ${s.idealFor}. Bigger groups are welcome — we will arrange the room on the call.</span>` : ''}
       </span>
@@ -616,7 +642,8 @@ function step3() {
   return head(4, 'Choose your setup',
     `Priced for ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}. Change the number of guests on step 2.`) +
     `<div class="sc-grid">${setups.map(setupCard).join('')}</div>` +
-    (s?.hasDecor && !setupPrice(s.id, S.guests).blocked ? decorStep() : '') +
+    (s?.hasDecor && !setupPrice(s.id, S.guests).blocked && decorHere() ? decorStep() : '') +
+    (!decorHere() && (expOf()?.suggests === 'date' || S.setup === 'date') ? `<div class="bk-note" style="margin-top:18px"><i>Decoration</i><span>Decoration is only set up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}. Your ${esc(slotOf()?.start ?? '')} session can still be a Date Night, without decoration. Want it decorated? <button type="button" class="linkish" data-bk-retime>Pick another time</button>.</span></div>` : '') +
     `<p class="fine">Something you cannot book here? Call us on ${callLink()}.</p>`;
 }
 
@@ -643,20 +670,21 @@ function step4(q: Quote) {
 
 function step5(q: Quote) {
   const online = canPayOnline(q);
-  if (!online && S.pay === 'upi') S.pay = 'later';
+  if (!online && S.pay === 'online') S.pay = 'later';
   const payBlock = online ? `
     <fieldset class="paypick">
       <legend>How would you like to pay?</legend>
-      <label class="payopt ${S.pay === 'upi' ? 'is-sel' : ''}">
-        <input type="radio" name="bkPay" value="upi"${S.pay === 'upi' ? ' checked' : ''}>
-        <span><strong>Pay now by UPI · ${rupee(q.total)}</strong>
-        <em>Any UPI app. We show you a QR code and a pay link as soon as this is sent.</em></span>
+      <label class="payopt ${S.pay === 'online' ? 'is-sel' : ''}">
+        <input type="radio" name="bkPay" value="online"${S.pay === 'online' ? ' checked' : ''}>
+        <span><strong>Pay now online · ${rupee(q.total)}</strong>
+        <em>UPI, card or netbanking, through Razorpay's secure checkout. It opens as soon as this is sent.</em></span>
       </label>
       <label class="payopt ${S.pay === 'later' ? 'is-sel' : ''}">
         <input type="radio" name="bkPay" value="later"${S.pay === 'later' ? ' checked' : ''}>
         <span><strong>Pay after we call</strong>
         <em>We confirm the slot first, then send you the payment details.</em></span>
       </label>
+      ${SECURE}
     </fieldset>`
     : `<div class="bk-note"><i>Payment</i><span>${q.unpriced.length
         ? `<b>${esc(q.unpriced.join(', '))}</b> ${q.unpriced.length > 1 ? 'are' : 'is'} priced on the call, so we will send you the exact amount and how to pay once we have spoken.`
@@ -692,8 +720,8 @@ function summary(q: Quote, final = false) {
     `<div class="bk-sum-row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('')}
     <div class="bk-sum-row is-total"><span>${q.unpriced.length ? 'Total so far' : 'Total'}</span><span>${esc(totalText(q))}</span></div>${final ? [
       ...(S.notes.trim() ? [['Your notes', S.notes.trim()]] : []),
-      ['Payment', S.pay === 'upi' && canPayOnline(q)
-        ? (S.utrSend === 'sent' ? 'UPI reference sent — awaiting confirmation' : 'UPI — awaiting payment')
+      ['Payment', paysOnline(q)
+        ? (S.paid === 'sent' ? `Paid online · ${S.paymentId}` : 'Online — awaiting payment')
         : 'After we call — nothing paid'],
     ].map(([a, b]) => `<div class="bk-sum-row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('') : ''}</div>`;
 }
@@ -732,7 +760,7 @@ function onBodyClick(e: Event) {
     S.setup = id;
     save();
     // Date Night carries on to the decoration below; the others are done here
-    if (setupOf(id)?.hasDecor) {
+    if (setupOf(id)?.hasDecor && decorHere()) {
       render();
       $('#bkDecor', root!)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       $<HTMLElement>(`[data-setup-pick="${id}"]`, root!)?.focus({ preventScroll: true });
@@ -740,6 +768,7 @@ function onBodyClick(e: Event) {
     }
     return go(S.step + 1);
   }
+  if (t.closest('[data-bk-retime]')) return go(2);
   if ((el = t.closest('[data-decor-pick]'))) { S.decor = el.dataset.decorPick!; save(); return go(S.step + 1); }
   if ((el = t.closest('[data-addon-pick]'))) {
     const id = el.dataset.addonPick!;
@@ -819,8 +848,8 @@ function bookingPayload(): Record<string, string> {
     ...Object.fromEntries(q.lines.map((l) => [l.label, l.amount !== null ? rupee(l.amount) : `price on call${l.note ? ` (${l.note})` : ''}`])),
     ...(S.notes.trim() ? { Notes: S.notes.trim() } : {}),
     Total: q.unpriced.length ? `${rupee(q.total)} + ${q.unpriced.join(', ')} (priced on call)` : rupee(q.total),
-    Payment: S.pay === 'upi' && online
-      ? `Customer chose UPI now (${rupee(q.total)}). NOT VERIFIED — check your bank app before confirming.`
+    Payment: S.pay === 'online' && online
+      ? `Customer chose to pay online now (${rupee(q.total)}). Not paid yet: a separate "Payment received" email follows once Razorpay confirms it.`
       : 'After the call. Nothing paid.',
     Received: new Date().toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' }),
   };
@@ -839,11 +868,11 @@ function bookingText() {
    it in WhatsApp instead of waiting for the call. It is an extra way through,
    not the only one — the booking has already been emailed to the team by the
    time this button appears, so nothing is lost if they never tap it, and a
-   WhatsApp message is still not a payment: the UPI panel and the "we will call
+   WhatsApp message is still not a payment: the pay panel and the "we will call
    you" line stay exactly as they were. */
 function bookingWhatsAppText() {
   const q = totals();
-  const upi = S.pay === 'upi' && canPayOnline(q);
+  const online = paysOnline(q);
   return [
     `Hi YourSpace, I'd like to book. My booking reference is ${S.ref}.`,
     '',
@@ -851,7 +880,8 @@ function bookingWhatsAppText() {
       .filter(([k]) => k !== 'Received' && k !== 'Booking ref' && k !== 'Payment' && k !== 'Email')
       .map(([k, v]) => `${k}: ${v}`),
     '',
-    upi ? 'I have chosen to pay by UPI.' : 'Please confirm the slot and tell me how to pay.',
+    online ? (S.paid === 'sent' ? `I have paid ${rupee(q.total)} online (${S.paymentId}).` : 'I have chosen to pay online.')
+      : 'Please confirm the slot and tell me how to pay.',
   ].join('\n');
 }
 
@@ -873,6 +903,9 @@ async function submit() {
   S.step = DONE;
   go(DONE);
   await sendBooking();
+  // they pressed "Send & pay", so the checkout opens by itself, once
+  // (S is changed inside sendBooking, which TypeScript's narrowing cannot see)
+  if ((S.send as Send) === 'sent' && paysOnline() && !S.paid) startPayment();
 }
 
 async function sendBooking() {
@@ -881,18 +914,18 @@ async function sendBooking() {
   S.send = 'sending'; save(); paintSendState();
   const payload = bookingPayload();
   const first = S.name.split(' ')[0] || 'there';
-  const upi = S.pay === 'upi';
+  const online = paysOnline();
   const outcome = await deliver({
     ...payload,
-    ...envelope(`Booking ${S.ref} — ${S.name || 'someone'} · ${S.phone}${upi ? ' · UPI pending' : ''}`, S.email),
+    ...envelope(`Booking ${S.ref} — ${S.name || 'someone'} · ${S.phone}${online ? ' · paying online' : ''}`, S.email),
     _autoresponse:
       `Thanks ${first} — we have your booking for YourSpace, ${site.city}.\n\n` +
       Object.entries(payload)
         .filter(([k]) => k !== 'Email' && k !== 'Received' && k !== 'Payment')
         .map(([k, v]) => `  ${k}: ${v}`).join('\n') +
       `\n\nWe will call you on ${S.phone} to confirm.\n` +
-      (upi ? `If you have paid by UPI, we confirm the booking once the payment shows in our account.\n`
-           : `Nothing has been charged.\n`) +
+      (online ? `Once you pay online, a separate email confirms we have received it.\n`
+              : `Nothing has been charged.\n`) +
       `\n— YourSpace, ${site.city}`,
   });
   busy = false;
@@ -917,80 +950,62 @@ function paintSendState(reason = '') {
         bookingWhatsAppLink() ? ', send it on WhatsApp below,' : ''} or call ${callLink()} and quote <b>${esc(S.ref)}</b>.`;
 }
 
-function upiLink(amount: number) {
-  // the UPI ID goes in as written: some apps reject an encoded "@"
-  const enc = encodeURIComponent;
-  return `upi://pay?pa=${site.upiId}&pn=${enc(site.upiPayee)}&am=${amount.toFixed(2)}&cu=INR&tn=${enc(`YourSpace ${S.ref}`)}`;
-}
-
-function qrSvg(text: string) {
-  const qr = qrcode(0, 'M');
-  qr.addData(text);
-  qr.make();
-  return qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
-}
-
 function payPanel(q: Quote) {
-  const link = upiLink(q.total);
-  const paid = S.utrSend === 'sent';
+  const paid = S.paid === 'sent';
+  if (paid) return `
+    <section class="paybox" aria-labelledby="payTitle">
+      <h3 id="payTitle">Paid ${rupee(q.total)}</h3>
+      <p class="paybox-done" role="status">Payment received, thank you. Razorpay reference
+        <b>${esc(S.paymentId)}</b>. A receipt is on its way to ${esc(S.email)}.</p>
+      ${SECURE}
+    </section>`;
   return `
     <section class="paybox" aria-labelledby="payTitle">
-      <h3 id="payTitle">Pay ${rupee(q.total)} by UPI</h3>
-      <div class="paybox-grid">
-        <div class="paybox-qr" role="img" aria-label="QR code to pay ${rupee(q.total)} by UPI">${qrSvg(link)}</div>
-        <div class="paybox-how">
-          <a class="btn btn-key full paybox-app" href="${esc(link)}">Open my UPI app<span aria-hidden="true">→</span></a>
-          <p class="fine">On a computer, scan the code with any UPI app on your phone.</p>
-          <dl class="paybox-meta">
-            <div><dt>UPI ID</dt><dd><code>${esc(site.upiId)}</code> <button type="button" class="linkish" data-copy="${esc(site.upiId)}">Copy</button></dd></div>
-            <div><dt>Name</dt><dd>${esc(site.upiPayee)}</dd></div>
-            <div><dt>Amount</dt><dd class="num">${rupee(q.total)}</dd></div>
-            <div><dt>Note</dt><dd><code>${esc(S.ref)}</code></dd></div>
-          </dl>
-          <p class="fine">If the link will not open or your app declines it, pay to the UPI ID by hand and put <b>${esc(S.ref)}</b> in the note.</p>
-        </div>
-      </div>
-      ${paid ? `
-        <p class="paybox-done" role="status">Thanks — we have your reference <b>${esc(S.utr)}</b>.
-          We confirm your booking as soon as the payment shows in our account. Until then it is <b>awaiting confirmation</b>, not paid.</p>`
-      : `
-        <div class="bookform paybox-utr"><div class="field">
-          <label for="bUtr">After paying: your UPI reference</label>
-          <input id="bUtr" type="text" inputmode="numeric" autocomplete="off" maxlength="12"
-                 placeholder="12-digit UTR / UPI ref. no." value="${esc(S.utr)}">
-          <span class="field-hint">In your UPI app under the payment's details. It lets us match your payment to this booking.</span>
-        </div></div>
-        <button class="btn btn-line" type="button" data-bk-paid>I've paid — send my reference</button>
-        <p class="fine" id="bkUtrState" role="status">${S.utrSend === 'failed' ? `That didn't reach us. Try again, or call ${callLink()}.` : ''}</p>`}
+      <h3 id="payTitle">Pay ${rupee(q.total)} to hold your slot</h3>
+      <p class="fine">UPI, card or netbanking, in Razorpay's secure checkout.</p>
+      <button class="btn btn-key full" type="button" data-bk-pay
+        ${S.paid === 'sending' ? 'disabled' : ''}>${S.paid === 'sending' ? 'Opening the payment…' : `Pay ${rupee(q.total)} now`}<span aria-hidden="true">→</span></button>
+      <p class="fine" id="bkPayState" role="status">${payMessage}</p>
+      ${SECURE}
     </section>`;
 }
 
-async function sendUtr() {
-  if (busy || S.utrSend === 'sent') return;
-  const input = $<HTMLInputElement>('#bUtr');
-  const utr = (input?.value ?? '').replace(/\s/g, '');
-  if (!/^\d{12}$/.test(utr)) {
-    const st = $('#bkUtrState');
-    if (st) st.textContent = 'A UPI reference is 12 digits. You will find it in your UPI app under the payment.';
-    input?.focus();
-    return;
-  }
+/** The last thing said about the payment, kept across re-renders. */
+let payMessage = '';
+
+async function startPayment() {
+  if (busy || S.paid === 'sent' || S.paid === 'sending') return;
   busy = true;
-  S.utr = utr; S.utrSend = 'sending'; save();
-  const btn = $<HTMLButtonElement>('[data-bk-paid]');
-  if (btn) { btn.disabled = true; btn.textContent = 'Sending…'; }
+  S.paid = 'sending'; payMessage = ''; save(); renderDone();
   const q = totals();
-  const outcome = await deliver({
-    'Booking ref': S.ref,
-    Name: S.name,
-    Phone: S.phone,
-    Amount: rupee(q.total),
-    'UPI reference (UTR)': utr,
-    Status: 'UNVERIFIED — the customer says they paid. Find this UTR in the bank app before confirming.',
-    ...envelope(`UPI payment claimed — ${S.ref} · ${rupee(q.total)} · UTR ${utr}`),
-  });
+  const d = decorOf();
+  let outcome: Paid;
+  try {
+    outcome = await openCheckout({
+      ref: S.ref,
+      name: S.name, phone: S.phone, email: S.email,
+      setup: S.setup, guests: S.guests, slot: S.slot, decor: d?.id ?? '', addons: S.addons,
+      summary: `${occasionLabel()} · ${dateLabel(S.date)}, ${timeLabel()} · ${S.guests} guests`,
+      expected: q.total,
+    });
+  } catch {
+    outcome = { ok: false, reason: 'offline' };
+  }
   busy = false;
-  S.utrSend = outcome.ok ? 'sent' : 'failed';
+  if (outcome.ok) {
+    S.paid = 'sent';
+    S.paymentId = outcome.paymentId;
+    payMessage = '';
+  } else {
+    S.paid = outcome.reason === 'dismissed' ? '' : 'failed';
+    payMessage = {
+      dismissed: 'Payment not made. Your booking is with us: pay now, or we will sort it out when we call.',
+      failed: 'The payment did not go through, and nothing was taken. Try again, or another method.',
+      unverified: `Razorpay took a payment, but we could not confirm it here. Do not pay again: call ${callLink()} and quote <b>${esc(S.ref)}</b>.`,
+      unavailable: `Online payment is not available right now. Nothing has been charged: we will sort payment out when we call, or ring ${callLink()}.`,
+      offline: `We could not reach the payment service. Check your connection and try again, or call ${callLink()}.`,
+    }[outcome.reason];
+  }
   save();
   renderDone();
 }
@@ -998,7 +1013,8 @@ async function sendUtr() {
 function renderDone() {
   const q = totals();
   const first = esc(S.name.split(' ')[0] || 'friend');
-  const upi = S.pay === 'upi' && canPayOnline(q);
+  const online = paysOnline(q);
+  const paid = online && S.paid === 'sent';
   const wa = bookingWhatsAppLink();
   $('#bkSteps')!.innerHTML = '';
   ($('#bkBar') as HTMLElement).style.width = '100%';
@@ -1006,14 +1022,14 @@ function renderDone() {
   $('#bkBody')!.innerHTML = `
     <div class="bk-done">
       <div class="done-mark" aria-hidden="true"></div>
-      <h2 class="title" id="bkTitle">${upi ? 'One step left' : "You're on the list"}, ${first}.</h2>
+      <h2 class="title" id="bkTitle">${paid ? "You're paid and on the list" : online ? 'One step left' : "You're on the list"}, ${first}.</h2>
       <p class="bk-ref">Booking <b class="num">${esc(S.ref)}</b></p>
       <p class="bk-sub" style="margin-inline:auto">We have your ${esc(setupOf(S.setup)?.name ?? 'booking')}
         for <b>${dateLabel(S.date)}, ${timeLabel()}</b>.
         We'll call you on ${esc(S.phone)} to confirm.
-        ${upi ? 'Pay below to hold your slot.' : 'Nothing has been charged.'}</p>
+        ${paid ? '' : online ? 'Pay below to hold your slot.' : 'Nothing has been charged.'}</p>
       <p class="fine center" id="bkSendState" role="status"></p>
-      ${upi ? payPanel(q) : ''}
+      ${online ? payPanel(q) : ''}
       ${summary(q, true)}
       ${wa ? `
         <div class="bk-wa">
@@ -1023,7 +1039,7 @@ function renderDone() {
             <b>${esc(S.ref)}</b> already written out.</p>
           <a class="btn btn-key bk-wa-btn" href="${esc(wa)}" target="_blank" rel="noopener" data-whatsapp data-wa-booking>
             ${WA_ICON}Send my booking on WhatsApp<span class="sr-only"> (opens WhatsApp)</span></a>
-          <p class="fine">${upi ? 'Sending it on WhatsApp is not a payment — pay above to hold your slot.'
+          <p class="fine">${online && !paid ? 'Sending it on WhatsApp is not a payment — pay above to hold your slot.'
             : 'We will still call you on ' + esc(S.phone) + ' to confirm.'}</p>
         </div>` : ''}
       <div class="bk-actions">
@@ -1035,19 +1051,19 @@ function renderDone() {
   paintSendState();
 
   // The second tap of a double-tap on "Send & pay" lands here, where the pay
-  // link has just appeared under the finger. Ignore taps on the panel for a
-  // moment so nobody is thrown into their UPI app before they have seen it.
-  const pay = $('.paybox', root!);
-  if (pay && !armed) {
-    pay.classList.add('is-arming');
-    setTimeout(() => { pay.classList.remove('is-arming'); armed = true; }, 700);
+  // button (or "Done") has just appeared under the finger. Ignore taps on the
+  // whole screen for a moment so nobody closes it, or opens a second checkout,
+  // before they have seen it.
+  const screen = $('.bk-done', root!);
+  if (screen && !armed) {
+    screen.classList.add('is-arming');
+    setTimeout(() => { screen.classList.remove('is-arming'); armed = true; }, 700);
   }
 
   const body = $('#bkBody')!;
   $('#bkCopy', body)?.addEventListener('click', () => copy($('#bkCopy', body)!, bookingText()));
   $$<HTMLElement>('[data-copy]', body).forEach((b) => b.addEventListener('click', () => copy(b, b.dataset.copy!)));
-  $('[data-bk-paid]', body)?.addEventListener('click', sendUtr);
-  $('#bUtr', body)?.addEventListener('input', (e) => { S.utr = (e.target as HTMLInputElement).value; save(); });
+  $('[data-bk-pay]', body)?.addEventListener('click', startPayment);
 }
 
 function copy(btn: HTMLElement, text: string) {

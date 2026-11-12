@@ -69,7 +69,10 @@ test.describe('site integrity', () => {
     expect(body).toContain('Referrer-Policy: strict-origin-when-cross-origin');
     // inline scripts are allowed by hash, never by blanket unsafe-inline
     expect(body).not.toContain("script-src 'self' 'unsafe-inline'");
-    expect(body).toMatch(/script-src 'self' 'sha256-/);
+    expect(body).toMatch(/script-src 'self' https:\/\/checkout\.razorpay\.com 'sha256-/);
+    // Razorpay's checkout window, and the popups banks open from it
+    expect(body).toContain('frame-src https://api.razorpay.com https://checkout.razorpay.com');
+    expect(body).toContain('Cross-Origin-Opener-Policy: same-origin-allow-popups');
     expect(body).toContain('Cache-Control: public, max-age=31536000, immutable');
   });
 

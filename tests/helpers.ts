@@ -38,6 +38,8 @@ export function readBody(raw: string | null): Record<string, string> {
 /** Accept every submission, and hand back what was posted. */
 export async function mockDelivery(page: Page) {
   const sent: Record<string, string>[] = [];
+  // tests never load the real Razorpay checkout; mockRazorpay() stands in for it
+  await page.route('https://checkout.razorpay.com/**', (route) => route.abort('blockedbyclient'));
   await page.route(ENDPOINT, async (route) => {
     sent.push(readBody(route.request().postData()));
     await route.fulfill({
@@ -52,4 +54,35 @@ export async function mockDelivery(page: Page) {
 /** Make the post fail, to exercise the fallback. */
 export async function failDelivery(page: Page) {
   await page.route(ENDPOINT, (route) => route.abort('failed'));
+}
+
+export type RazorpayMode = 'pay' | 'dismiss' | 'unavailable' | 'unverified';
+
+/**
+ * Stand in for Razorpay: /api/pay answers as the server would, and a fake
+ * checkout.js either "pays" straight away or is closed without paying.
+ * Returns every body posted to /api/pay.
+ */
+export async function mockRazorpay(page: Page, mode: RazorpayMode = 'pay') {
+  const calls: Record<string, any>[] = [];
+  await page.route('**/api/pay', async (route) => {
+    const body = JSON.parse(route.request().postData() ?? '{}');
+    calls.push(body);
+    if (mode === 'unavailable') return route.fulfill({ status: 503, json: { success: false } });
+    if (body.step === 'order') {
+      return route.fulfill({ json: { success: true, key: 'rzp_test_key', order_id: 'order_TEST123', amount: body.expected } });
+    }
+    if (mode === 'unverified') return route.fulfill({ status: 400, json: { success: false } });
+    return route.fulfill({ json: { success: true, ref: 'x', amount: 1500, payment_id: body.payment_id } });
+  });
+  const act = mode === 'dismiss'
+    ? 'o.modal.ondismiss()'
+    : 'o.handler({ razorpay_payment_id: "pay_TEST12345678", razorpay_order_id: o.order_id, razorpay_signature: "sig" })';
+  await page.route('https://checkout.razorpay.com/**', (route) => route.fulfill({
+    contentType: 'application/javascript',
+    body: `window.Razorpay = function (o) { this.o = o; };
+      window.Razorpay.prototype.on = function () {};
+      window.Razorpay.prototype.open = function () { var o = this.o; window.__rzpOptions = o; setTimeout(function () { ${act}; }, 50); };`,
+  }));
+  return calls;
 }
