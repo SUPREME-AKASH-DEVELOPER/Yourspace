@@ -77,7 +77,8 @@ export async function openCheckout(req: PayRequest): Promise<Paid> {
       currency: 'INR',
       name: 'YourSpace Jabalpur',
       description: `Booking ${req.ref}`,
-      prefill: { name: req.name, email: req.email, contact: req.phone.replace(/\D/g, '').slice(-10) },
+      // with the country code, so Razorpay skips asking for the number again
+      prefill: { name: req.name, email: req.email, contact: `+91${req.phone.replace(/\D/g, '').slice(-10)}` },
       notes: { booking_ref: req.ref },
       theme: { color: '#E0A542' },
       modal: { ondismiss: () => done({ ok: false, reason: 'dismissed' }), confirm_close: true },

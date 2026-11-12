@@ -209,7 +209,7 @@ test.describe('booking flow', () => {
     expect(calls[1]).toMatchObject({ step: 'verify', order_id: 'order_TEST123', payment_id: 'pay_TEST12345678' });
     const opts = await page.evaluate(() => (window as any).__rzpOptions);
     expect(opts).toMatchObject({ order_id: 'order_TEST123', amount: 150000, currency: 'INR' });
-    expect(opts.prefill).toMatchObject({ contact: '9876543210', email: 'a@example.com' });
+    expect(opts.prefill).toMatchObject({ contact: '+919876543210', email: 'a@example.com' });
     await expect(page.locator('.bk-sum')).toContainText('Paid online');
   });
 
