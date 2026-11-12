@@ -107,8 +107,7 @@ export async function POST(request) {
 
   const subject = oneLine(body.subject).slice(0, 180) || `Enquiry from ${oneLine(fields.Name)}`;
   const safeRef = /^YS-[A-Z0-9]{6}$/.test(fields['Booking ref'] ?? '') ? fields['Booking ref'] : '';
-  const isPayment = Boolean(fields['UPI reference (UTR)']);
-  const onceKey = (who) => (safeRef && !isPayment ? `${safeRef}-${who}` : undefined);
+  const onceKey = (who) => (safeRef ? `${safeRef}-${who}` : undefined);
   const canReply = /^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/.test(fields.Email ?? '');
 
   const lead = ownerEmail(fields, subject);

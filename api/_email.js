@@ -48,7 +48,6 @@ export function detailRows(fields) {
 /** What sort of submission this is, from the fields it carries. */
 export function kindOf(fields, subject = '') {
   if (fields['Razorpay payment']) return 'Payment received';
-  if (fields['UPI reference (UTR)']) return 'UPI payment claimed';
   if (fields['Booking ref']) return 'Booking';
   const known = ['Pre-booking', 'Enquiry', 'Message', 'Call-back request'];
   return known.find((k) => subject.startsWith(k)) ?? 'Enquiry';
@@ -154,7 +153,7 @@ ${footer([
     ...(fields['Came from'] ? [`From the page ${esc(fields['Came from'])}`] : []),
     kind === 'Payment received'
       ? 'Verified with Razorpay. It is in the Razorpay dashboard under Transactions.'
-      : 'Online payments arrive as a separate "Payment received" email, checked with Razorpay. Anything else, find in the bank app first.',
+      : 'Payments are taken only through Razorpay. Each one arrives as a separate "Payment received" email, already checked with Razorpay.',
   ])}`);
 
   const text = [
@@ -233,7 +232,6 @@ const LINKISH = /https?:|:\/\/|www\.|<|>|\b[\w-]+\.(com|net|org|in|io|co|xyz|ru|
 /** Only send to a visitor when the email reads as ours, with no one's link in it. */
 export function canEmailCustomer(fields) {
   if (!/^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$/.test(fields.Email ?? '')) return false;
-  if (fields['UPI reference (UTR)']) return false;
   if (!mobileDigits(fields.Phone)) return false;
   return [['Name', fields.Name], ...detailRows(fields)]
     .every(([, value]) => !LINKISH.test(String(value ?? '')));

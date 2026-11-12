@@ -62,6 +62,13 @@
 *,*::before,*::after{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 html:focus-within{scroll-behavior:smooth}
+/* Wide desktop screens read as too much empty margin at 100%. The owner liked
+   the site at 110% browser zoom, so from 1400px up the whole page is drawn
+   10% larger — the same as that zoom, and still wider than the 1240px shell
+   (1400 / 1.1 = 1272). Tablets and phones are untouched. */
+@media (min-width:1400px) and (hover:hover) and (pointer:fine){
+  html{zoom:1.1}
+}
 
 body{
   margin:0;
@@ -1305,23 +1312,10 @@ h3{
 .secure-line b{color:var(--paper);font-weight:600}
 .lock-i{width:16px;height:16px;flex:0 0 auto;margin-top:1px;color:#7FC79A}
 .paybox h3{margin:0 0 16px;font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
-.paybox-grid{display:grid;grid-template-columns:200px 1fr;gap:clamp(16px,3vw,28px);align-items:start}
-.paybox-qr{background:#fff;padding:8px;border-radius:6px;line-height:0}
-.paybox-qr svg{width:100%;height:auto;display:block}
-.paybox-how{display:grid;gap:10px}
-.paybox-meta{display:grid;gap:6px;margin:4px 0 0}
-.paybox-meta div{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
-.paybox-meta dt{min-width:64px;font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.12em;color:var(--grey)}
-.paybox-meta dd{margin:0;overflow-wrap:anywhere}
-.paybox-meta code{font-family:var(--mono);font-size:.86rem;color:var(--paper)}
-.paybox-utr{margin-top:20px}
-.paybox-utr+.btn{margin-top:10px}
 .paybox-done{margin:18px 0 0;padding:12px 14px;border-left:2px solid var(--amber);background:rgba(212,168,95,.1);line-height:1.5}
 .bk-step.is-skip{text-decoration:line-through;opacity:.5}
 @media (max-width:620px){
-  .paybox-grid{grid-template-columns:1fr}
-  .paybox-qr{max-width:220px;margin-inline:auto}
-}
+    }
 @media (prefers-reduced-motion:reduce){
   .sc,.dc,.ad,.sc img,.dc img,.ad img{transition:none}
   .sc:hover,.dc:hover,.ad:hover{transform:none}

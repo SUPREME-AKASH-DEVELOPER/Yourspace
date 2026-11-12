@@ -682,13 +682,13 @@ function step5(q: Quote) {
       <label class="payopt ${S.pay === 'later' ? 'is-sel' : ''}">
         <input type="radio" name="bkPay" value="later"${S.pay === 'later' ? ' checked' : ''}>
         <span><strong>Pay after we call</strong>
-        <em>We confirm the slot first, then send you the payment details.</em></span>
+        <em>We confirm the slot first, then send you a secure Razorpay payment link.</em></span>
       </label>
       ${SECURE}
     </fieldset>`
     : `<div class="bk-note"><i>Payment</i><span>${q.unpriced.length
         ? `<b>${esc(q.unpriced.join(', '))}</b> ${q.unpriced.length > 1 ? 'are' : 'is'} priced on the call, so we will send you the exact amount and how to pay once we have spoken.`
-        : 'We will send you the payment details once we have confirmed your slot.'}</span></div>`;
+        : 'Once we have confirmed your slot, we send you a secure Razorpay payment link.'}</span></div>`;
 
   return head(6, 'Your details, then payment',
     'We send your booking straight to the team, and a copy to you.') +

@@ -43,7 +43,7 @@ export const site = {
    * WhatsApp carries two things: questions, and a finished booking handed
    * over from the confirmation screen. Neither is a payment — bookings are
    * still recorded through the booking form, and payment is checked in the
-   * bank app before anything is confirmed.
+   * Razorpay before anything is called paid.
    */
   whatsapp: '',
   /** What the chat opens with. The customer can edit it before sending. */

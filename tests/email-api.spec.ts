@@ -115,17 +115,6 @@ test.describe('the email function', () => {
     }
   });
 
-  test('a claimed UPI payment reaches the team only, marked unverified', async () => {
-    const res = await call({
-      'Booking ref': 'YS-ABC234', Name: 'Riya', Phone: '9876543210', Amount: '₹1,500',
-      'UPI reference (UTR)': '123456789012',
-      Status: 'UNVERIFIED — the customer says they paid.',
-    });
-    expect(await res.json()).toEqual({ success: true, customer: 'none' });
-    expect(sent).toHaveLength(1);
-    expect(sent[0].html).toContain('UNVERIFIED');
-  });
-
   test('the team email failing is reported, so the site can use the backup', async () => {
     refuse = (m) => m.to.includes('tanishkofficial27@gmail.com');
     const res = await call(booking);
