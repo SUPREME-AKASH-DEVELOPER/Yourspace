@@ -64,6 +64,10 @@ async function createOrder(k, body) {
     slot: body.slot,
     decor: body.decor,
     addons: body.addons,
+    // the session's date and the house rules they ticked: both are checked
+    // here against this server's clock, not taken on the browser's word
+    date: body.date,
+    agreed: body.agreed,
   });
   if (price.amount === null) return answer(400, { success: false, message: price.reason });
 

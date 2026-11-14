@@ -7,7 +7,7 @@
  * seat is now its own toggle, and what someone picks is what we are told.
  */
 import { test, expect, type Page } from '@playwright/test';
-import { mockDelivery, pickSeats } from './helpers';
+import { mockDelivery, pickSeats, acceptRules } from './helpers';
 import { SEATING, MAX_GUESTS } from '../src/data/booking';
 
 const seat = (page: Page, n: number) => page.locator(`[data-seat="${n}"]`);
@@ -119,6 +119,7 @@ test.describe('the seat picker', () => {
     await page.fill('#bPhone', '9876543210');
     await page.fill('#bEmail', 'a@example.com');
     await page.locator('input[name=bkPay][value=later]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
 
     await expect(page.locator('#bkSendState')).toContainText('reached us', { timeout: 10_000 });

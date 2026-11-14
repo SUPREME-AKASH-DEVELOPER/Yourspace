@@ -234,6 +234,64 @@ export function decorAvailable(slotId: string): boolean {
   return start >= clockToMinutes(DECOR_FROM) && start < clockToMinutes(DECOR_UNTIL);
 }
 
+/**
+ * How long before a session we need to know about a decoration (Tanishk,
+ * 14 Nov 2026). One decorator has to buy the flowers, get to the room and
+ * build the set, so three hours is the least notice that is honest to take
+ * money for online.
+ */
+export const DECOR_NOTICE_MINUTES = 3 * 60;
+
+/**
+ * What a session can be offered, for decoration only:
+ *
+ *   'online'  in the decorator's hours, and far enough away — book it here
+ *   'call'    in the decorator's hours, but sooner than the notice we need.
+ *             We do not sell it online, because we cannot promise it; the
+ *             flow offers the phone instead, and Tanishk decides on the call
+ *   'closed'  outside the decorator's hours. Not offered at all, at any notice
+ *
+ * Nothing here touches the room itself: Movie Space, Karaoke, Watch Party and
+ * an undecorated Date Night are bookable in every open slot as before.
+ *
+ * `now` comes from venueNow() in the browser and from the same clock on the
+ * server, so both answer in Jabalpur time whatever the customer's device says.
+ * Pure on purpose — the time is passed in, never read — so the truth table can
+ * be tested at any hour of any day.
+ */
+export type DecorStatus = 'online' | 'call' | 'closed';
+
+export function decorStatus(
+  slotId: string,
+  dateIso: string,
+  now: { iso: string; minutes: number },
+): DecorStatus {
+  if (!decorAvailable(slotId)) return 'closed';
+  const slot = slots.find((x) => x.id === slotId)!;
+  return minutesUntil(dateIso, slot.start, now) >= DECOR_NOTICE_MINUTES ? 'online' : 'call';
+}
+
+/**
+ * Minutes from `now` until a session starts. Whole days are counted from the
+ * dates themselves, so a booking for tomorrow is not mistaken for one today
+ * and the answer survives midnight. A date we cannot read is treated as far
+ * away rather than near, so a broken value can never unlock a slot it should
+ * not — the server checks the same thing again regardless.
+ */
+export function minutesUntil(
+  dateIso: string,
+  start: string,
+  now: { iso: string; minutes: number },
+): number {
+  const day = (iso: string) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    return m ? Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : NaN;
+  };
+  const from = day(now.iso), to = day(dateIso);
+  if (Number.isNaN(from) || Number.isNaN(to)) return Number.POSITIVE_INFINITY;
+  return (to - from) / 60000 + clockToMinutes(start) - now.minutes;
+}
+
 /** "7:30 PM" plus 30 minutes is "8:00 PM". Only used for the shorter karaoke session. */
 export function addMinutes(clock: string, mins: number): string {
   if (!/^\d{1,2}:\d{2} (AM|PM)$/.test(clock)) return clock;
@@ -485,5 +543,50 @@ export const priceList = addonGroups.flatMap((g) => g.options.map((o) => ({
   price: o.price,
   priceNote: o.priceNote,
 }))).sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity) || a.name.localeCompare(b.name));
+
+/* ------------------------------------------------------------------ */
+/*  House rules — agreed to on the last step, before paying.           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * What a customer agrees to before they pay (Tanishk, 14 Nov 2026).
+ *
+ * TODO(owner): this is plain wording, not checked by anyone legal. Tanishk is
+ * to confirm the final text. Editing it is the whole job — add, remove or
+ * reword an entry and the booking flow, the tick boxes and the line in the
+ * email all follow. Bump HOUSE_RULES_VERSION whenever the wording changes, so
+ * an old booking still says which version was agreed to.
+ *
+ * Every rule here must be ticked before the pay button turns on. If a rule is
+ * ever advisory rather than binding, give it `optional: true` instead of
+ * leaving it out, so it still shows.
+ */
+export const HOUSE_RULES_VERSION = '2026-11-14';
+
+export interface HouseRule {
+  id: string;
+  /**
+   * Written to be read straight after "I agree" — so it starts with "to…" or
+   * "that…", never as a sentence of its own. Reword and the tick box follows.
+   */
+  text: string;
+  optional?: boolean;
+}
+
+export const HOUSE_RULES: HouseRule[] = [
+  { id: 'smoking',     text: 'not to smoke inside the room.' },
+  { id: 'celebration', text: 'that the room is for a celebration, and nothing else.' },
+  { id: 'staff',       text: "to follow the team's instructions while we are there." },
+  { id: 'damage',      text: 'to look after the room, and to cover anything we damage.' },
+  { id: 'more',        text: 'that any other house rule will be told to us before the booking is confirmed.' },
+];
+
+/** The ids that have to be ticked before a booking can be paid for. */
+export const requiredRules = (): string[] =>
+  HOUSE_RULES.filter((r) => !r.optional).map((r) => r.id);
+
+/** True when every required rule has been ticked. */
+export const rulesAccepted = (agreed: readonly string[]): boolean =>
+  requiredRules().every((id) => agreed.includes(id));
 
 export const stepNames = ['Occasion', 'Date & guests', 'Time', 'Setup', 'Add-ons', 'Pay'];

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mockDelivery } from './helpers';
+import { mockDelivery, acceptRules } from './helpers';
 
 const STORY = 'A surprise farewell for my sister before she moves to Pune';
 
@@ -56,6 +56,7 @@ test.describe('"Something else" — writing your own occasion', () => {
     await page.fill('#bPhone', '7999656039');
     await page.fill('#bEmail', 'a@example.com');
     await page.locator('input[name=bkPay][value=later]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
 
     await expect(page.locator('.bk-done')).toContainText(STORY);

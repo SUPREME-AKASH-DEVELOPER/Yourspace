@@ -16,6 +16,14 @@ export async function pickSeats(page: Page, n: number) {
   for (const id of ids) if (!want.has(id) && await taken(id)) await page.locator(`[data-seat="${id}"]`).click();
 }
 
+/**
+ * Tick every house rule on the pay step. A booking cannot be sent without
+ * them, so any test that reaches that step has to do what a customer does.
+ */
+export async function acceptRules(page: Page) {
+  for (const box of await page.locator('[data-rule]').all()) await box.check();
+}
+
 /** Forms post to a real service; tests must never actually email anyone. */
 export const ENDPOINT = /\/api\/send|formsubmit\.co|api\.web3forms\.com/;
 

@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { readBody, pickSeats } from './helpers';
+import { readBody, pickSeats, acceptRules } from './helpers';
 
 const ENDPOINT = /\/api\/send|formsubmit\.co|api\.web3forms\.com/;
 
@@ -262,6 +262,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.fill('#bPhone', '7999656039');
     await page.fill('#bEmail', 'tanishk@example.com');
     await page.locator('input[name=bkPay][value=later]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
 
     await expect(page.locator('#bkTitle')).toContainText("You're on the list");
@@ -309,6 +310,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.fill('#bPhone', '9429690584');
     await page.fill('#bEmail', 'a@example.com');
     await page.locator('input[name=bkPay][value=later]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
     await expect(page.locator('#bkSendState')).toContainText("didn't reach us", { timeout: 15_000 });
   });

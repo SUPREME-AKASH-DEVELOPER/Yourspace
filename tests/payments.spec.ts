@@ -3,7 +3,21 @@ import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { POST } from '../api/pay.js';
 import { priceBooking, DECOR_PRICES, ADDON_PRICES, DECOR_SLOTS } from '../api/_prices.js';
-import { quote, setups, slots, addonGroups, decorAvailable, MAX_GUESTS } from '../src/data/booking';
+import { quote, setups, slots, addonGroups, decorAvailable, MAX_GUESTS, requiredRules } from '../src/data/booking';
+
+/**
+ * Every case below is about price, not about when the decorator works. So they
+ * all book a day well ahead, with the house rules ticked: the notice rule and
+ * the rules checklist have their own tests in decoration.spec.ts.
+ */
+const SOON = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+const AHEAD = {
+  // worked out from today, not written down: the server checks the notice
+  // against its own clock, so a fixed date would quietly expire
+  date: SOON,
+  now: { iso: new Date().toISOString().slice(0, 10), minutes: 10 * 60 },
+  agreed: requiredRules(),
+};
 
 /* These call the server code directly. Razorpay and Resend are stubbed: nobody is charged or emailed. */
 
@@ -50,7 +64,7 @@ test.describe('what the server charges', () => {
               const d = decor ? SITE_DECOR[decor] : null;
               const q = quote({ setup: s.id, guests, decor: d, addons });
               const payableOnSite = !q.blocked && q.unpriced.length === 0 && q.total > 0;
-              const server = priceBooking({ setup: s.id, guests, slot, decor, addons });
+              const server = priceBooking({ setup: s.id, guests, slot, decor, addons, ...AHEAD, ...AHEAD });
               const label = `${s.id} × ${guests} ${slot} ${decor} ${addons.join(',')}`;
               if (payableOnSite) expect(server.amount, label).toBe(q.total);
               else expect(server.amount, label).toBeNull();
@@ -64,17 +78,17 @@ test.describe('what the server charges', () => {
   });
 
   test('cannot be talked into a lower price', () => {
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: [] }).amount).toBe(6500);
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: '', addons: [] }).amount, 'decorated time needs one').toBeNull();
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's1', decor: 'royal', addons: [] }).amount, 'no decorator at noon').toBeNull();
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's7', decor: '', addons: [] }).amount).toBe(1500);
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'nothing', addons: [] }).amount).toBeNull();
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: ['bouquet-s', 'bouquet-l'] }).amount).toBeNull();
-    expect(priceBooking({ setup: 'watch', guests: 2 }).amount).toBeNull();
-    expect(priceBooking({ setup: 'movie', guests: 0 }).amount).toBeNull();
-    expect(priceBooking({ setup: 'movie', guests: 2.5 }).amount).toBeNull();
-    expect(priceBooking({ setup: '__proto__', guests: 2 }).amount).toBeNull();
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'toString' }).amount).toBeNull();
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: [], ...AHEAD }).amount).toBe(6500);
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: '', addons: [], ...AHEAD }).amount, 'decorated time needs one').toBeNull();
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's1', decor: 'royal', addons: [], ...AHEAD }).amount, 'no decorator at noon').toBeNull();
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's7', decor: '', addons: [], ...AHEAD }).amount).toBe(1500);
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'nothing', addons: [], ...AHEAD }).amount).toBeNull();
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: ['bouquet-s', 'bouquet-l'], ...AHEAD }).amount).toBeNull();
+    expect(priceBooking({ setup: 'watch', guests: 2, ...AHEAD }).amount).toBeNull();
+    expect(priceBooking({ setup: 'movie', guests: 0, ...AHEAD }).amount).toBeNull();
+    expect(priceBooking({ setup: 'movie', guests: 2.5, ...AHEAD }).amount).toBeNull();
+    expect(priceBooking({ setup: '__proto__', guests: 2, ...AHEAD }).amount).toBeNull();
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'toString', ...AHEAD }).amount).toBeNull();
   });
 });
 
@@ -118,7 +132,8 @@ test.describe('the payment function', () => {
   }));
   const sign = (o: string, p: string) => createHmac('sha256', SECRET).update(`${o}|${p}`).digest('hex');
   const order = { step: 'order', ref: 'YS-ABC234', name: 'Riya Sharma', phone: '9876543210', email: 'riya@example.com',
-    setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: [], expected: 1 };
+    setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: [], expected: 1,
+    date: AHEAD.date, agreed: AHEAD.agreed };
 
   test('opens an order for the server price, whatever the page says', async () => {
     const res = await call(order);

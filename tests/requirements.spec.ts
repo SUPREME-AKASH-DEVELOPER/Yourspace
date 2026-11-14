@@ -6,7 +6,7 @@
  * real booking flow in a browser for the behaviour around those rules.
  */
 import { test, expect, type Page } from '@playwright/test';
-import { mockDelivery, ENDPOINT, readBody, pickSeats } from './helpers';
+import { mockDelivery, ENDPOINT, readBody, pickSeats, acceptRules } from './helpers';
 import { PAGES } from './pages';
 import {
   setups, slots, addonGroups, priceList, setupPrice, quote, CALL_US, MAX_GUESTS, addMinutes,
@@ -290,6 +290,7 @@ test.describe('the booking journey', () => {
     await page.fill('#bEmail', 'a@example.com');
     await page.fill('#bNotes', 'Name on the screen: Riya');
     await page.locator('input[name=bkPay][value=online]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
     const sum = page.locator('.bk-done .bk-sum');
     await expect(sum).toContainText('Name on the screen: Riya');
@@ -313,6 +314,7 @@ test.describe('the booking journey', () => {
     await page.fill('#bPhone', '9876543210');
     await page.fill('#bEmail', 'a@example.com');
     await page.locator('input[name=bkPay][value=later]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
     // the first attempt is retried once automatically on a dropped connection, so it lands
     await expect(page.locator('#bkSendState')).toContainText('reached us', { timeout: 15_000 });
@@ -363,6 +365,7 @@ test.describe('the journey on a phone and a tablet', () => {
       await page.fill('#bEmail', 'a@example.com');
       await page.locator('input[name=bkPay][value=online]').check();
       await fits('details');
+      await acceptRules(page);
       await page.locator('[data-bk-next]').click();
       await expect(page.locator('.paybox')).toBeVisible();
       await fits('payment');

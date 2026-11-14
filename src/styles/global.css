@@ -1036,6 +1036,11 @@ h3{
 .slot strong{font-family:var(--mono);font-size:1.02rem;font-weight:500}
 .slot span{font-family:var(--mono);font-size:.64rem;text-transform:uppercase;letter-spacing:.1em;color:var(--grey)}
 .slot .slot-decor{color:var(--amber);letter-spacing:.06em}
+/* a session the decorator cannot reach in time: offered, but by phone, and
+   never in the same gold as one that can be booked here */
+/* no glyph: a telephone symbol is a blank box in some fonts, and the words
+   already say it */
+.slot .slot-decor.is-call{color:var(--grey)}
 .slot.is-sel{border-color:var(--amber);background:rgba(212,168,95,.1)}
 
 /* packages */
@@ -1304,6 +1309,43 @@ h3{
 .payopt strong{display:block;font-weight:600}
 .payopt em{display:block;font-style:normal;font-size:.86rem;color:var(--grey);margin-top:2px}
 
+/* the house rules, ticked one at a time before paying */
+.rules{
+  border:1px solid var(--rule-2);border-radius:8px;
+  padding:clamp(14px,2.4vw,20px);margin:24px 0 6px;display:grid;gap:9px;
+  transition:border-color .25s var(--ease),background .25s var(--ease);
+}
+.rules.is-done{border-color:rgba(212,168,95,.5);background:rgba(212,168,95,.05)}
+.rules legend{
+  padding:0 8px;margin-left:-8px;font-family:var(--mono);font-size:.66rem;
+  text-transform:uppercase;letter-spacing:.16em;color:var(--amber);
+}
+.rules>.fine{margin:0 0 4px}
+.rule{
+  display:flex;gap:12px;align-items:flex-start;cursor:pointer;
+  padding:11px 13px;border:1px solid transparent;border-radius:6px;
+  font-size:.93rem;line-height:1.45;
+  transition:background .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease);
+}
+.rule:hover{border-color:var(--rule-2);background:rgba(237,230,216,.03)}
+.rule input{margin-top:2px;accent-color:var(--amber);width:19px;height:19px;flex:0 0 auto;cursor:pointer}
+.rule span{color:#C8BFB1}
+.rule.is-on{border-color:rgba(212,168,95,.32);background:rgba(212,168,95,.07)}
+.rule.is-on span{color:var(--paper)}
+.rule:focus-within{outline:2px solid var(--amber);outline-offset:2px}
+.rules-left{margin:2px 0 0;color:var(--grey)}
+.rules.is-done .rules-left{color:var(--amber)}
+/* The Continue button while a rule is still unticked: plainly not ready yet,
+   but still clickable, so it can say which one is missing. Drawn as an
+   outline rather than dimmed — fading the solid gold button took its text
+   down to 2.25:1 against its own background, well under the 4.5 it needs. */
+.btn.is-waiting{
+  background:transparent;color:var(--amber);
+  border:1px solid rgba(212,168,95,.55);box-shadow:none;
+}
+.btn.is-waiting:hover{background:rgba(212,168,95,.1);border-color:var(--amber)}
+@media (max-width:640px){ .rule{padding:12px 11px;font-size:.9rem} }
+
 .bk-ref{margin:-4px 0 10px;font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;color:var(--grey)}
 .bk-ref b{color:var(--amber);font-weight:500}
 .paybox{margin:22px auto 6px;max-width:680px;text-align:left;padding:clamp(16px,3vw,26px);border:1px solid var(--amber);border-radius:8px;background:rgba(212,168,95,.06)}
@@ -1313,7 +1355,7 @@ h3{
 .lock-i{width:16px;height:16px;flex:0 0 auto;margin-top:1px;color:#7FC79A}
 .paybox h3{margin:0 0 16px;font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
 .paybox-done{margin:18px 0 0;padding:12px 14px;border-left:2px solid var(--amber);background:rgba(212,168,95,.1);line-height:1.5}
-.bk-step.is-skip{text-decoration:line-through;opacity:.5}
+.bk-step.is-skip{text-decoration:line-through;opacity:.68}
 @media (max-width:620px){
     }
 @media (prefers-reduced-motion:reduce){

@@ -5,7 +5,9 @@ import { openCheckout, type Paid } from './razorpay';
 import {
   experiences, slots, setups, addonGroups, stepNames, OTHER,
   BUFFER_MINUTES, MAX_GUESTS, SEATING, SEAT_IDS, seatKind, cleanSeats, defaultSeats, seatsLabel,
-  setupOf, setupPrice, addonOf, quote, addMinutes, decorAvailable, DECOR_FROM, DECOR_UNTIL,
+  setupOf, setupPrice, addonOf, quote, addMinutes, DECOR_FROM, DECOR_UNTIL,
+  decorStatus, DECOR_NOTICE_MINUTES, HOUSE_RULES, HOUSE_RULES_VERSION, requiredRules, rulesAccepted,
+  type DecorStatus,
   type Setup, type Quote,
 } from '../data/booking';
 import { decorations, DECOR_INCLUDED } from '../data/decorations';
@@ -47,6 +49,8 @@ interface State {
   /** Filled in when the occasion is "Something else". */
   customOccasion: string;
   pay: Pay;
+  /** Ids of the house rules ticked on the last step. Empty until they tick. */
+  agreed: string[];
   /** Made once, when the booking is sent, and printed on everything after. */
   ref: string;
   /** Where the booking email got to. A sent booking is never sent again. */
@@ -62,7 +66,7 @@ interface State {
 const BLANK: State = {
   step: 0, exp: '', date: '', seats: [1, 2], guests: 2, slot: '', setup: '', decor: '', addons: [],
   name: '', phone: '', email: '', notes: '', customOccasion: '',
-  pay: '', ref: '', send: '', paid: '', paymentId: '',
+  pay: '', ref: '', send: '', paid: '', paymentId: '', agreed: [],
 };
 
 const KEY = 'ys-booking-v3';
@@ -157,7 +161,20 @@ function occasionLabel(): string {
 const expOf = () => experiences.find((e) => e.id === S.exp) ?? null;
 const slotOf = () => slots.find((s) => s.id === S.slot) ?? null;
 /** The decorator only works certain hours, so a decoration depends on the time picked. */
-const decorHere = () => decorAvailable(S.slot);
+/**
+ * Decoration for a given slot on the chosen date, as the customer stands now:
+ * 'online' bookable here, 'call' only by phone (too little notice), 'closed'
+ * not at that hour at all. The clock is Jabalpur's, not the device's.
+ */
+const decorFor = (slotId: string): DecorStatus => decorStatus(slotId, S.date, venueNow());
+
+/** Decoration can be booked online for the slot they have chosen. */
+const decorHere = () => decorFor(S.slot) === 'online';
+
+/** Hours are fine, but it is too close to the session to sell online. */
+const decorCallOnly = () => decorFor(S.slot) === 'call';
+
+const NOTICE_HOURS = DECOR_NOTICE_MINUTES / 60;
 /** The decoration they picked, if this time can have one. */
 const decorOf = () => (decorHere() ? decorations.find((d) => d.id === S.decor) ?? null : null);
 
@@ -388,12 +405,23 @@ function validate(step: number): string {
     const blocked = setupPrice(S.setup, S.guests).blocked;
     if (blocked) return blocked;
     if (setupOf(S.setup)?.hasDecor && decorHere() && !decorOf()) return 'Pick a decoration to continue.';
+    /* Checked again here, not only where the picker is drawn: going back,
+       sitting on the page until the session is under three hours away, or
+       editing the saved state all land here before anything is paid for. */
+    if (S.decor && !decorHere()) {
+      S.decor = '';
+      save();
+      return decorCallOnly()
+        ? `That session is less than ${NOTICE_HOURS} hours away, so decoration cannot be booked here. Call us on ${tel()?.pretty ?? 'our number'} and we will see what we can do.`
+        : 'Decoration is not set up at that hour. Pick another time, or carry on without it.';
+    }
   }
   if (step === 5) {
     if (!S.name.trim()) return 'Please add your name.';
     if (!/^[6-9]\d{9}$/.test(S.phone.replace(/\D/g, '').slice(-10))) return 'Enter a valid 10-digit mobile number.';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.email.trim())) return 'Please add an email we can send your confirmation to.';
     if (canPayOnline(totals()) && !S.pay) return 'Choose how you would like to pay.';
+    if (!rulesAccepted(S.agreed)) return 'Please agree to the house rules before you book.';
   }
   return '';
 }
@@ -567,13 +595,20 @@ function step2() {
   return head(3, 'Choose your time',
     `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Karaoke runs 30 minutes from the start of the slot.`) +
     `<p class="fine" style="margin:-14px 0 18px">We leave ${BUFFER_MINUTES} minutes between bookings to reset the room, so the start times are not on the hour — the space is yours for the whole slot, with nobody waiting at the door.</p>` +
-    (expOf()?.suggests === 'date' ? `<p class="fine" style="margin:-8px 0 18px">Want your room decorated? Decoration is set up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}, marked below.</p>` : '') +
+    (expOf()?.suggests === 'date' ? `<p class="fine" style="margin:-8px 0 18px">Want your room decorated? One decorator sets the room up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}, and needs ${NOTICE_HOURS} hours' notice to do it — so each time below says what it can have today.</p>` : '') +
     `<div class="slots">${slots.map((s) => {
       const gone = slotPassed(s.start);
-      const decor = expOf()?.suggests === 'date' && decorAvailable(s.id) && !gone;
+      /* The label is the real answer for this slot on this date at this hour,
+         never just "the slot exists". A session the decorator cannot reach in
+         time says so instead of promising decoration we cannot deliver. */
+      const asked = expOf()?.suggests === 'date';
+      const state = asked && !gone ? decorFor(s.id) : 'closed';
+      const tag = state === 'online' ? '<span class="slot-decor">Decoration available</span>'
+        : state === 'call' ? '<span class="slot-decor is-call">Decoration by phone</span>'
+        : '';
       return `
       <button class="slot ${S.slot === s.id ? 'is-sel' : ''}" type="button" data-slot-pick="${s.id}"${gone ? ' disabled' : ''}>
-        <strong>${s.start}</strong><span>${gone ? 'Already started' : `to ${s.end}`}</span>${decor ? '<span class="slot-decor">Decoration available</span>' : ''}
+        <strong>${s.start}</strong><span>${gone ? 'Already started' : `to ${s.end}`}</span>${tag}
       </button>`;
     }).join('')}</div>` +
     `<div class="bk-note" style="margin-top:22px"><i>Note</i><span>We check the slot is free as soon as your booking reaches us, and call you if it is not. You are never charged for a slot we cannot give you.</span></div>`;
@@ -643,8 +678,26 @@ function step3() {
     `Priced for ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}. Change the number of guests on step 2.`) +
     `<div class="sc-grid">${setups.map(setupCard).join('')}</div>` +
     (s?.hasDecor && !setupPrice(s.id, S.guests).blocked && decorHere() ? decorStep() : '') +
-    (!decorHere() && (expOf()?.suggests === 'date' || S.setup === 'date') ? `<div class="bk-note" style="margin-top:18px"><i>Decoration</i><span>Decoration is only set up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}. Your ${esc(slotOf()?.start ?? '')} session can still be a Date Night, without decoration. Want it decorated? <button type="button" class="linkish" data-bk-retime>Pick another time</button>.</span></div>` : '') +
+    (!decorHere() && (expOf()?.suggests === 'date' || S.setup === 'date') ? decorClosedNote() : '') +
     `<p class="fine">Something you cannot book here? Call us on ${callLink()}.</p>`;
+}
+
+/**
+ * What we say when the decoration picker is not on screen. Two different
+ * reasons, and they are not interchangeable:
+ *
+ *   too soon  — we could decorate at that hour, but not at this notice. The
+ *               phone is offered, because Tanishk can still say yes if the
+ *               decorator happens to be free. Nothing is sold online.
+ *   closed    — nobody is decorating at that hour whatever the notice, so
+ *               offering the phone would only waste the customer's call.
+ */
+function decorClosedNote() {
+  const at = esc(slotOf()?.start ?? '');
+  if (decorCallOnly()) {
+    return `<div class="bk-note" style="margin-top:18px"><i>Decoration</i><span>Decoration for your ${at} session is only arranged by phone now — it starts in under ${NOTICE_HOURS} hours, and the decorator needs that long to set the room up. Call us on ${callLink()} and we will tell you straight away whether we can still do it. Your ${at} session can be booked here either way, as a Date Night without decoration. Booking further ahead? <button type="button" class="linkish" data-bk-retime>Pick another time</button>.</span></div>`;
+  }
+  return `<div class="bk-note" style="margin-top:18px"><i>Decoration</i><span>Decoration is only set up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}. Your ${at} session can still be a Date Night, without decoration. Want it decorated? <button type="button" class="linkish" data-bk-retime>Pick another time</button>.</span></div>`;
 }
 
 function step4(q: Quote) {
@@ -703,7 +756,36 @@ function step5(q: Quote) {
       <div class="field"><label for="bNotes">Anything we should set up? <span class="opt">Optional</span></label>
         <textarea id="bNotes" rows="3" placeholder="A name on the cake, a song to open with…">${esc(S.notes)}</textarea></div>
     </div>` +
-    summary(q) + payBlock;
+    summary(q) + houseRules() + payBlock;
+}
+
+/**
+ * The house rules, ticked one at a time, immediately before paying.
+ *
+ * Every required rule has to be ticked before the Continue button turns on.
+ * The button is only dimmed, never removed, and it still answers a click with
+ * the reason — a disabled button that does nothing tells someone with a
+ * screen reader nothing at all. validate() checks the same thing again, and
+ * so does the server, so unticking them in the console buys nothing.
+ */
+function houseRules() {
+  const done = rulesAccepted(S.agreed);
+  return `
+    <fieldset class="rules ${done ? 'is-done' : ''}" id="bkRules">
+      <legend>Before you book</legend>
+      <p class="fine">A few house rules. Tick each one to carry on — they are part of the booking.</p>
+      ${HOUSE_RULES.map((r) => {
+        const on = S.agreed.includes(r.id);
+        return `
+        <label class="rule ${on ? 'is-on' : ''}">
+          <input type="checkbox" data-rule="${esc(r.id)}"${on ? ' checked' : ''}>
+          <span>I agree ${esc(r.text)}</span>
+        </label>`;
+      }).join('')}
+      <p class="fine rules-left" id="bkRulesLeft" role="status">${done
+        ? 'Thank you — all agreed.'
+        : `${requiredRules().filter((id) => !S.agreed.includes(id)).length} still to tick.`}</p>
+    </fieldset>`;
 }
 
 /** The booking read back. On the confirmation screen it also says what they asked
@@ -751,7 +833,15 @@ function onBodyClick(e: Event) {
   }
   if ((el = t.closest('[data-slot-pick]'))) {
     if ((el as HTMLButtonElement).disabled) return;
-    S.slot = el.dataset.slotPick!; save(); return go(S.step + 1);
+    S.slot = el.dataset.slotPick!;
+    // a decoration chosen for an earlier time may not be possible at this one
+    if (S.decor && !decorHere()) {
+      S.decor = '';
+      notice = decorCallOnly()
+        ? `That session starts in under ${NOTICE_HOURS} hours, which is less notice than the decorator needs, so the decoration has come off. Call us and we will see what we can do.`
+        : 'Decoration is not set up at that hour, so the decoration has come off. The session is still yours as a Date Night.';
+    }
+    save(); return go(S.step + 1);
   }
   if ((el = t.closest('[data-setup-pick]'))) {
     const id = el.dataset.setupPick!;
@@ -801,8 +891,40 @@ function onBodyClick(e: Event) {
   }
 }
 
+/**
+ * Dims the Continue button while a required rule is still unticked.
+ *
+ * Dimmed, and described by the line that counts what is left — but never
+ * `disabled` or `aria-disabled`. A truly disabled button is unreachable by
+ * keyboard and silent to a screen reader, so someone who cannot see the
+ * checklist would click it, get nothing, and have no idea why. This one still
+ * takes the click and answers it: validate() says which step is unfinished.
+ */
+function paintRuleGate() {
+  const next = $<HTMLButtonElement>('[data-bk-next]');
+  if (!next) return;
+  const gated = S.step === 5 && !rulesAccepted(S.agreed);
+  next.classList.toggle('is-waiting', gated);
+  if (gated) next.setAttribute('aria-describedby', 'bkRulesLeft');
+  else next.removeAttribute('aria-describedby');
+}
+
 function wireFields() {
   const body = $('#bkBody')!;
+  $$<HTMLInputElement>('[data-rule]', body).forEach((box) => box.addEventListener('change', () => {
+    const id = box.dataset.rule!;
+    S.agreed = box.checked
+      ? [...new Set([...S.agreed, id])]
+      : S.agreed.filter((x) => x !== id);
+    save();
+    box.closest('.rule')?.classList.toggle('is-on', box.checked);
+    const left = requiredRules().filter((x) => !S.agreed.includes(x)).length;
+    const say = $('.rules-left', body);
+    if (say) say.textContent = left ? `${left} still to tick.` : 'Thank you — all agreed.';
+    $('#bkRules', body)?.classList.toggle('is-done', left === 0);
+    paintRuleGate();
+  }));
+  paintRuleGate();
   ([['bName', 'name'], ['bPhone', 'phone'], ['bNotes', 'notes'],
     ['bEmail', 'email'], ['bkCustom', 'customOccasion']] as const).forEach(([id, key]) => {
     const el = $<HTMLInputElement>(`#${id}`, body);
@@ -847,6 +969,9 @@ function bookingPayload(): Record<string, string> {
     Seating: seatsLabel(S.seats),
     ...Object.fromEntries(q.lines.map((l) => [l.label, l.amount !== null ? rupee(l.amount) : `price on call${l.note ? ` (${l.note})` : ''}`])),
     ...(S.notes.trim() ? { Notes: S.notes.trim() } : {}),
+    'House rules': rulesAccepted(S.agreed)
+      ? `Agreed to all ${requiredRules().length} (wording of ${HOUSE_RULES_VERSION})`
+      : 'NOT AGREED — this booking should not have gone through. Check before confirming.',
     Total: q.unpriced.length ? `${rupee(q.total)} + ${q.unpriced.join(', ')} (priced on call)` : rupee(q.total),
     Payment: S.pay === 'online' && online
       ? `Customer chose to pay online now (${rupee(q.total)}). Not paid yet: a separate "Payment received" email follows once Razorpay confirms it.`
@@ -985,6 +1110,7 @@ async function startPayment() {
       ref: S.ref,
       name: S.name, phone: S.phone, email: S.email,
       setup: S.setup, guests: S.guests, slot: S.slot, decor: d?.id ?? '', addons: S.addons,
+      date: S.date, agreed: S.agreed, rulesVersion: HOUSE_RULES_VERSION,
       summary: `${occasionLabel()} · ${dateLabel(S.date)}, ${timeLabel()} · ${S.guests} guests`,
       expected: q.total,
     });

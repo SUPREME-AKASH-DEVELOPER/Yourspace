@@ -95,6 +95,59 @@ email say — "1 recliner + 2 bean bags", not just a head count. The chosen seat
 `state.seats`; `state.guests` is only ever `seats.length`, and `setSeats()` is the one
 function that writes either, so the two cannot drift apart.
 
+### When decoration can be booked
+
+There is one decorator, so decoration is not on offer in every slot the room
+is. Two conditions, and a session has to pass both:
+
+| | |
+|---|---|
+| **His hours** | Sessions starting from `DECOR_FROM` (2:30 PM) and before `DECOR_UNTIL` (9:30 PM). That is the 3:30, 5:15, 7:00 and 8:45 slots. Noon, 1:45 PM and 10:30 PM are never decorated, at any notice. |
+| **His notice** | `DECOR_NOTICE_MINUTES` (3 hours) before the session starts, counted in Jabalpur time from the real clock. |
+
+`decorStatus(slot, date, now)` in `src/data/booking.ts` answers in one word:
+
+- **`online`** — both satisfied. The slot is labelled "Decoration available" and
+  the decoration picker appears.
+- **`call`** — his hours, but too soon. Labelled "Decoration by phone": the flow
+  says why, gives the number, and sells nothing. Tanishk can still say yes on
+  the phone if the decorator happens to be free, which is a judgement the site
+  cannot make.
+- **`closed`** — outside his hours. No label, no picker, and no number offered,
+  because ringing would only waste the customer's time.
+
+None of this touches the room: an undecorated Date Night, Movie Space, Karaoke
+and Watch Party are bookable in every open slot as before, at any notice.
+
+The function is pure — `now` is passed in, never read — so the whole truth
+table is tested at any hour of any day without waiting for one.
+
+**It is checked three times.** The label on the slot and the step that would
+sell a decoration both run on the customer's machine, so neither decides
+anything: `api/_prices.js` works the same answer out from the server's own
+clock and refuses an order that does not pass. Going back a step, leaving the
+page open until the session is under three hours away, or hand-editing the
+saved booking all end at the same refusal. `tests/decoration.spec.ts` runs both
+copies against the same clock, every slot, every hour of the day, and fails if
+they ever disagree.
+
+### The house rules
+
+Five things a customer agrees to before they can pay, one tick box each:
+`HOUSE_RULES` in `src/data/booking.ts`. Add, remove or reword an entry and the
+checklist, the gate on the button and the line in the team's email all follow.
+Bump `HOUSE_RULES_VERSION` when the wording changes, so an older booking still
+records which version was agreed.
+
+Until every one is ticked the Continue button is drawn as an outline instead of
+solid gold. It is deliberately **not** `disabled`: a disabled button cannot be
+focused and says nothing to a screen reader, so this one still takes the click
+and answers it. The server refuses to price a booking whose `agreed` list is
+short, so unticking them in the console buys nothing.
+
+**TODO(owner):** the wording is plain English, not checked by anyone legal.
+Tanishk is to confirm the final text.
+
 ### Payment
 
 The last screen shows the amount as a UPI pay link (phones), a QR code (computers,
@@ -330,6 +383,12 @@ plus the edge cases around them (time zones, going back, tampered saved state).
 - **Booking** — the full flow, seat pricing, validation, confirmation wording, resuming
   after a reload, the WhatsApp hand-off on the confirmation screen, and behaviour when
   `localStorage` throws
+- **Decoration** (`tests/decoration.spec.ts`) — the decorator's hours and his three
+  hours' notice: the truth table at 2, 5, 6 and 8 PM, exactly three hours versus a
+  minute under, bookings for other days and across midnight, 10:30 PM at every hour
+  of every day, the server's copy of the rule against the site's hour by hour, the
+  call-only hand-off, a decoration coming off when the time no longer allows it, one
+  smuggled back in through saved progress, and the house-rules gate
 - **Seats** (`tests/seats.spec.ts`) — five recliners and two bean bags, told apart by
   shape; one tap takes one seat and no other; the last seat cannot be given back; the
   seats chosen are what the summary and the email say; a tampered seat list is cleaned

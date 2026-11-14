@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockDelivery } from './helpers';
+import { mockDelivery, acceptRules } from './helpers';
 import AxeBuilder from '@axe-core/playwright';
 import { PAGES } from './pages';
 
@@ -100,6 +100,7 @@ test.describe('accessibility', () => {
     await page.fill('#bPhone', '9876543210');
     await page.fill('#bEmail', 'a@example.com');
     await page.locator('input[name=bkPay][value=online]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
     await expect(page.locator('.paybox')).toBeVisible();
     await audit('pay online');

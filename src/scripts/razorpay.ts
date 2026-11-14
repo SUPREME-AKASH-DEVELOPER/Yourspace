@@ -16,6 +16,11 @@ export interface PayRequest {
   ref: string;
   name: string; phone: string; email: string;
   setup: string; guests: number; slot: string; decor: string; addons: string[];
+  /** The session's date, so the server can check the decorator's notice itself. */
+  date: string;
+  /** The house rules ticked, and which wording they were. */
+  agreed: string[];
+  rulesVersion: string;
   summary: string;
   /** What the page showed. The server's own price is what is charged. */
   expected: number;

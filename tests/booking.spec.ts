@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { mockDelivery, mockRazorpay, pickSeats } from './helpers';
+import { mockDelivery, mockRazorpay, pickSeats, acceptRules } from './helpers';
 
 /** Each test starts from an empty flow — the saved-progress behaviour is tested separately. */
 async function freshFlow(page: Page) {
@@ -25,6 +25,8 @@ async function details(page: Page, pay?: 'online' | 'later') {
   await page.fill('#bPhone', '9876543210');
   await page.fill('#bEmail', 'a@example.com');
   if (pay) await page.locator(`input[name=bkPay][value=${pay}]`).check();
+  // a booking cannot be sent until the house rules are ticked
+  await acceptRules(page);
 }
 
 test.describe('booking flow', () => {
@@ -167,10 +169,12 @@ test.describe('booking flow', () => {
 
     await page.fill('#bPhone', '9876543210');
     await page.fill('#bEmail', 'a@example.com');
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
     await expect(page.locator('.bk-flash')).toContainText('how you would like to pay');
 
     await page.locator('input[name=bkPay][value=later]').check();
+    await acceptRules(page);
     await page.locator('[data-bk-next]').click();
     await expect(page.locator('#bkTitle')).toContainText("You're on the list");
   });
