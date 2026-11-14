@@ -33,7 +33,7 @@ test.describe('the seat picker', () => {
     await expect(page.locator('.bk .seat-row-back [data-kind="recliner"]')).toHaveCount(SEATING.recliners);
     await expect(page.locator('.bk .seat-row-front [data-kind="beanbag"]')).toHaveCount(SEATING.beanBags);
 
-    // round bean bags, square-ish recliners — a real difference, not just a label
+    // round bean bags, square-ish recliners, a real difference, not just a label
     const radius = (sel: string) => page.locator(sel).first().evaluate(
       (el) => getComputedStyle(el).borderTopLeftRadius);
     expect(await radius('.bk [data-kind="beanbag"]')).toMatch(/50%|2[0-9]px/);
@@ -44,7 +44,7 @@ test.describe('the seat picker', () => {
     await expect(page.locator('.bk .seat-kinds')).toContainText(`Total Capacity: ${MAX_GUESTS} People`);
   });
 
-  test('one tap takes one seat — tapping a bean bag does not take the recliners', async ({ page }) => {
+  test('one tap takes one seat, tapping a bean bag does not take the recliners', async ({ page }) => {
     await freshFlow(page);
     await expect(taken(page), 'two seats to start with').toHaveCount(2);
 
@@ -81,7 +81,7 @@ test.describe('the seat picker', () => {
     await expect(page.locator('.bk .seat-tally')).toContainText(`2 of ${SEATING.beanBags} bean bags`);
   });
 
-  test('the last seat cannot be given back — someone has to sit somewhere', async ({ page }) => {
+  test('the last seat cannot be given back, someone has to sit somewhere', async ({ page }) => {
     await freshFlow(page);
     await pickSeats(page, 1);
     await expect(taken(page)).toHaveCount(1);

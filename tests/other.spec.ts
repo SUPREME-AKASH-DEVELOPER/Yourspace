@@ -10,7 +10,7 @@ async function freshFlow(page: Page) {
   await page.reload();
 }
 
-test.describe('"Something else" — writing your own occasion', () => {
+test.describe('"Something else", writing your own occasion', () => {
   test('is offered alongside the six set occasions', async ({ page }) => {
     await freshFlow(page);
     await expect(page.locator('[data-exp-pick]')).toHaveCount(7);

@@ -1,5 +1,5 @@
 /**
- * POST /api/send — every form on the site ends here.
+ * POST /api/send, every form on the site ends here.
  *
  * It sends the lead to the team, then a confirmation to the visitor, through
  * Resend. Who receives the lead is decided here, never by the browser, and the

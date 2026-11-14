@@ -28,13 +28,13 @@ export type ArtKey = 'heart' | 'screen' | 'mic' | 'ring' | 'flame' | 'stage';
  */
 export const SEATING = { recliners: 5, beanBags: 2 } as const;
 
-/** Nobody books more than this online, whatever the setup — one person per seat. */
+/** Nobody books more than this online, whatever the setup, one person per seat. */
 export const MAX_GUESTS = SEATING.recliners + SEATING.beanBags;
 
 /**
  * Every seat has a number, and the number says which kind it is: 1–5 are the
  * recliners in the back row, 6 and 7 the bean bags in front. The picker lets
- * people choose the seats they actually want — any one of them on its own —
+ * people choose the seats they actually want, any one of them on its own , 
  * so these two helpers are what everything else reads.
  */
 export const SEAT_IDS: readonly number[] = Array.from({ length: MAX_GUESTS }, (_, i) => i + 1);
@@ -55,7 +55,7 @@ export function seatsFor(guests: number): { recliners: number; beanBags: number 
 }
 
 /**
- * The seats to start someone off with when all we have is a head count — from
+ * The seats to start someone off with when all we have is a head count, from
  * the home page, say, or older saved progress. Recliners first, as before.
  */
 export function defaultSeats(guests: number): number[] {
@@ -70,7 +70,7 @@ export function defaultSeats(guests: number): number[] {
 export const cleanSeats = (seats: unknown): number[] =>
   Array.isArray(seats) ? [...new Set(seats.filter(isSeatId))].sort((a, b) => a - b) : [];
 
-/** "2 recliners", "1 recliner + 1 bean bag" — from the seats actually chosen. */
+/** "2 recliners", "1 recliner + 1 bean bag", from the seats actually chosen. */
 export function seatsLabel(seats: number[]): string {
   const recliners = seats.filter((n) => seatKind(n) === 'recliner').length;
   const beanBags = seats.length - recliners;
@@ -81,10 +81,10 @@ export function seatsLabel(seats: number[]): string {
   return parts.join(' + ') || 'no seats yet';
 }
 
-/** "2 recliners", "5 recliners + 1 bean bag" — from a head count alone. */
+/** "2 recliners", "5 recliners + 1 bean bag", from a head count alone. */
 export const seatingLabel = (guests: number): string => seatsLabel(defaultSeats(guests));
 
-/** The lowest price anything starts from — used for "From ₹…" on the marketing pages. */
+/** The lowest price anything starts from, used for "From ₹…" on the marketing pages. */
 export const ROOM_BASE = 1500;
 
 /** A standard session. Karaoke is shorter; see its setup below. */
@@ -93,7 +93,7 @@ export const RUNTIME = '90 min';
 export const SESSION_LABEL = '90-minute private session';
 
 /* ------------------------------------------------------------------ */
-/*  Occasions — step 1. What they are celebrating, not what they book. */
+/*  Occasions, step 1. What they are celebrating, not what they book. */
 /* ------------------------------------------------------------------ */
 
 export interface Experience {
@@ -117,7 +117,7 @@ export const experiences: Experience[] = [
   },
   {
     id: 'watch', name: 'Watch Party', note: 'Your match, your show', art: 'screen', suggests: 'watch',
-    blurb: "Your match, your show, your people — at a volume you'd never get away with at home. Bring the group, put the game on the big screen, and shout at it as loudly as it deserves.",
+    blurb: "Your match, your show, your people, at a volume you'd never get away with at home. Bring the group, put the game on the big screen, and shout at it as loudly as it deserves.",
     bestFor: `Up to ${MAX_GUESTS} guests`, setUp: 'Big screen, full sound', cta: 'Plan a watch party',
   },
   {
@@ -127,7 +127,7 @@ export const experiences: Experience[] = [
   },
   {
     id: 'proposal', name: 'Proposal', note: 'Set the scene, then ask', art: 'ring', suggests: 'date',
-    blurb: "Set the scene exactly how you pictured it, then ask the question. Tell us the moment you want — the song, the slide, the cue to dim the lights — and we'll have it ready and stay out of the way.",
+    blurb: "Set the scene exactly how you pictured it, then ask the question. Tell us the moment you want: the song, the slide, the cue to dim the lights, and we'll have it ready and stay out of the way.",
     bestFor: '2 guests', setUp: 'Decor, your cue, our timing', cta: 'Plan a proposal',
   },
   {
@@ -152,11 +152,11 @@ export const OTHER = {
   name: 'Something else',
   note: 'Tell us what you have in mind',
   prompt: "What are you planning?",
-  placeholder: 'A farewell, a reveal, a screening of something odd, a surprise for someone — whatever it is, say it in your own words.',
+  placeholder: 'A farewell, a reveal, a screening of something odd, a surprise for someone. Whatever it is, say it in your own words.',
 } as const;
 
 /* ------------------------------------------------------------------ */
-/*  Time slots — step 3                                                */
+/*  Time slots, step 3                                                */
 /* ------------------------------------------------------------------ */
 
 export interface Slot { id: string; start: string; end: string }
@@ -189,14 +189,14 @@ const minutesToClock = (total: number): string => {
  * The slots, worked out rather than typed in: each is SESSION_MINUTES long,
  * and the next one starts BUFFER_MINUTES after the one before it ends. With a
  * 90-minute session and a 15-minute gap that is seven slots between noon and
- * midnight, the last finishing exactly at closing — one fewer than when they
+ * midnight, the last finishing exactly at closing, one fewer than when they
  * ran back to back, which is the cost of the gap.
  *
  * Start times are deliberately not on the hour. The booking flow says why, so
  * nobody reads 1:45 PM as a mistake.
  *
  * TODO(owner): confirm every slot is open for every setup.
- * Karaoke runs 30 minutes from the start of whichever slot is chosen —
+ * Karaoke runs 30 minutes from the start of whichever slot is chosen , 
  * also to confirm. The room is still held for the whole slot, so the gap
  * after it is unchanged.
  */
@@ -245,7 +245,7 @@ export const DECOR_NOTICE_MINUTES = 3 * 60;
 /**
  * What a session can be offered, for decoration only:
  *
- *   'online'  in the decorator's hours, and far enough away — book it here
+ *   'online'  in the decorator's hours, and far enough away, book it here
  *   'call'    in the decorator's hours, but sooner than the notice we need.
  *             We do not sell it online, because we cannot promise it; the
  *             flow offers the phone instead, and Tanishk decides on the call
@@ -256,7 +256,7 @@ export const DECOR_NOTICE_MINUTES = 3 * 60;
  *
  * `now` comes from venueNow() in the browser and from the same clock on the
  * server, so both answer in Jabalpur time whatever the customer's device says.
- * Pure on purpose — the time is passed in, never read — so the truth table can
+ * Pure on purpose, the time is passed in, never read, so the truth table can
  * be tested at any hour of any day.
  */
 export type DecorStatus = 'online' | 'call' | 'closed';
@@ -276,7 +276,7 @@ export function decorStatus(
  * dates themselves, so a booking for tomorrow is not mistaken for one today
  * and the answer survives midnight. A date we cannot read is treated as far
  * away rather than near, so a broken value can never unlock a slot it should
- * not — the server checks the same thing again regardless.
+ * not, the server checks the same thing again regardless.
  */
 export function minutesUntil(
   dateIso: string,
@@ -299,7 +299,7 @@ export function addMinutes(clock: string, mins: number): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Setups — step 4. What they actually book.                          */
+/*  Setups, step 4. What they actually book.                          */
 /* ------------------------------------------------------------------ */
 
 export type SetupId = 'date' | 'movie' | 'karaoke' | 'watch';
@@ -311,7 +311,7 @@ export interface Setup {
   art: ArtKey;
   /** Session length, or null where it has not been set. */
   minutes: number | null;
-  /** Fewer than this and it cannot be booked online — they call instead. */
+  /** Fewer than this and it cannot be booked online, they call instead. */
   minGuests: number;
   maxGuests: number;
   /** Shown on the card as "₹150 per person", beside the total. */
@@ -410,7 +410,7 @@ export function setupPrice(id: string, guests: number): {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Add-ons — step 5. Date Night only.                                 */
+/*  Add-ons, step 5. Date Night only.                                 */
 /* ------------------------------------------------------------------ */
 
 export interface AddonOption {
@@ -465,7 +465,7 @@ export const addonGroups: AddonGroup[] = [
   },
   {
     /* Tanishk, 11 Nov 2026: this was listed as a photoshoot by mistake. It is a
-       video — we film the celebration and hand back a 15-minute edited film.
+       video, we film the celebration and hand back a 15-minute edited film.
        The ids stay as they are: they key the photographs in BookingMedia and
        any booking already saved in someone's browser. */
     id: 'photo', name: 'Celebration video', art: 'ring',
@@ -545,14 +545,14 @@ export const priceList = addonGroups.flatMap((g) => g.options.map((o) => ({
 }))).sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity) || a.name.localeCompare(b.name));
 
 /* ------------------------------------------------------------------ */
-/*  House rules — agreed to on the last step, before paying.           */
+/*  House rules, agreed to on the last step, before paying.           */
 /* ------------------------------------------------------------------ */
 
 /**
  * What a customer agrees to before they pay (Tanishk, 14 Nov 2026).
  *
  * TODO(owner): this is plain wording, not checked by anyone legal. Tanishk is
- * to confirm the final text. Editing it is the whole job — add, remove or
+ * to confirm the final text. Editing it is the whole job, add, remove or
  * reword an entry and the booking flow, the tick boxes and the line in the
  * email all follow. Bump HOUSE_RULES_VERSION whenever the wording changes, so
  * an old booking still says which version was agreed to.
@@ -566,7 +566,7 @@ export const HOUSE_RULES_VERSION = '2026-11-14';
 export interface HouseRule {
   id: string;
   /**
-   * Written to be read straight after "I agree" — so it starts with "to…" or
+   * Written to be read straight after "I agree", so it starts with "to…" or
    * "that…", never as a sentence of its own. Reword and the tick box follows.
    */
   text: string;
@@ -585,8 +585,12 @@ export const HOUSE_RULES: HouseRule[] = [
 export const requiredRules = (): string[] =>
   HOUSE_RULES.filter((r) => !r.optional).map((r) => r.id);
 
-/** True when every required rule has been ticked. */
-export const rulesAccepted = (agreed: readonly string[]): boolean =>
-  requiredRules().every((id) => agreed.includes(id));
+/**
+ * True when every required rule has been ticked. Anything that is not a list
+ * counts as nothing ticked: saved progress comes out of the visitor's own
+ * browser, and a value hand-edited to an object once crashed every render.
+ */
+export const rulesAccepted = (agreed: unknown): boolean =>
+  Array.isArray(agreed) && requiredRules().every((id) => agreed.includes(id));
 
 export const stepNames = ['Occasion', 'Date & guests', 'Time', 'Setup', 'Add-ons', 'Pay'];

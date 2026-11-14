@@ -20,7 +20,7 @@ const LOCK = '<svg class="lock-i" viewBox="0 0 24 24" aria-hidden="true" focusab
 /** Said wherever money is taken. Every claim is Razorpay's own and true. */
 const SECURE = `<p class="secure-line">${LOCK}<span>Secured by <b>Razorpay</b> · PCI DSS compliant · 256-bit encrypted. We never see your card or bank details.</span></p>`;
 
-/* Line-art marks for the occasion tiles — drawn, not emoji. */
+/* Line-art marks for the occasion tiles, drawn, not emoji. */
 const ICON: Record<string, string> = {
   heart:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 4.6-7 9-7 9Z"/></svg>',
   screen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M10 9.2v4.6l4-2.3-4-2.3Z" fill="currentColor" stroke="none"/><path d="M8 20h8"/></svg>',
@@ -37,7 +37,7 @@ type Send = '' | 'sending' | 'sent' | 'failed';
 interface State {
   step: number; exp: string; date: string;
   /**
-   * The seat numbers they picked — 1–5 recliners, 6–7 bean bags. This is the
+   * The seat numbers they picked, 1–5 recliners, 6–7 bean bags. This is the
    * truth about who is coming; `guests` is only ever `seats.length`, kept
    * alongside it because the prices are worked out per head. Change seats
    * through setSeats() and the two can never drift apart.
@@ -57,7 +57,7 @@ interface State {
   send: Send;
   /**
    * Where the online payment stands. 'sent' means Razorpay took the money AND
-   * our server checked its signature — the only state the page calls "paid".
+   * our server checked its signature, the only state the page calls "paid".
    */
   paid: Send;
   /** Razorpay's id for the payment, shown on the receipt. */
@@ -115,6 +115,10 @@ function load() {
     // nothing is trusted: every value must be one this flow could have made.
     if (!Array.isArray(S.addons)) S.addons = [];
     S.addons = S.addons.filter((a) => typeof a === 'string' && addonOf(a) !== null);
+    // the ticks, checked the same way: an object saved here instead of a list
+    // used to take the whole flow down on the next render
+    if (!Array.isArray(S.agreed)) S.agreed = [];
+    S.agreed = [...new Set(S.agreed.filter((a) => typeof a === 'string' && requiredRules().includes(a)))];
     if (S.date && !isIsoDate(S.date)) S.date = '';
     if (S.slot && !slots.some((x) => x.id === S.slot)) S.slot = '';
     if (S.setup && !setupOf(S.setup)) S.setup = '';
@@ -155,7 +159,7 @@ function load() {
 /** What to call the occasion: their own words when they gave us some. */
 function occasionLabel(): string {
   if (S.exp === OTHER.id) return S.customOccasion.trim() || OTHER.name;
-  return expOf()?.name ?? '—';
+  return expOf()?.name ?? '-';
 }
 
 const expOf = () => experiences.find((e) => e.id === S.exp) ?? null;
@@ -321,7 +325,7 @@ export function prefillBooking(opts: { exp?: string; custom?: string; date?: str
   if (opts.guests && opts.guests > 0) {
     setSeats(defaultSeats(Math.min(MAX_GUESTS, Math.max(1, Math.floor(opts.guests)))));
     if (opts.guests > MAX_GUESTS) {
-      notice = `You asked for ${Math.floor(opts.guests)} guests. Online bookings are for up to ${MAX_GUESTS}, so we have set ${MAX_GUESTS} — for a bigger group, call us on ${tel()?.pretty ?? 'the number on our contact page'}.`;
+      notice = `You asked for ${Math.floor(opts.guests)} guests. Online bookings are for up to ${MAX_GUESTS}, so we have set ${MAX_GUESTS}. For a bigger group, call us on ${tel()?.pretty ?? 'the number on our contact page'}.`;
     }
   }
   // with a described occasion we can move on; without one, stay and ask
@@ -466,7 +470,7 @@ function render() {
 
   const bits = [occasionLabel(), S.date && dateLabel(S.date), slotOf()?.start,
                 `${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}`].filter(Boolean);
-  const amount = S.setup && !q.blocked ? totalText(q) : '—';
+  const amount = S.setup && !q.blocked ? totalText(q) : '-';
   $('#bkTotal')!.innerHTML = `<strong>${amount}</strong><span>${esc(bits.join(' · '))}</span>`;
 
   $('#bkBody')!.innerHTML = [step0, step1, step2, step3, step4, step5][S.step](q);
@@ -523,12 +527,12 @@ function step0() {
 }
 
 /* The seat picker: you choose the seats themselves, not a number in a box.
-   It is drawn as the room is — two bean bags in front, nearer the screen, and
+   It is drawn as the room is, two bean bags in front, nearer the screen, and
    five recliners behind them. Recliners are square, bean bags round.
 
    Each seat is its own toggle: tapping one takes that seat and nothing else.
    (It used to fill every seat up to the one you tapped, so tapping a bean bag
-   looked like it had taken all five recliners too — Tanishk flagged it, and
+   looked like it had taken all five recliners too, Tanishk flagged it, and
    this is the fix.) The seats chosen are what the summary and the email say,
    so a couple who want the bean bags get the bean bags. */
 
@@ -543,7 +547,7 @@ function seatButton(n: number) {
   const on = S.seats.includes(n);
   return `<button type="button" class="seat seat-${kind}${on ? ' is-taken' : ''}${seatJustOn === n ? ' is-new' : ''}"
     data-seat="${n}" data-kind="${kind}" aria-pressed="${on}"
-    aria-label="${name}, ${row}${on ? ' — taken, tap to give it back' : ''}"
+    aria-label="${name}, ${row}${on ? ', taken, tap to give it back' : ''}"
     title="${name} · ${row}"><span class="seat-tag" aria-hidden="true">${nth}</span></button>`;
 }
 
@@ -580,7 +584,7 @@ function step1() {
   const said = notice;
   notice = '';
   return head(2, "When's the night, and who's coming?",
-    `Pick the seats you want — one tap each, up to ${MAX_GUESTS}. ${SEATING.recliners} recliners at the back, ${SEATING.beanBags} bean bags in front. The price for your group shows when you choose a setup.`) +
+    `Pick the seats you want, one tap each, up to ${MAX_GUESTS}. ${SEATING.recliners} recliners at the back, ${SEATING.beanBags} bean bags in front. The price for your group shows when you choose a setup.`) +
     (said ? `<div class="bk-note" role="status" style="margin-bottom:22px"><i>Note</i><span>${esc(said)}</span></div>` : '') +
     seatmap() +
     '<p class="bk-kicker">Pick a date</p>' +
@@ -594,8 +598,8 @@ function step1() {
 function step2() {
   return head(3, 'Choose your time',
     `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Karaoke runs 30 minutes from the start of the slot.`) +
-    `<p class="fine" style="margin:-14px 0 18px">We leave ${BUFFER_MINUTES} minutes between bookings to reset the room, so the start times are not on the hour — the space is yours for the whole slot, with nobody waiting at the door.</p>` +
-    (expOf()?.suggests === 'date' ? `<p class="fine" style="margin:-8px 0 18px">Want your room decorated? One decorator sets the room up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}, and needs ${NOTICE_HOURS} hours' notice to do it — so each time below says what it can have today.</p>` : '') +
+    `<p class="fine" style="margin:-14px 0 18px">We leave ${BUFFER_MINUTES} minutes between bookings to reset the room, so the start times are not on the hour. The space is yours for the whole slot, with nobody waiting at the door.</p>` +
+    (expOf()?.suggests === 'date' ? `<p class="fine" style="margin:-8px 0 18px">Want your room decorated? One decorator sets the room up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}, and needs ${NOTICE_HOURS} hours' notice to do it, so each time below says what it can have today.</p>` : '') +
     `<div class="slots">${slots.map((s) => {
       const gone = slotPassed(s.start);
       /* The label is the real answer for this slot on this date at this hour,
@@ -643,7 +647,7 @@ function setupCard(s: Setup) {
         <span class="sc-pricing">${price}${p.note ? `<span class="sc-per">${esc(p.note)}</span>` : ''}</span>
         <span class="sc-list">${includes.map((i) => `<span>${esc(i)}</span>`).join('')}</span>
         ${p.blocked ? `<span class="sc-why" id="sc-why-${s.id}">${esc(p.blocked)}</span>` : ''}
-        ${s.idealFor && S.guests > s.idealFor && !p.blocked ? `<span class="sc-hint">Set up for ${s.idealFor}. Bigger groups are welcome — we will arrange the room on the call.</span>` : ''}
+        ${s.idealFor && S.guests > s.idealFor && !p.blocked ? `<span class="sc-hint">Set up for ${s.idealFor}. Bigger groups are welcome, and we will arrange the room on the call.</span>` : ''}
       </span>
     </button>`;
 }
@@ -686,23 +690,23 @@ function step3() {
  * What we say when the decoration picker is not on screen. Two different
  * reasons, and they are not interchangeable:
  *
- *   too soon  — we could decorate at that hour, but not at this notice. The
+ *   too soon , we could decorate at that hour, but not at this notice. The
  *               phone is offered, because Tanishk can still say yes if the
  *               decorator happens to be free. Nothing is sold online.
- *   closed    — nobody is decorating at that hour whatever the notice, so
+ *   closed   , nobody is decorating at that hour whatever the notice, so
  *               offering the phone would only waste the customer's call.
  */
 function decorClosedNote() {
   const at = esc(slotOf()?.start ?? '');
   if (decorCallOnly()) {
-    return `<div class="bk-note" style="margin-top:18px"><i>Decoration</i><span>Decoration for your ${at} session is only arranged by phone now — it starts in under ${NOTICE_HOURS} hours, and the decorator needs that long to set the room up. Call us on ${callLink()} and we will tell you straight away whether we can still do it. Your ${at} session can be booked here either way, as a Date Night without decoration. Booking further ahead? <button type="button" class="linkish" data-bk-retime>Pick another time</button>.</span></div>`;
+    return `<div class="bk-note" style="margin-top:18px"><i>Decoration</i><span>Decoration for your ${at} session is only arranged by phone now, because it starts in under ${NOTICE_HOURS} hours, and the decorator needs that long to set the room up. Call us on ${callLink()} and we will tell you straight away whether we can still do it. Your ${at} session can be booked here either way, as a Date Night without decoration. Booking further ahead? <button type="button" class="linkish" data-bk-retime>Pick another time</button>.</span></div>`;
   }
   return `<div class="bk-note" style="margin-top:18px"><i>Decoration</i><span>Decoration is only set up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}. Your ${at} session can still be a Date Night, without decoration. Want it decorated? <button type="button" class="linkish" data-bk-retime>Pick another time</button>.</span></div>`;
 }
 
 function step4(q: Quote) {
   return head(5, 'Make it yours',
-    'Optional — add only what you want. Fog entry and candlelight are already in your decoration.') +
+    'Optional. Add only what you want. Fog entry and candlelight are already in your decoration.') +
     addonGroups.map((g) => `
       <div class="ad-group">
         <h3>${esc(g.name)}<span>${esc(g.blurb)}</span></h3>
@@ -764,7 +768,7 @@ function step5(q: Quote) {
  *
  * Every required rule has to be ticked before the Continue button turns on.
  * The button is only dimmed, never removed, and it still answers a click with
- * the reason — a disabled button that does nothing tells someone with a
+ * the reason, a disabled button that does nothing tells someone with a
  * screen reader nothing at all. validate() checks the same thing again, and
  * so does the server, so unticking them in the console buys nothing.
  */
@@ -773,7 +777,7 @@ function houseRules() {
   return `
     <fieldset class="rules ${done ? 'is-done' : ''}" id="bkRules">
       <legend>Before you book</legend>
-      <p class="fine">A few house rules. Tick each one to carry on — they are part of the booking.</p>
+      <p class="fine">A few house rules. Tick each one to carry on. They are part of the booking.</p>
       ${HOUSE_RULES.map((r) => {
         const on = S.agreed.includes(r.id);
         return `
@@ -783,17 +787,17 @@ function houseRules() {
         </label>`;
       }).join('')}
       <p class="fine rules-left" id="bkRulesLeft" role="status">${done
-        ? 'Thank you — all agreed.'
+        ? 'Thank you, all agreed.'
         : `${requiredRules().filter((id) => !S.agreed.includes(id)).length} still to tick.`}</p>
     </fieldset>`;
 }
 
 /** The booking read back. On the confirmation screen it also says what they asked
- *  for in their own words and, plainly, where payment stands — never "paid". */
+ *  for in their own words and, plainly, where payment stands, never "paid". */
 function summary(q: Quote, final = false) {
   const rows: [string, string][] = [
     ['Occasion', occasionLabel()],
-    ['Date & time', (S.date ? dateLabel(S.date) : '—') + (slotOf() ? ` · ${timeLabel()}` : '')],
+    ['Date & time', (S.date ? dateLabel(S.date) : '-') + (slotOf() ? ` · ${timeLabel()}` : '')],
     ['Guests', String(S.guests)],
     ['Seating', seatsLabel(S.seats)],
   ];
@@ -803,8 +807,8 @@ function summary(q: Quote, final = false) {
     <div class="bk-sum-row is-total"><span>${q.unpriced.length ? 'Total so far' : 'Total'}</span><span>${esc(totalText(q))}</span></div>${final ? [
       ...(S.notes.trim() ? [['Your notes', S.notes.trim()]] : []),
       ['Payment', paysOnline(q)
-        ? (S.paid === 'sent' ? `Paid online · ${S.paymentId}` : 'Online — awaiting payment')
-        : 'After we call — nothing paid'],
+        ? (S.paid === 'sent' ? `Paid online · ${S.paymentId}` : 'Online, awaiting payment')
+        : 'After we call, nothing paid'],
     ].map(([a, b]) => `<div class="bk-sum-row"><span>${esc(a)}</span><span>${esc(b)}</span></div>`).join('') : ''}</div>`;
 }
 
@@ -881,7 +885,7 @@ function onBodyClick(e: Event) {
     const n = Number(el.dataset.seat);
     if (!SEAT_IDS.includes(n)) return;
     const had = S.seats.includes(n);
-    if (had && S.seats.length === 1) return flash('Someone has to sit somewhere — tap another seat first.');
+    if (had && S.seats.length === 1) return flash('Someone has to sit somewhere. Tap another seat first.');
     seatJustOn = had ? null : n;
     setSeats(had ? S.seats.filter((x) => x !== n) : [...S.seats, n]);
     save();
@@ -894,7 +898,7 @@ function onBodyClick(e: Event) {
 /**
  * Dims the Continue button while a required rule is still unticked.
  *
- * Dimmed, and described by the line that counts what is left — but never
+ * Dimmed, and described by the line that counts what is left, but never
  * `disabled` or `aria-disabled`. A truly disabled button is unreachable by
  * keyboard and silent to a screen reader, so someone who cannot see the
  * checklist would click it, get nothing, and have no idea why. This one still
@@ -920,7 +924,7 @@ function wireFields() {
     box.closest('.rule')?.classList.toggle('is-on', box.checked);
     const left = requiredRules().filter((x) => !S.agreed.includes(x)).length;
     const say = $('.rules-left', body);
-    if (say) say.textContent = left ? `${left} still to tick.` : 'Thank you — all agreed.';
+    if (say) say.textContent = left ? `${left} still to tick.` : 'Thank you, all agreed.';
     $('#bkRules', body)?.classList.toggle('is-done', left === 0);
     paintRuleGate();
   }));
@@ -971,7 +975,7 @@ function bookingPayload(): Record<string, string> {
     ...(S.notes.trim() ? { Notes: S.notes.trim() } : {}),
     'House rules': rulesAccepted(S.agreed)
       ? `Agreed to all ${requiredRules().length} (wording of ${HOUSE_RULES_VERSION})`
-      : 'NOT AGREED — this booking should not have gone through. Check before confirming.',
+      : 'NOT AGREED. This booking should not have gone through. Check before confirming.',
     Total: q.unpriced.length ? `${rupee(q.total)} + ${q.unpriced.join(', ')} (priced on call)` : rupee(q.total),
     Payment: S.pay === 'online' && online
       ? `Customer chose to pay online now (${rupee(q.total)}). Not paid yet: a separate "Payment received" email follows once Razorpay confirms it.`
@@ -981,7 +985,7 @@ function bookingPayload(): Record<string, string> {
 }
 
 function bookingText() {
-  return [`YourSpace ${site.city} — booking ${S.ref}`,
+  return [`YourSpace ${site.city}, booking ${S.ref}`,
     ...Object.entries(bookingPayload()).filter(([k]) => k !== 'Received' && k !== 'Booking ref' && k !== 'Payment')
       .map(([k, v]) => `${k}: ${v}`)].join('\n');
 }
@@ -991,7 +995,7 @@ function bookingText() {
 /* Tanishk asked for this (Nov 2026): once someone has filled the flow in, they
    land in his chat with the whole booking already typed out, so they can finish
    it in WhatsApp instead of waiting for the call. It is an extra way through,
-   not the only one — the booking has already been emailed to the team by the
+   not the only one, the booking has already been emailed to the team by the
    time this button appears, so nothing is lost if they never tap it, and a
    WhatsApp message is still not a payment: the pay panel and the "we will call
    you" line stay exactly as they were. */
@@ -1042,16 +1046,16 @@ async function sendBooking() {
   const online = paysOnline();
   const outcome = await deliver({
     ...payload,
-    ...envelope(`Booking ${S.ref} — ${S.name || 'someone'} · ${S.phone}${online ? ' · paying online' : ''}`, S.email),
+    ...envelope(`Booking ${S.ref} · ${S.name || 'someone'} · ${S.phone}${online ? ' · paying online' : ''}`, S.email),
     _autoresponse:
-      `Thanks ${first} — we have your booking for YourSpace, ${site.city}.\n\n` +
+      `Thanks ${first}, we have your booking for YourSpace, ${site.city}.\n\n` +
       Object.entries(payload)
         .filter(([k]) => k !== 'Email' && k !== 'Received' && k !== 'Payment')
         .map(([k, v]) => `  ${k}: ${v}`).join('\n') +
       `\n\nWe will call you on ${S.phone} to confirm.\n` +
       (online ? `Once you pay online, a separate email confirms we have received it.\n`
               : `Nothing has been charged.\n`) +
-      `\n— YourSpace, ${site.city}`,
+      `\n\nYourSpace, ${site.city}`,
   });
   busy = false;
   S.send = outcome.ok ? 'sent' : 'failed';
@@ -1165,7 +1169,7 @@ function renderDone() {
             <b>${esc(S.ref)}</b> already written out.</p>
           <a class="btn btn-key bk-wa-btn" href="${esc(wa)}" target="_blank" rel="noopener" data-whatsapp data-wa-booking>
             ${WA_ICON}Send my booking on WhatsApp<span class="sr-only"> (opens WhatsApp)</span></a>
-          <p class="fine">${online && !paid ? 'Sending it on WhatsApp is not a payment — pay above to hold your slot.'
+          <p class="fine">${online && !paid ? 'Sending it on WhatsApp is not a payment. Pay above to hold your slot.'
             : 'We will still call you on ' + esc(S.phone) + ' to confirm.'}</p>
         </div>` : ''}
       <div class="bk-actions">

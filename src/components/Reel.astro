@@ -15,7 +15,7 @@ const frames = decorations.flatMap((d) =>
     ...p,
     setup: d.name,
     id: d.id,
-    /** A short line for the subtitle bar — the long alt text is for readers. */
+    /** A short line for the subtitle bar, the long alt text is for readers. */
     caption: p.alt.split(/[,.]/)[0].trim(),
   })));
 
@@ -68,5 +68,5 @@ const looped = [...frames, ...frames];
 
     <button class="reel-btn" type="button" data-reel-next aria-label="More photographs">›</button>
   </div>
-  <p class="reel-hint fine">It runs on its own — drag the strip, or tap a frame to see it larger.</p>
+  <p class="reel-hint fine">It runs on its own. Drag the strip, or tap a frame to see it larger.</p>
 </div>

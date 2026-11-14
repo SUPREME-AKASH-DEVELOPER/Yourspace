@@ -33,7 +33,7 @@ async function postOnce(url: string, payload: Record<string, string>): Promise<O
   const primary = url === PRIMARY;
   try {
     // Web3Forms refuses the CORS preflight that a JSON content-type sets off,
-    // so it gets FormData — a "simple" request the browser sends straight out.
+    // so it gets FormData, a "simple" request the browser sends straight out.
     // Our own route and FormSubmit's ajax endpoint want JSON.
     const init: RequestInit = !primary && useWeb3Forms
       ? { method: 'POST', body: toFormData(payload), signal: ctl.signal }

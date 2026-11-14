@@ -19,7 +19,7 @@ async function dialogReady(page: import('@playwright/test').Page) {
 /**
  * Sections fade in as they are scrolled to. Auditing before that happens judges
  * a state no reader ever sees, so walk the page down first and let the reveals
- * settle — exactly what a sighted user does.
+ * settle, exactly what a sighted user does.
  */
 async function settle(page: import('@playwright/test').Page) {
   await page.evaluate(async () => {
@@ -66,7 +66,7 @@ test.describe('accessibility', () => {
     // scrim, and it is audited on its own in the per-page tests above.
     const { violations } = await new AxeBuilder({ page }).include('#bk').withTags(TAGS).analyze();
     const detail = violations.flatMap((v) =>
-      v.nodes.map((n) => `${v.id}: ${n.html.slice(0, 120)} — ${n.failureSummary?.split('\n')[1] ?? ''}`));
+      v.nodes.map((n) => `${v.id}: ${n.html.slice(0, 120)}, ${n.failureSummary?.split('\n')[1] ?? ''}`));
     expect(detail).toEqual([]);
   });
 

@@ -6,7 +6,7 @@ import Notice from '../components/Notice.astro';
 import Reel from '../components/Reel.astro';
 import { MAX_GUESTS, ROOM_BASE, SEATING } from '../data/booking';
 ---
-<Base title="The Room — YourSpace Jabalpur"
+<Base title="The Room · YourSpace Jabalpur"
       description="One private room in Jabalpur: big-screen projection, dedicated sound, lounge seating, and nobody else in it but your group.">
   <PageHead crumb="The room">
     <h1 class="headline">The lights go down.<br />The room is <em>yours</em>.</h1>
@@ -22,12 +22,12 @@ import { MAX_GUESTS, ROOM_BASE, SEATING } from '../data/booking';
         <dl class="credits">
           <div><dt>Privacy</dt><dd>The whole room reserved for your group, start to finish. No shared seating, no second booking running alongside yours.</dd></div>
           <div><dt>Screen &amp; sound</dt><dd>Big-screen projection with a dedicated sound system.</dd></div>
-          <div><dt>Seating</dt><dd>{SEATING.recliners} recliners at the back and {SEATING.beanBags} bean bags in front — {MAX_GUESTS} people in all</dd></div>
+          <div><dt>Seating</dt><dd>{SEATING.recliners} recliners at the back and {SEATING.beanBags} bean bags in front, {MAX_GUESTS} people in all</dd></div>
           <div><dt>Capacity</dt><dd>Up to {MAX_GUESTS} guests. Sessions start at ₹{ROOM_BASE.toLocaleString('en-IN')}; the tickets page has the price for each setup.</dd></div>
           <div><dt>Session</dt><dd>90 minutes, start to finish. Karaoke is 30.</dd></div>
           <div><dt>Make it yours</dt><dd>Decoration, cake, flowers and a celebration video available with Date Night.</dd></div>
         </dl>
-        <p class="fine">Exact equipment details are being finalised — we'll confirm them with you when we call.</p>
+        <p class="fine">Exact equipment details are being finalised, and we'll confirm them with you when we call.</p>
       </div>
     </div>
   </section>
@@ -57,7 +57,7 @@ import { MAX_GUESTS, ROOM_BASE, SEATING } from '../data/booking';
             <li><span>Open flames you brought yourself</span><b>Ask us</b></li>
             <li><span>More guests than you booked for</span><b>Tell us first</b></li>
           </ul>
-          <p class="fine">If something here would spoil your plan, ask — most of it is a conversation, not a rule.</p>
+          <p class="fine">If something here would spoil your plan, ask. Most of it is a conversation, not a rule.</p>
         </div>
       </div>
     </div>
@@ -78,7 +78,7 @@ import { MAX_GUESTS, ROOM_BASE, SEATING } from '../data/booking';
     <div class="shell narrow">
       <Notice label="Note">
         The pictures above show the decoration setups. We'll add photographs of the room
-        itself — empty, in daylight — as soon as it is finished, so you can see the space
+        itself, empty and in daylight, as soon as it is finished, so you can see the space
         as well as the dressing.
       </Notice>
       <h2 class="title">Want to see it <em>first</em>?</h2>

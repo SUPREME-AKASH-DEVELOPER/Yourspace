@@ -315,7 +315,7 @@ test.describe('submissions actually go somewhere', () => {
     await expect(page.locator('#bkSendState')).toContainText("didn't reach us", { timeout: 15_000 });
   });
 
-  test('no form hands the visitor off to WhatsApp — the WhatsApp link is for questions only', async ({ page }) => {
+  test('no form hands the visitor off to WhatsApp, the WhatsApp link is for questions only', async ({ page }) => {
     for (const path of ['/', '/prebook/', '/contact/', '/book/', '/thanks/', '/tickets/']) {
       await page.goto(path);
       const stray = await page.evaluate(() =>

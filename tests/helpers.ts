@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 /**
  * Take exactly `n` seats in the picker, whatever is taken right now.
- * Each seat is its own toggle, so a head count is reached seat by seat —
+ * Each seat is its own toggle, so a head count is reached seat by seat , 
  * recliners (1–5) first, then the bean bags (6–7), as the room fills.
  * Seats are added before any are given back, because the flow refuses to
  * leave nobody seated.

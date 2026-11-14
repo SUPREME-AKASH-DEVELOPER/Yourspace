@@ -30,7 +30,7 @@ export function venueNow(at = new Date()): { iso: string; minutes: number } {
 
 export const venueToday = () => venueNow().iso;
 
-/** A calendar date ("2026-11-03"), read and printed as a date — no time zone can shift it. */
+/** A calendar date ("2026-11-03"), read and printed as a date, no time zone can shift it. */
 const asDay = (iso: string) => new Date(iso + 'T00:00:00Z');
 export const isIsoDate = (s: unknown): s is string =>
   typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(asDay(s).getTime());
@@ -61,5 +61,5 @@ export function stash(record: Record<string, unknown>) {
     const all = JSON.parse(localStorage.getItem('ys-requests') || '[]');
     all.push(record);
     localStorage.setItem('ys-requests', JSON.stringify(all));
-  } catch { /* private mode, blocked storage — not worth failing over */ }
+  } catch { /* private mode, blocked storage, not worth failing over */ }
 }

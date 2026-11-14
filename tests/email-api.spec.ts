@@ -15,7 +15,7 @@ const booking = {
   Total: '₹1,500',
   Payment: 'After the call. Nothing paid.',
   Notes: 'Knife for the cake',
-  subject: 'Booking YS-ABC234 — Riya Sharma · 9876543210',
+  subject: 'Booking YS-ABC234, Riya Sharma · 9876543210',
 };
 
 function call(body: unknown, origin = 'https://www.yourspacejbp.com', ip: string = crypto.randomUUID()) {
@@ -106,7 +106,7 @@ test.describe('the email function', () => {
   });
 
   test('a browser cannot send an email that says paid', async () => {
-    const res = await call({ ...booking, 'Razorpay payment': 'pay_FAKE', 'Amount paid': '₹1', Status: 'PAID — ₹1 verified with Razorpay' });
+    const res = await call({ ...booking, 'Razorpay payment': 'pay_FAKE', 'Amount paid': '₹1', Status: 'PAID, ₹1 verified with Razorpay' });
     expect(res.status).toBe(200);
     for (const m of sent) {
       expect(m.subject).not.toMatch(/payment received/i);

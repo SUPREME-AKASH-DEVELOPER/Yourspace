@@ -166,7 +166,7 @@ test.describe('the payment function', () => {
     const res = await call({ step: 'verify', order_id: 'order_ABC', payment_id: 'pay_XYZ', signature: sign('order_ABC', 'pay_XYZ') });
     expect(await res.json()).toEqual({ success: true, ref: 'YS-ABC234', amount: 6500, payment_id: 'pay_XYZ' });
     expect(emails).toHaveLength(2);
-    expect(emails[0].subject).toBe('Payment received — YS-ABC234 · ₹6,500');
+    expect(emails[0].subject).toBe('Payment received, YS-ABC234 · ₹6,500');
     expect(emails[0].html).toContain('verified with Razorpay');
     expect(emails[1].to).toEqual(['riya@example.com']);
     expect(emails[1].subject).toContain('Payment received');

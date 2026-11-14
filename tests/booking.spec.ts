@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mockDelivery, mockRazorpay, pickSeats, acceptRules } from './helpers';
 
-/** Each test starts from an empty flow — the saved-progress behaviour is tested separately. */
+/** Each test starts from an empty flow, the saved-progress behaviour is tested separately. */
 async function freshFlow(page: Page) {
   const sent = await mockDelivery(page);          // the booking is emailed on confirm
   await page.goto('/book/');
@@ -10,7 +10,7 @@ async function freshFlow(page: Page) {
   return sent;
 }
 
-/** Occasion, guests, date and time — everything up to the setup step. */
+/** Occasion, guests, date and time, everything up to the setup step. */
 async function toSetup(page: Page, guests: number, occasion = 'date') {
   await page.locator(`[data-exp-pick="${occasion}"]`).click();
   await pickSeats(page, guests);
@@ -256,7 +256,7 @@ test.describe('booking flow', () => {
     await expect(page.locator('#bkPayState')).toContainText('Payment not made');
     await expect(page.locator('[data-bk-pay]')).toBeEnabled();
     await expect(page.locator('.bk-done')).not.toContainText(/payment received|paid and on the list/i);
-    await expect(page.locator('.bk-sum')).toContainText('Online — awaiting payment');
+    await expect(page.locator('.bk-sum')).toContainText('Online, awaiting payment');
   });
 
   test('a payment the server cannot verify is never called paid', async ({ page }) => {

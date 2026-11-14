@@ -255,7 +255,7 @@ function wireReel() {
     let wanted = !still.matches;      // what the visitor asked for
     let held = 0;                     // reasons to hold still right now
     let last = 0;
-    const SPEED = 22;                 // pixels a second — a drift, not a ride
+    const SPEED = 22;                 // pixels a second, a drift, not a ride
 
     const half = () => track.scrollWidth / 2;
 
@@ -400,7 +400,7 @@ const KIND_TITLES: Record<string, string> = {
 /** The note the visitor gets back, in the same voice as the site. */
 function thankYou(who: string, titled: string, data: Record<string, string>): string {
   const lines = [
-    `Thanks ${who || 'there'} — we have your ${titled.toLowerCase()}.`,
+    `Thanks ${who || 'there'}, we have your ${titled.toLowerCase()}.`,
     '',
     'Here is what you told us:',
   ];
@@ -415,7 +415,7 @@ function thankYou(who: string, titled: string, data: Record<string, string>): st
     'Nothing has been charged, and nothing will be until you have confirmed with us.',
     'If your plans change before then, just reply to this email.',
     '',
-    `— YourSpace, ${site.city}`,
+    `YourSpace, ${site.city}`,
     'A private screening room for your people',
   );
   return lines.join('\n');
@@ -456,7 +456,7 @@ function wireForms() {
       if (problem) { say('err', problem); return; }
 
       // a bot filling every field trips this; a person never sees it
-      if (data._gotcha) { say('ok', 'Thanks — we have your message.'); form.reset(); return; }
+      if (data._gotcha) { say('ok', 'Thanks, we have your message.'); form.reset(); return; }
 
       const kind = form.getAttribute('data-form') ?? 'enquiry';
       const who = (data.name || '').split(' ')[0];
@@ -485,7 +485,7 @@ function wireForms() {
       const outcome = await deliver({
         ...payload,
         ...envelope(
-          `${titled} — ${data.name || 'someone'}${data.phone ? ` · ${data.phone}` : ''}`,
+          `${titled} · ${data.name || 'someone'}${data.phone ? ` · ${data.phone}` : ''}`,
           data.email),
         // the visitor gets a thank-you of their own
         ...(data.email ? { _autoresponse: thankYou(who, titled, data) } : {}),
@@ -498,8 +498,8 @@ function wireForms() {
 
       if (outcome.ok) {
         say('ok', kind === 'contact'
-          ? `Thanks ${who} — your message is with us. We'll come back to you on ${data.phone || 'your number'}.`
-          : `Thanks ${who} — you're on the list. We'll call you on ${data.phone || 'your number'} to confirm. Nothing has been charged.`);
+          ? `Thanks ${who}, your message is with us. We'll come back to you on ${data.phone || 'your number'}.`
+          : `Thanks ${who}, you're on the list. We'll call you on ${data.phone || 'your number'} to confirm. Nothing has been charged.`);
         form.reset();
         $$<HTMLInputElement>('[name=guests]', form).forEach((g) => { g.value = '2'; });
         return;
@@ -512,7 +512,7 @@ function wireForms() {
         say('err', `We're getting a lot of messages right now. ${kept} ` +
                    `Please press the button again in a minute, or call us on ${prettyPhone}.`);
       } else if (outcome.reason === 'offline') {
-        say('err', `That didn't send — it looks like the connection dropped. ${kept} ` +
+        say('err', `That didn't send. It looks like the connection dropped. ${kept} ` +
                    `Please press the button again. If it still will not go, call us on ${prettyPhone}.`);
       } else {
         say('err', `We couldn't send that just now. ${kept} ` +

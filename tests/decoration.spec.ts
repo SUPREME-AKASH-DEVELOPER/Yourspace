@@ -3,9 +3,9 @@
  *
  * There is one decorator. He works a set stretch of the day, and he needs
  * three hours' warning to buy the flowers, get to the room and build the set.
- * Those two facts decide every slot, and they are checked in three places —
+ * Those two facts decide every slot, and they are checked in three places , 
  * the label on the slot, the step that would sell it, and the server that
- * takes the money — because the first two run on the customer's machine.
+ * takes the money, because the first two run on the customer's machine.
  *
  * Nothing here touches the room itself: an undecorated Date Night, Movie
  * Space, Karaoke and Watch Party are unaffected at every hour.
@@ -46,7 +46,7 @@ test.describe('when decoration can be booked', () => {
 
     expect(table('2:00 PM')).toEqual({
       '12:00 PM': 'closed', '1:45 PM': 'closed',
-      '3:30 PM': 'call',                        // 1h30 away — too soon to sell
+      '3:30 PM': 'call',                        // 1h30 away, too soon to sell
       '5:15 PM': 'online', '7:00 PM': 'online', '8:45 PM': 'online',
       '10:30 PM': 'closed',
     });
@@ -54,7 +54,7 @@ test.describe('when decoration can be booked', () => {
     expect(table('5:00 PM')).toEqual({
       '12:00 PM': 'closed', '1:45 PM': 'closed',
       '3:30 PM': 'call', '5:15 PM': 'call', '7:00 PM': 'call',
-      '8:45 PM': 'online',                      // 3h45 away — just enough
+      '8:45 PM': 'online',                      // 3h45 away, just enough
       '10:30 PM': 'closed',
     });
 
@@ -306,6 +306,25 @@ test.describe('the house rules', () => {
     await expect.poll(() => sent.length, { timeout: 10_000 }).toBeGreaterThan(0);
     expect(JSON.stringify(sent[0]), 'what was agreed is kept with the booking')
       .toContain('Agreed to all');
+  });
+
+  test('a tampered agreement is thrown away, not obeyed and not fatal', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await toPay(page);
+
+    for (const bad of [{ smoking: true } as unknown, 'all of them', 42, [1, 2, 3], ['made-up-rule']]) {
+      await page.evaluate((agreed) => {
+        const raw = JSON.parse(localStorage.getItem('ys-booking-v3') ?? '{}');
+        localStorage.setItem('ys-booking-v3', JSON.stringify({ ...raw, agreed }));
+      }, bad);
+      await page.reload();
+      // the flow still draws, and nothing counts as ticked
+      await expect(page.locator('#bkTitle'), JSON.stringify(bad)).toContainText('Your details');
+      for (const box of await page.locator('[data-rule]').all()) await expect(box).not.toBeChecked();
+      await expect(page.locator('[data-bk-next]')).toHaveClass(/is-waiting/);
+    }
+    expect(errors, 'nothing threw').toEqual([]);
   });
 
   test('the ticks survive a reload, so nobody has to do it twice', async ({ page }) => {

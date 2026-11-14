@@ -2,23 +2,23 @@
  * The three decoration setups, with the photographs of each.
  *
  * The three packages are Elite, Royal and Aesthetic (owner's walkthrough, Nov).
- * Every one includes fog entry and candlelight — see DECOR_INCLUDED.
+ * Every one includes fog entry and candlelight, see DECOR_INCLUDED.
  *
  * Prices are Tanishk's (WhatsApp): Aesthetic ₹1,000 and Trendy ₹2,000 on
  * 11 Oct, Royal ₹5,000 on 11 Nov. Each is the price of the decoration, added
- * on top of the ₹1,500 Date Night session — so Royal comes to ₹6,500.
+ * on top of the ₹1,500 Date Night session, so Royal comes to ₹6,500.
  *
- * ASSUMPTION — TODO(owner): "Elite" is the package that was called "Trendy" on
+ * ASSUMPTION, TODO(owner): "Elite" is the package that was called "Trendy" on
  * 11 Oct, so it keeps Trendy's photographs and ₹2,000. If that is wrong, swap
  * the photos and price below. In the booking flow a decoration's price is
- * added on top of the ₹1,500 Date Night session — also to confirm.
+ * added on top of the ₹1,500 Date Night session, also to confirm.
  *
  * TODO (Akash/Tanishk):
- *   0. Confirm these photographs are ours to publish — our own room and our own
+ *   0. Confirm these photographs are ours to publish, our own room and our own
  *      work, or licensed from whoever shot them. If any are a supplier's or a
  *      reference picture, they must come down before launch: a customer who
  *      books from them will expect exactly what they saw.
- *   0b. CONSENT: royal-2 and royal-3 show a real customer's private things —
+ *   0b. CONSENT: royal-2 and royal-3 show a real customer's private things , 
  *      recognisable faces, a first name, and a personal letter written to them.
  *      Publishing those without that person's written permission is not ours to
  *      do. Get consent, or swap both for a setup shot taken with no guests and
@@ -39,7 +39,7 @@ import type { ImageMetadata } from 'astro';
  *   2. Rewrite each `alt` under Aesthetic to describe the new picture.
  *   3. If the new setup looks different, update its `blurb` and `includes`.
  *   Price and booking logic do not change. Use only photographs of our own
- *   room and our own work — never an AI or stock picture presented as ours.
+ *   room and our own work, never an AI or stock picture presented as ours.
  */
 import aesthetic1 from '../assets/decor/aesthetic-1.jpeg';
 import aesthetic2 from '../assets/decor/aesthetic-2.jpeg';
@@ -62,7 +62,7 @@ export const DECOR_INCLUDED = ['Fog entry', 'Candlelight setup'];
 export interface Decoration {
   id: string;
   name: string;
-  /** null means we have not set a price yet — the site says so plainly. */
+  /** null means we have not set a price yet, the site says so plainly. */
   price: number | null;
   tagline: string;
   blurb: string;
@@ -117,7 +117,7 @@ export const decorations: Decoration[] = [
     price: 5000,                     // Tanishk, 11 Nov 2026
     tagline: 'With your own message and photographs',
     blurb:
-      'Deep red roses, velvet drapes and candlelight, plus a written message and printed photographs of the two of you — the most personal of the three.',
+      'Deep red roses, velvet drapes and candlelight, plus a written message and printed photographs of the two of you, the most personal of the three.',
     includes: [
       ...DECOR_INCLUDED,
       'Rose and velvet backdrop',

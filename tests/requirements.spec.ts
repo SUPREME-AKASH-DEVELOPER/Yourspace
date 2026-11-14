@@ -65,7 +65,7 @@ test.describe('rules from the call', () => {
     expect(setupPrice('karaoke', 4).note).toBe('₹150 per person');
   });
 
-  test('Karaoke for 6–7 is not given a guessed price — neither ₹500 nor ₹900', () => {
+  test('Karaoke for 6–7 is not given a guessed price, neither ₹500 nor ₹900', () => {
     for (const g of [6, 7]) {
       const p = setupPrice('karaoke', g);
       expect(p.amount, `${g}`).toBeNull();
@@ -100,12 +100,12 @@ test.describe('rules from the call', () => {
     expect(setups.filter((s) => s.hasDecor || s.hasAddons).map((s) => s.id)).toEqual(['date']);
   });
 
-  test('add-ons are bouquet, cake and the celebration video — and nothing the owner ruled out', () => {
+  test('add-ons are bouquet, cake and the celebration video, and nothing the owner ruled out', () => {
     expect(addonGroups.map((g) => g.id)).toEqual(['bouquet', 'cake', 'photo']);
     expect(addonGroups[0].options.map((o) => o.price)).toEqual([200, 250, 300]);
     expect(addonGroups[2].options[0]).toMatchObject({ price: null, priceNote: '₹400–₹500' });
     expect(addonGroups[2].callFor).toMatch(/phone/);
-    // what can be picked, by name — descriptions may mention candles on a cake
+    // what can be picked, by name, descriptions may mention candles on a cake
     const offered = addonGroups.flatMap((g) => [g.name, ...g.options.map((o) => `${o.id} ${o.name}`)]).join(' ').toLowerCase();
     for (const gone of ['bubble', 'snack', 'platter', 'led', 'petal', 'rose', 'fog', 'candle']) {
       expect(offered, gone).not.toContain(gone);
@@ -294,7 +294,7 @@ test.describe('the booking journey', () => {
     await page.locator('[data-bk-next]').click();
     const sum = page.locator('.bk-done .bk-sum');
     await expect(sum).toContainText('Name on the screen: Riya');
-    await expect(sum).toContainText('Online — awaiting payment');
+    await expect(sum).toContainText('Online, awaiting payment');
   });
 
   test('a send that fails can be retried, and goes once', async ({ page }) => {

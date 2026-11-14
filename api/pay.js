@@ -1,5 +1,5 @@
 /**
- * POST /api/pay — online payment through Razorpay.
+ * POST /api/pay, online payment through Razorpay.
  *
  *   { step: 'order',  ref, name, phone, email, setup, guests, decor, addons }
  *     Prices the booking HERE (api/_prices.js), never trusting a total from the
@@ -133,9 +133,9 @@ async function verify(k, body, mailKey) {
       'Amount paid': rupee(amount),
       'Paid by': clip(payment.body.method, 20) || 'online',
       'Razorpay payment': paymentId,
-      Status: `PAID — ${rupee(amount)} verified with Razorpay (${status}).`,
+      Status: `PAID, ${rupee(amount)} verified with Razorpay (${status}).`,
     };
-    const subject = `Payment received — ${ref} · ${rupee(amount)}`;
+    const subject = `Payment received, ${ref} · ${rupee(amount)}`;
     const lead = ownerEmail(fields, subject);
     // Keyed on the payment id, so a retried verify never emails twice.
     await resend(mailKey, {

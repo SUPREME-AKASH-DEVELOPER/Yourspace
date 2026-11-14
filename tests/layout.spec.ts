@@ -161,7 +161,7 @@ test.describe('layout', () => {
   /**
    * An error message in the booking footer takes a line of its own. Before the
    * footer was allowed to wrap at every width, it shoved Back, the total and
-   * Continue clean off the right edge of the panel — the buttons were still
+   * Continue clean off the right edge of the panel, the buttons were still
    * there, just not on screen, so the flow looked like a dead end.
    */
   test('an error in the booking footer never pushes the buttons off the panel', async ({ page }) => {
@@ -191,6 +191,50 @@ test.describe('layout', () => {
       await page.locator('[data-setup-pick="movie"]').click();
       await expect(page.locator('#bkTitle')).toContainText('Your details');
     }
+  });
+
+  /**
+   * No em dashes on the site (Akash, 14 Nov). They are stripped from the copy
+   * on purpose, so this walks every page and the booking flow and fails if one
+   * comes back, in the text, the tab title or the meta description.
+   */
+  test('no em dash reaches the page', async ({ page }) => {
+    for (const path of PAGES) {
+      await page.goto(path);
+      const found = await page.evaluate(() => {
+        const hits: string[] = [];
+        const take = (where: string, text: string) => {
+          const i = text.indexOf('\u2014');
+          if (i >= 0) hits.push(`${where}: ...${text.slice(Math.max(0, i - 40), i + 40)}...`);
+        };
+        take('title', document.title);
+        take('description', document.querySelector('meta[name=description]')?.getAttribute('content') ?? '');
+        take('body', document.body.innerText);
+        return hits;
+      });
+      expect(found, path).toEqual([]);
+    }
+  });
+
+  test('no em dash in the booking flow either', async ({ page }) => {
+    await page.goto('/book/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.locator('[data-exp-pick="date"]').click();
+    const seen: string[] = [];
+    const sweep = async (where: string) => {
+      const t = await page.locator('#bookMount').innerText();
+      if (t.includes('\u2014')) seen.push(where);
+    };
+    await sweep('date and seats');
+    await page.locator('[data-date-pick]').nth(3).click();
+    await page.locator('[data-bk-next]').click();
+    await sweep('times');
+    await page.locator('[data-slot-pick="s5"]').click();
+    await sweep('setups');
+    await page.locator('[data-setup-pick="movie"]').click();
+    await sweep('details and payment');
+    expect(seen).toEqual([]);
   });
 
   test('no gradient reference is left dangling', async ({ page }) => {

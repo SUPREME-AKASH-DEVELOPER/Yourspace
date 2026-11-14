@@ -1,7 +1,7 @@
 ---
 /**
  * LocalBusiness structured data.
- * Only facts we can actually stand behind go in here — no ratings, no review
+ * Only facts we can actually stand behind go in here, no ratings, no review
  * counts, no opening hours until they are real. Fields fill themselves in as
  * src/data/site.ts is completed.
  */
@@ -16,7 +16,7 @@ const schema: Record<string, unknown> = {
   '@id': `${origin}/#business`,
   name: `${site.name} ${site.city}`,
   description:
-    'A private screening room in Jabalpur booked by the session — for watch parties, karaoke, date nights, proposals, candlelight dinners and stand-up evenings.',
+    'A private screening room in Jabalpur booked by the session, for watch parties, karaoke, date nights, proposals, candlelight dinners and stand-up evenings.',
   url: origin || undefined,
   address: {
     '@type': 'PostalAddress',

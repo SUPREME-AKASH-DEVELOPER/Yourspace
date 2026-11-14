@@ -107,7 +107,7 @@ test.describe('contact details', () => {
     }
   });
 
-  test('every WhatsApp link on a page is one of ours — no stray numbers', async ({ page }) => {
+  test('every WhatsApp link on a page is one of ours, no stray numbers', async ({ page }) => {
     for (const path of ['/', '/contact/', '/prebook/', '/thanks/', '/tickets/']) {
       await page.goto(path);
       const hrefs = await page.evaluate(() =>

@@ -23,25 +23,25 @@ export const site = {
    */
   phone: '+917999656039',
 
-  /** A second line, shown alongside the first. '' — there is only one. */
+  /** A second line, shown alongside the first. '', there is only one. */
   phoneAlt: '',
 
   /**
    * The address customers write to, shown on the contact page and in the
    * structured data (Tanishk, 11 Oct). Bookings are still delivered by Resend
-   * from bookings@yourspacejbp.com — this is the box customers reply to.
+   * from bookings@yourspacejbp.com, this is the box customers reply to.
    */
   email: 'yourspacejbp@gmail.com',
 
   /**
-   * WHATSAPP — "For more information, contact us on WhatsApp"
+   * WHATSAPP, "For more information, contact us on WhatsApp"
    *
    * Left as '' it follows `phone` above, which is what we want: the same
    * number for calls and for WhatsApp. Set it only if WhatsApp ever moves to
    * a different line from the one we answer calls on.
    *
    * WhatsApp carries two things: questions, and a finished booking handed
-   * over from the confirmation screen. Neither is a payment — bookings are
+   * over from the confirmation screen. Neither is a payment, bookings are
    * still recorded through the booking form, and payment is checked in the
    * Razorpay before anything is called paid.
    */
@@ -57,7 +57,7 @@ export const site = {
    *
    * notifyPrimary is the inbox FormSubmit needs confirmed. The very first
    * submission sends that address a one-time link, and nothing is delivered
-   * to anyone until it is clicked — so whoever owns this address has to click
+   * to anyone until it is clicked, so whoever owns this address has to click
    * it once. (A Web3Forms key below skips that step entirely.)
    *
    * notifyCc rides along on every submission and needs no confirmation of
@@ -79,7 +79,7 @@ export const site = {
    *
    * Paste a Web3Forms access key here and it uses that instead: free, 250
    * submissions a month, no confirmation step, and far steadier.
-   * Get one in under a minute at https://web3forms.com — enter the address
+   * Get one in under a minute at https://web3forms.com, enter the address
    * the forms should reach, and the key is emailed to you.
    */
   web3formsKey: '4943e365-6fd6-49d6-a37a-1b35fd92d625',
@@ -90,7 +90,7 @@ export const site = {
    * When every line of a booking has a price, the last step offers "Pay now
    * online": Razorpay's checkout (UPI, card, netbanking) opens once the booking
    * is sent. The amount is worked out again on the server (api/_prices.js) and
-   * the payment is checked with Razorpay before anyone is told it is paid —
+   * the payment is checked with Razorpay before anyone is told it is paid , 
    * the team gets a separate "Payment received" email for every real payment.
    *
    * Needs RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET in Vercel. Without them the
