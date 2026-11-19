@@ -13,7 +13,7 @@ const karaoke = setupOf('karaoke')!;
     <ul class="stub-list">
       <li>The room reserved for your group alone</li>
       <li>Screen, sound and seating included</li>
-      <li>Movie Space: {rupee(setupPrice('movie', 1).amount)} up to 5, {rupee(setupPrice('movie', MAX_GUESTS).amount)} for 6–{MAX_GUESTS}</li>
+      <li>Movie Space, 3 hours: {rupee(setupPrice('movie', 1).amount)} up to 5, {rupee(setupPrice('movie', MAX_GUESTS).amount)} for 6–{MAX_GUESTS}</li>
       <li>Date Night: {rupee(setupPrice('date', 2).amount)} plus your decoration</li>
       <li>Karaoke: {rupee(karaoke.perPerson ?? null)} per person, {karaoke.minutes} minutes, {karaoke.minGuests} or more</li>
     </ul>

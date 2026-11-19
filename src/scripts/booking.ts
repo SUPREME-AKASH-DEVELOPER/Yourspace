@@ -7,7 +7,8 @@ import {
   BUFFER_MINUTES, MAX_GUESTS, SEATING, SEAT_IDS, seatKind, cleanSeats, defaultSeats, seatsLabel,
   setupOf, setupPrice, addonOf, quote, addMinutes, DECOR_FROM, DECOR_UNTIL,
   decorStatus, DECOR_NOTICE_MINUTES, HOUSE_RULES, HOUSE_RULES_VERSION, requiredRules, rulesAccepted,
-  type DecorStatus,
+  clashes, slotFree, fitsBeforeClose, durationLabel, holdMinutes, MOVIE_MINUTES,
+  type DecorStatus, type Busy,
   type Setup, type Quote,
 } from '../data/booking';
 import { decorations, DECOR_INCLUDED } from '../data/decorations';
@@ -217,6 +218,64 @@ function slotPassed(start: string): boolean {
   return mins <= venueNow().minutes;
 }
 
+/* ---------- slots already booked ----------
+   /api/slots answers with the stretches of the chosen day that are already
+   taken (times only, never who booked them). If it cannot be reached, or the
+   bookings database is not connected yet, nothing is greyed out and the team
+   checks by phone as before. */
+let taken: Busy[] = [];
+let takenFor = '';
+let takenLoading = '';
+
+async function loadTaken(date: string) {
+  if (!isIsoDate(date) || takenFor === date || takenLoading === date) return;
+  takenLoading = date;
+  const before = JSON.stringify(takenNow());
+  let fresh: Busy[] = [];
+  try {
+    const res = await fetch(`/api/slots?date=${encodeURIComponent(date)}`, { headers: { Accept: 'application/json' } });
+    const body = res.ok ? await res.json() as { busy?: unknown } : {};
+    const list = Array.isArray(body.busy) ? body.busy : [];
+    fresh = list.filter((x): x is Busy => Array.isArray(x) && x.length === 2 && x.every((n) => typeof n === 'number'));
+  } catch {
+    fresh = [];
+  }
+  if (takenLoading === date) takenLoading = '';
+  // they moved to another date while this was on its way: the answer is stale
+  if (S.date !== date) return;
+  taken = fresh;
+  takenFor = date;
+  // a slot they had picked may have just been booked by someone else
+  if (S.slot && !slotFree(taken, S.slot)) {
+    S.slot = '';
+    notice = 'Sorry, the time you had picked has just been booked. Please choose another.';
+    save();
+    if (S.step > 2) return go(2);
+  }
+  // only the time and setup steps show anything that depends on this, and
+  // only redraw when the answer changed, so nothing moves under a finger
+  if (root && (S.step === 2 || S.step === 3) && JSON.stringify(taken) !== before) render();
+}
+
+/** The taken list, but only once it really is for the date on screen. */
+const takenNow = (): Busy[] => (takenFor === S.date ? taken : []);
+
+/**
+ * Why this setup cannot start at the time they picked, or '' when it can.
+ * Only Movie Space runs longer than a slot, so in practice only it is affected.
+ */
+function timeBlock(setupId: string): string {
+  if (!S.slot) return '';
+  const at = slotOf()?.start ?? '';
+  if (!fitsBeforeClose(S.slot, setupId)) {
+    return `${setupOf(setupId)?.name ?? 'This'} runs ${durationLabel(holdMinutes(setupId))}, so it cannot start at ${at}, we close at midnight. Pick an earlier time, or call us.`;
+  }
+  if (clashes(takenNow(), S.slot, setupId)) {
+    return `${setupOf(setupId)?.name ?? 'This'} runs ${durationLabel(holdMinutes(setupId))}, and the slot after ${at} is already booked. Pick another time, or call us.`;
+  }
+  return '';
+}
+
 const totalText = (q: Quote) => q.unpriced.length ? `${rupee(q.total)} + on call` : rupee(q.total);
 
 const tel = () => phoneNumbers[0];
@@ -404,9 +463,10 @@ function validate(step: number): string {
   if (step === 1 && (S.guests < 1 || S.guests > MAX_GUESTS)) return `Choose between 1 and ${MAX_GUESTS} guests.`;
   if (step === 2 && !S.slot) return 'Pick a time to continue.';
   if (step === 2 && slotOf() && slotPassed(slotOf()!.start)) return 'That time has already started today. Pick a later one.';
+  if (step === 2 && !slotFree(takenNow(), S.slot)) return 'That time is already booked. Pick another one.';
   if (step === 3) {
     if (!S.setup) return 'Choose a setup to continue.';
-    const blocked = setupPrice(S.setup, S.guests).blocked;
+    const blocked = setupPrice(S.setup, S.guests).blocked || timeBlock(S.setup);
     if (blocked) return blocked;
     if (setupOf(S.setup)?.hasDecor && decorHere() && !decorOf()) return 'Pick a decoration to continue.';
     /* Checked again here, not only where the picker is drawn: going back,
@@ -455,6 +515,7 @@ function updateNext() {
 
 function render() {
   if (S.step === DONE) return renderDone();
+  if (S.date && S.step >= 2) loadTaken(S.date);
   const q = totals();
 
   $('#bkSteps')!.innerHTML = stepNames.map((n, i) => {
@@ -580,12 +641,18 @@ function seatmap() {
     </p></div>`;
 }
 
-function step1() {
+/** Say a pending notice once, on whichever screen comes next, then forget it. */
+function noticeBlock(): string {
   const said = notice;
   notice = '';
+  return said ? `<div class="bk-note" role="status" style="margin-bottom:22px"><i>Note</i><span>${esc(said)}</span></div>` : '';
+}
+
+function step1() {
+  const said = noticeBlock();
   return head(2, "When's the night, and who's coming?",
     `Pick the seats you want, one tap each, up to ${MAX_GUESTS}. ${SEATING.recliners} recliners at the back, ${SEATING.beanBags} bean bags in front. The price for your group shows when you choose a setup.`) +
-    (said ? `<div class="bk-note" role="status" style="margin-bottom:22px"><i>Note</i><span>${esc(said)}</span></div>` : '') +
+    said +
     seatmap() +
     '<p class="bk-kicker">Pick a date</p>' +
     `<div class="bk-dates">${nextDays(21).map((d) => `
@@ -596,12 +663,16 @@ function step1() {
 }
 
 function step2() {
+  loadTaken(S.date);
   return head(3, 'Choose your time',
-    `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Karaoke runs 30 minutes from the start of the slot.`) +
+    `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Movie Space runs ${durationLabel(MOVIE_MINUTES)}, and karaoke 30 minutes, from the start of the slot.`) +
+    noticeBlock() +
     `<p class="fine" style="margin:-14px 0 18px">We leave ${BUFFER_MINUTES} minutes between bookings to reset the room, so the start times are not on the hour. The space is yours for the whole slot, with nobody waiting at the door.</p>` +
     (expOf()?.suggests === 'date' ? `<p class="fine" style="margin:-8px 0 18px">Want your room decorated? One decorator sets the room up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}, and needs ${NOTICE_HOURS} hours' notice to do it, so each time below says what it can have today.</p>` : '') +
     `<div class="slots">${slots.map((s) => {
-      const gone = slotPassed(s.start);
+      const passed = slotPassed(s.start);
+      const booked = !passed && !slotFree(takenNow(), s.id);
+      const gone = passed || booked;
       /* The label is the real answer for this slot on this date at this hour,
          never just "the slot exists". A session the decorator cannot reach in
          time says so instead of promising decoration we cannot deliver. */
@@ -612,7 +683,7 @@ function step2() {
         : '';
       return `
       <button class="slot ${S.slot === s.id ? 'is-sel' : ''}" type="button" data-slot-pick="${s.id}"${gone ? ' disabled' : ''}>
-        <strong>${s.start}</strong><span>${gone ? 'Already started' : `to ${s.end}`}</span>${tag}
+        <strong>${s.start}</strong><span>${passed ? 'Already started' : booked ? 'Booked' : `to ${s.end}`}</span>${tag}
       </button>`;
     }).join('')}</div>` +
     `<div class="bk-note" style="margin-top:22px"><i>Note</i><span>We check the slot is free as soon as your booking reaches us, and call you if it is not. You are never charged for a slot we cannot give you.</span></div>`;
@@ -622,6 +693,10 @@ const TONE: Record<string, string> = { date: 'rose', movie: 'night', karaoke: 'n
 
 function setupCard(s: Setup) {
   const p = { ...setupPrice(s.id, S.guests) };
+  if (!p.blocked) {
+    const why = timeBlock(s.id);
+    if (why) p.blocked = why;
+  }
   // outside the decorator's hours Date Night is the room without a decoration
   const undecorated = s.hasDecor && !decorHere();
   if (undecorated && !p.blocked) p.note = 'no decoration at this time';
@@ -630,7 +705,7 @@ function setupCard(s: Setup) {
     : s.includes;
   const sel = S.setup === s.id;
   const suggested = expOf()?.suggests === s.id;
-  const dur = s.minutes ? `${s.minutes} min` : 'Duration on call';
+  const dur = s.minutes ? durationLabel(s.minutes) : 'Duration on call';
   const price = p.amount !== null
     ? `<span class="sc-price num">${rupee(p.amount)}</span>`
     : `<span class="sc-price sc-price-ask">${p.blocked ? 'Call to book' : 'Price on call'}</span>`;
@@ -680,6 +755,7 @@ function step3() {
   const s = setupOf(S.setup);
   return head(4, 'Choose your setup',
     `Priced for ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'}. Change the number of guests on step 2.`) +
+    noticeBlock() +
     `<div class="sc-grid">${setups.map(setupCard).join('')}</div>` +
     (s?.hasDecor && !setupPrice(s.id, S.guests).blocked && decorHere() ? decorStep() : '') +
     (!decorHere() && (expOf()?.suggests === 'date' || S.setup === 'date') ? decorClosedNote() : '') +
@@ -833,6 +909,7 @@ function onBodyClick(e: Event) {
   if ((el = t.closest('[data-date-pick]'))) {
     S.date = el.dataset.datePick!;
     if (slotOf() && slotPassed(slotOf()!.start)) S.slot = '';
+    loadTaken(S.date);
     save(); return render();
   }
   if ((el = t.closest('[data-slot-pick]'))) {
@@ -849,7 +926,7 @@ function onBodyClick(e: Event) {
   }
   if ((el = t.closest('[data-setup-pick]'))) {
     const id = el.dataset.setupPick!;
-    const blocked = setupPrice(id, S.guests).blocked;
+    const blocked = setupPrice(id, S.guests).blocked || timeBlock(id);
     if (blocked) return flash(blocked);
     S.setup = id;
     save();
@@ -984,6 +1061,25 @@ function bookingPayload(): Record<string, string> {
   };
 }
 
+/**
+ * The same booking as plain data, for the bookings dashboard. It rides along
+ * with the email as `_booking`; /api/send stores it and never prints it.
+ * The server checks every value again, so nothing here is trusted.
+ */
+function bookingRecord(): string {
+  const q = totals();
+  const d = decorOf();
+  return JSON.stringify({
+    ref: S.ref, date: S.date, slot: S.slot, setup: S.setup, guests: S.guests,
+    seats: S.seats, name: S.name, phone: S.phone, email: S.email,
+    occasion: occasionLabel(), decor: d?.name ?? '',
+    addons: S.addons.map((id) => addonOf(id)?.option.name ?? id),
+    total: q.unpriced.length ? `${rupee(q.total)} + on call` : rupee(q.total),
+    pay: paysOnline(q) ? 'online' : 'later',
+    notes: S.notes.trim(),
+  });
+}
+
 function bookingText() {
   return [`YourSpace ${site.city}, booking ${S.ref}`,
     ...Object.entries(bookingPayload()).filter(([k]) => k !== 'Received' && k !== 'Booking ref' && k !== 'Payment')
@@ -1046,6 +1142,7 @@ async function sendBooking() {
   const online = paysOnline();
   const outcome = await deliver({
     ...payload,
+    _booking: bookingRecord(),
     ...envelope(`Booking ${S.ref} · ${S.name || 'someone'} · ${S.phone}${online ? ' · paying online' : ''}`, S.email),
     _autoresponse:
       `Thanks ${first}, we have your booking for YourSpace, ${site.city}.\n\n` +

@@ -38,7 +38,8 @@ test.describe('when decoration can be booked', () => {
     expect(decorStatus(byStart('5:15 PM'), DAY, early)).toBe('online');
     expect(decorStatus(byStart('7:00 PM'), DAY, early)).toBe('online');
     expect(decorStatus(byStart('8:45 PM'), DAY, early), 'starts before the cut-off').toBe('online');
-    expect(decorStatus(byStart('10:30 PM'), DAY, early), 'after he has gone home').toBe('closed');
+    // Tanishk, 18 Nov 2026: the 10:30 PM slot can be decorated too
+    expect(decorStatus(byStart('10:30 PM'), DAY, early), 'the last slot is decorated too').toBe('online');
   });
 
   test('three hours of notice, counted from the real time of day', () => {
@@ -48,20 +49,20 @@ test.describe('when decoration can be booked', () => {
       '12:00 PM': 'closed', '1:45 PM': 'closed',
       '3:30 PM': 'call',                        // 1h30 away, too soon to sell
       '5:15 PM': 'online', '7:00 PM': 'online', '8:45 PM': 'online',
-      '10:30 PM': 'closed',
+      '10:30 PM': 'online',
     });
 
     expect(table('5:00 PM')).toEqual({
       '12:00 PM': 'closed', '1:45 PM': 'closed',
       '3:30 PM': 'call', '5:15 PM': 'call', '7:00 PM': 'call',
       '8:45 PM': 'online',                      // 3h45 away, just enough
-      '10:30 PM': 'closed',
+      '10:30 PM': 'online',
     });
 
-    // 6 PM + 3h = 9 PM. Only 10:30 PM is far enough away, and it is shut.
+    // 6 PM + 3h = 9 PM. Only 10:30 PM is far enough away.
     expect(table('6:00 PM')['8:45 PM'], 'two and three quarter hours away').toBe('call');
-    expect(table('6:00 PM')['10:30 PM'], 'far enough away, but shut').toBe('closed');
-    expect(table('8:00 PM')['10:30 PM']).toBe('closed');
+    expect(table('6:00 PM')['10:30 PM'], 'far enough away').toBe('online');
+    expect(table('8:00 PM')['10:30 PM'], 'two and a half hours away').toBe('call');
   });
 
   test('exactly three hours is enough; a minute under is not', () => {
@@ -79,13 +80,14 @@ test.describe('when decoration can be booked', () => {
     expect(decorStatus(byStart('3:30 PM'), '2026-11-19', at('12:00 PM', '2026-11-20'))).toBe('call');
   });
 
-  test('10:30 PM is never decorated, at any hour of any day', () => {
+  test('10:30 PM is decorated with three hours of notice, like every other decorated slot', () => {
     const last = byStart('10:30 PM');
     for (let h = 0; h < 24; h++) {
-      for (const iso of ['2026-11-20', '2026-11-21', '2026-12-25']) {
-        expect(decorStatus(last, iso, { iso: '2026-11-20', minutes: h * 60 }), `${h}:00 for ${iso}`)
-          .toBe('closed');
-      }
+      // 10:30 PM minus three hours is 7:30 PM: before it, online; from it, phone
+      expect(decorStatus(last, '2026-11-20', { iso: '2026-11-20', minutes: h * 60 }), `${h}:00 same day`)
+        .toBe(h * 60 <= 19 * 60 + 30 ? 'online' : 'call');
+      expect(decorStatus(last, '2026-11-21', { iso: '2026-11-20', minutes: h * 60 }), `${h}:00 day before`)
+        .toBe('online');
     }
   });
 
@@ -122,7 +124,7 @@ test.describe('the server refuses what the page will not sell', () => {
   });
 
   test('a decoration outside the decorator\'s hours is refused', () => {
-    for (const start of ['12:00 PM', '1:45 PM', '10:30 PM']) {
+    for (const start of ['12:00 PM', '1:45 PM']) {
       const r = booking({ slot: byStart(start) });
       expect(r.amount, start).toBeNull();
       expect(r.reason, start).toMatch(/not available/i);
@@ -139,8 +141,9 @@ test.describe('the server refuses what the page will not sell', () => {
     for (const s of slots) {
       expect(booking({ slot: s.id, decor: '', now: at('11:00 PM') }).amount, `date night at ${s.start}`)
         .toBe(1500);
+      // Movie Space is three hours, so it cannot start at 10:30 PM and finish by midnight
       expect(booking({ setup: 'movie', slot: s.id, decor: '', now: at('11:00 PM') }).amount, `movie at ${s.start}`)
-        .toBe(1500);
+        .toBe(s.start === '10:30 PM' ? null : 1500);
       expect(booking({ setup: 'karaoke', guests: 3, slot: s.id, decor: '', now: at('11:00 PM') }).amount,
         `karaoke at ${s.start}`).toBe(450);
     }
@@ -189,21 +192,23 @@ test.describe('what the flow shows', () => {
     for (const start of ['5:15 PM', '7:00 PM', '8:45 PM']) {
       await expect(slotCard(page, start), start).toContainText('Decoration available');
     }
-    await expect(slotCard(page, '10:30 PM'), 'never decorated').not.toContainText('Decoration');
+    await expect(slotCard(page, '10:30 PM'), 'the last slot is decorated too').toContainText('Decoration available');
   });
 
-  test('10:30 PM never says decoration available, whatever the hour', async ({ page }) => {
-    for (const clock of ['12:05:00', '14:00:00', '17:00:00', '18:00:00', '20:00:00']) {
+  test('10:30 PM offers decoration online until 7:30 PM, then by phone', async ({ page }) => {
+    for (const clock of ['12:05:00', '14:00:00', '17:00:00', '18:00:00']) {
       await flowAt(page, '2026-11-20', clock);
-      await expect(slotCard(page, '10:30 PM'), clock).not.toContainText('Decoration');
+      await expect(slotCard(page, '10:30 PM'), clock).toContainText('Decoration available');
     }
+    await flowAt(page, '2026-11-20', '20:00:00');
+    await expect(slotCard(page, '10:30 PM')).toContainText('Decoration by phone');
   });
 
-  test('at 5 PM only the 8:45 session can still be decorated online', async ({ page }) => {
+  test('at 5 PM only the 8:45 and 10:30 sessions can still be decorated online', async ({ page }) => {
     await flowAt(page, '2026-11-20', '17:00:00');
     await expect(slotCard(page, '7:00 PM')).toContainText('Decoration by phone');
     await expect(slotCard(page, '8:45 PM')).toContainText('Decoration available');
-    await expect(slotCard(page, '10:30 PM')).not.toContainText('Decoration');
+    await expect(slotCard(page, '10:30 PM')).toContainText('Decoration available');
   });
 
   test('a short-notice session offers the phone, not a decoration to buy', async ({ page }) => {
@@ -234,7 +239,10 @@ test.describe('what the flow shows', () => {
     await page.locator('[data-bk-back]').click();
     await page.locator('[data-bk-back]').click();
     await slotCard(page, '3:30 PM').click();
-    await expect(page.locator('.bk-note'))
+    // the setup screen explains it twice: why the decoration came off, and how to get one by phone
+    await expect(page.locator('.bk-note[role=status]'), 'says the decoration came off')
+      .toContainText('the decoration has come off');
+    await expect(page.locator('.bk-note').last())
       .toContainText(/less notice than the decorator needs|under 3 hours/);
     // the decoration is gone from the booking itself, not just off the screen
     await expect.poll(async () => (await saved(page)).decor).toBe('');

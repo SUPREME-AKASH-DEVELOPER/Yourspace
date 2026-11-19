@@ -92,6 +92,19 @@ export const SESSION_MINUTES = 90;
 export const RUNTIME = '90 min';
 export const SESSION_LABEL = '90-minute private session';
 
+/**
+ * Movie Space is a three-hour session (Tanishk, 18 Nov 2026), long enough for
+ * a full film with no rush at the end. It starts at any normal slot time and
+ * holds the room through the slot after it as well, so the slot after it
+ * cannot be booked by anyone else. It has to finish by closing, so it is not
+ * offered at the last start time of the day.
+ */
+export const MOVIE_MINUTES = 3 * 60;
+
+/** "90 min", "30 min", "3 hours". */
+export const durationLabel = (mins: number): string =>
+  mins % 60 === 0 && mins >= 120 ? `${mins / 60} hours` : `${mins} min`;
+
 /* ------------------------------------------------------------------ */
 /*  Occasions, step 1. What they are celebrating, not what they book. */
 /* ------------------------------------------------------------------ */
@@ -172,8 +185,10 @@ export const BUFFER_MINUTES = 15;
 /** When the room opens and closes. The slots are worked out between them. */
 const OPENS_AT = '12:00 PM';
 const CLOSES_AT = '12:00 AM';
+/** Closing, in minutes past midnight (midnight itself counts as 24:00). */
+export const CLOSE_MINUTES = 24 * 60;
 
-const clockToMinutes = (clock: string): number => {
+export const clockToMinutes = (clock: string): number => {
   const m = /^(\d{1,2}):(\d{2}) (AM|PM)$/.exec(clock);
   if (!m) return 0;
   return ((Number(m[1]) % 12) + (m[3] === 'PM' ? 12 : 0)) * 60 + Number(m[2]);
@@ -215,23 +230,24 @@ export const slots: Slot[] = (() => {
 })();
 
 /**
- * When decoration can be booked (12 Nov 2026). There is one decorator, there
- * for about seven hours, so decoration is only set up for sessions STARTING
- * from 2:30 PM and before 9:30 PM. Not the first two slots of the day, and not
- * the last. At the other times Date Night can still be booked, without a
- * decoration, and the flow says so.
+ * When decoration can be booked (12 Nov 2026). There is one decorator, so
+ * decoration is only set up for sessions STARTING from 2:30 PM up to and
+ * including the 10:30 PM slot (Tanishk, 18 Nov 2026: the 10:30 PM slot can be
+ * decorated too). Not the first two slots of the day. At those times Date
+ * Night can still be booked, without a decoration, and the flow says so.
  *
  * api/_prices.js keeps the same list of slots for the server; the payment
  * tests fail if the two ever disagree.
  */
 export const DECOR_FROM = '2:30 PM';
-export const DECOR_UNTIL = '9:30 PM';
+/** The LAST start time that can be decorated, inclusive. */
+export const DECOR_UNTIL = '10:30 PM';
 
 export function decorAvailable(slotId: string): boolean {
   const s = slots.find((x) => x.id === slotId);
   if (!s) return false;
   const start = clockToMinutes(s.start);
-  return start >= clockToMinutes(DECOR_FROM) && start < clockToMinutes(DECOR_UNTIL);
+  return start >= clockToMinutes(DECOR_FROM) && start <= clockToMinutes(DECOR_UNTIL);
 }
 
 /**
@@ -299,6 +315,43 @@ export function addMinutes(clock: string, mins: number): string {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Which slots are already taken                                      */
+/* ------------------------------------------------------------------ */
+
+/**
+ * How long a booking holds the room. Movie Space is three hours; everything
+ * else holds the whole 90-minute slot (karaoke included: the room is still
+ * held for the full slot even though the singing is 30 minutes).
+ */
+export const holdMinutes = (setupId: string): number =>
+  setupId === 'movie' ? MOVIE_MINUTES : SESSION_MINUTES;
+
+/** A stretch of the day already booked, [start, end) in minutes, buffer included. */
+export type Busy = [number, number];
+
+/**
+ * True when a session of this setup starting at this slot would run into a
+ * booking already made. `busy` comes from /api/slots for the chosen date.
+ */
+export function clashes(busy: Busy[], slotId: string, setupId: string): boolean {
+  const s = slots.find((x) => x.id === slotId);
+  if (!s) return false;
+  const a = clockToMinutes(s.start);
+  const b = a + holdMinutes(setupId);
+  return busy.some(([x, y]) => a < y && b > x);
+}
+
+/** A slot is free for at least a normal 90-minute session. */
+export const slotFree = (busy: Busy[], slotId: string): boolean => !clashes(busy, slotId, 'date');
+
+/** The setup finishes by closing time if it starts at this slot. */
+export function fitsBeforeClose(slotId: string, setupId: string): boolean {
+  const s = slots.find((x) => x.id === slotId);
+  if (!s) return true;
+  return clockToMinutes(s.start) + holdMinutes(setupId) <= CLOSE_MINUTES;
+}
+
+/* ------------------------------------------------------------------ */
 /*  Setups, step 4. What they actually book.                          */
 /* ------------------------------------------------------------------ */
 
@@ -355,10 +408,10 @@ export const setups: Setup[] = [
     includes: ['Private room, 90 min', 'Your choice of decoration', 'Fog entry', 'Candlelight setup'],
   },
   {
-    id: 'movie', name: 'Movie Space', tagline: 'Big screen, lights down, nothing else',
-    art: 'screen', minutes: SESSION_MINUTES, minGuests: 1, maxGuests: MAX_GUESTS,
+    id: 'movie', name: 'Movie Space', tagline: 'A full film, three hours, no rush',
+    art: 'screen', minutes: MOVIE_MINUTES, minGuests: 1, maxGuests: MAX_GUESTS,
     hasDecor: false, hasAddons: false,
-    includes: ['Private room, 90 min', 'Big screen + sound', `Up to ${MAX_GUESTS} guests`],
+    includes: ['Private room, 3 hours', 'Big screen + sound', `Up to ${MAX_GUESTS} guests`],
   },
   {
     id: 'karaoke', name: 'Karaoke', tagline: 'Thirty minutes, full volume',

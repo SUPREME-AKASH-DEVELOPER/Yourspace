@@ -12,8 +12,8 @@
  */
 
 export const SITE_ORIGIN = 'https://www.yourspacejbp.com';
-const PHONE_PRETTY = '+91 79996 56039';
-const PHONE_RAW = '+917999656039';
+const PHONE_PRETTY = '+91 88201 03948';
+const PHONE_RAW = '+918820103948';
 
 const INK = '#0C0B09';
 const CARD = '#131110';

@@ -3,7 +3,7 @@ import { createHmac } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { POST } from '../api/pay.js';
 import { priceBooking, DECOR_PRICES, ADDON_PRICES, DECOR_SLOTS } from '../api/_prices.js';
-import { quote, setups, slots, addonGroups, decorAvailable, MAX_GUESTS, requiredRules } from '../src/data/booking';
+import { quote, setups, slots, addonGroups, decorAvailable, fitsBeforeClose, MAX_GUESTS, requiredRules } from '../src/data/booking';
 
 /**
  * Every case below is about price, not about when the decorator works. So they
@@ -38,12 +38,12 @@ test.describe('what the server charges', () => {
     expect(ADDON_PRICES).toEqual(siteAddons);
   });
 
-  test('decoration is offered only from 2:30 PM to before 9:30 PM, the same on both sides', () => {
+  test('decoration is offered from 2:30 PM up to the 10:30 PM slot, the same on both sides', () => {
     expect(slots.filter((x) => decorAvailable(x.id)).map((x) => x.id)).toEqual(DECOR_SLOTS);
     for (const x of slots) {
       const [h, m, ap] = x.start.split(/[: ]/);
       const mins = (Number(h) % 12 + (ap === 'PM' ? 12 : 0)) * 60 + Number(m);
-      expect(decorAvailable(x.id), x.start).toBe(mins >= 14 * 60 + 30 && mins < 21 * 60 + 30);
+      expect(decorAvailable(x.id), x.start).toBe(mins >= 14 * 60 + 30 && mins <= 22 * 60 + 30);
     }
     expect(decorAvailable('s1'), 'not the first slot').toBe(false);
     expect(decorAvailable('s2'), 'not the second slot').toBe(false);
@@ -63,7 +63,8 @@ test.describe('what the server charges', () => {
             for (const addons of s.hasAddons ? addonSets : [[]]) {
               const d = decor ? SITE_DECOR[decor] : null;
               const q = quote({ setup: s.id, guests, decor: d, addons });
-              const payableOnSite = !q.blocked && q.unpriced.length === 0 && q.total > 0;
+              // the page refuses a setup that would run past midnight (a 3-hour movie at 10:30 PM)
+              const payableOnSite = !q.blocked && q.unpriced.length === 0 && q.total > 0 && fitsBeforeClose(slot, s.id);
               const server = priceBooking({ setup: s.id, guests, slot, decor, addons, ...AHEAD, ...AHEAD });
               const label = `${s.id} × ${guests} ${slot} ${decor} ${addons.join(',')}`;
               if (payableOnSite) expect(server.amount, label).toBe(q.total);
@@ -81,7 +82,8 @@ test.describe('what the server charges', () => {
     expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: [], ...AHEAD }).amount).toBe(6500);
     expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: '', addons: [], ...AHEAD }).amount, 'decorated time needs one').toBeNull();
     expect(priceBooking({ setup: 'date', guests: 2, slot: 's1', decor: 'royal', addons: [], ...AHEAD }).amount, 'no decorator at noon').toBeNull();
-    expect(priceBooking({ setup: 'date', guests: 2, slot: 's7', decor: '', addons: [], ...AHEAD }).amount).toBe(1500);
+    expect(priceBooking({ setup: 'date', guests: 2, slot: 's1', decor: '', addons: [], ...AHEAD }).amount).toBe(1500);
+    expect(priceBooking({ setup: 'movie', guests: 2, slot: 's7', decor: '', addons: [], ...AHEAD }).amount, 'a 3-hour movie at 10:30 PM').toBeNull();
     expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'nothing', addons: [], ...AHEAD }).amount).toBeNull();
     expect(priceBooking({ setup: 'date', guests: 2, slot: 's4', decor: 'royal', addons: ['bouquet-s', 'bouquet-l'], ...AHEAD }).amount).toBeNull();
     expect(priceBooking({ setup: 'watch', guests: 2, ...AHEAD }).amount).toBeNull();

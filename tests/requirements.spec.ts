@@ -36,9 +36,9 @@ test.describe('rules from the call', () => {
     }
   });
 
-  test('durations: 90 minutes, karaoke 30', () => {
+  test('durations: 90 minutes, Movie Space 3 hours, karaoke 30', () => {
     const mins = Object.fromEntries(setups.map((s) => [s.id, s.minutes]));
-    expect(mins).toMatchObject({ date: 90, movie: 90, karaoke: 30 });
+    expect(mins).toMatchObject({ date: 90, movie: 180, karaoke: 30 });
   });
 
   test('nobody books more than seven online', () => {

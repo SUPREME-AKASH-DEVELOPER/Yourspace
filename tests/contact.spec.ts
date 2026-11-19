@@ -6,7 +6,7 @@ import { PAGES } from './pages';
  * and WhatsApp both come to it (Akash/Tanishk, Nov 2026). RETIRED is the line
  * that used to be on the site and must not come back by accident.
  */
-const PRIMARY = { raw: '+917999656039', pretty: '+91 79996 56039' };
+const PRIMARY = { raw: '+918820103948', pretty: '+91 88201 03948' };
 const WA = PRIMARY;
 const RETIRED = '+91 94296 90584';
 
@@ -51,6 +51,9 @@ test.describe('contact details', () => {
       const links = await page.evaluate(() =>
         [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href') ?? '').join(' '));
       expect(links.includes('9429690584'), `a link still points at it on ${path}`).toBe(false);
+      // the line before +91 88201 03948 (replaced 18 Nov 2026)
+      expect(body.includes('79996 56039'), `old number still on ${path}`).toBe(false);
+      expect(links.includes('7999656039'), `a link still points at the old number on ${path}`).toBe(false);
     }
   });
 

@@ -1,7 +1,7 @@
 ---
 import Art from './Art.astro';
 import type { Experience } from '../data/booking';
-import { RUNTIME, ROOM_BASE, setupOf, setupPrice } from '../data/booking';
+import { RUNTIME, ROOM_BASE, setupOf, setupPrice, durationLabel } from '../data/booking';
 
 interface Props {
   exp: Experience;
@@ -13,7 +13,7 @@ interface Props {
 const { exp, index, detailed = false, as: Heading = 'h3' } = Astro.props;
 const rupee = (n: number) => '₹' + n.toLocaleString('en-IN');
 const setup = setupOf(exp.suggests);
-const runtime = setup?.minutes ? `${setup.minutes} min` : RUNTIME;
+const runtime = setup?.minutes ? durationLabel(setup.minutes) : RUNTIME;
 const from = setup ? setupPrice(setup.id, setup.minGuests).amount : ROOM_BASE;
 ---
 <li class="prog reveal" id={exp.id}>

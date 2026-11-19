@@ -244,11 +244,33 @@ that allows those hashes. The policy never needs `'unsafe-inline'` for scripts a
 cannot go stale when content changes. Netlify and Cloudflare Pages read the file
 automatically; on another host, copy the directives into its header config.
 
+## Bookings dashboard (/admin/)
+
+Added 18 Nov 2026. Every website booking is saved to a small database as well as emailed.
+The team opens **https://www.yourspacejbp.com/admin/**, logs in, and can:
+
+- see each day's slots (free, booked, or held by a 3-hour movie) and every booking
+- **Confirm** a booking, or **Cancel & free the slot** (the time opens on the website at once)
+- **Move / change** a booking to another date, time or setup (it refuses a time that is taken)
+- **+ Add booking** for phone or walk-in customers, so the site never sells that slot twice
+- keep a private team note on each booking
+
+Already-booked times are greyed out as "Booked" in the booking flow.
+
+To switch it on in Vercel (Project > Settings / Storage), then redeploy:
+
+1. Storage > add **Upstash for Redis** and connect it to this project (sets `KV_REST_API_URL` and `KV_REST_API_TOKEN`)
+2. Environment variable `ADMIN_PASSWORD`: the dashboard password
+3. Optional `ADMIN_SECRET`: any long random string that signs the login (change it to log everyone out)
+
+Until the database is connected, nothing breaks: bookings are still emailed and no slot is greyed out.
+Code: `api/_store.js`, `api/slots.js`, `api/admin.js`, `src/pages/admin.astro`.
+
 ## Before it goes live
 
 | # | What | Who | Status |
 |---|------|-----|--------|
-| 1 | Phone number | Client | **Done** — one number everywhere, +91 79996 56039 (`phone` in `src/data/site.ts`; `whatsapp` is empty so WhatsApp follows it). Set `phoneAlt` if a second line is ever published |
+| 1 | Phone number | Client | **Done** — one number everywhere, +91 88201 03948 (`phone` in `src/data/site.ts`; `whatsapp` is empty so WhatsApp follows it). Set `phoneAlt` if a second line is ever published |
 | 2 | Full address, map link and opening hours (`site.ts`) | Client | **Done**, but confirm the hours (Tanishk wrote "12am to 12pm"; the site says 12 PM to 12 AM) and the spelling of Olympus Cafe |
 | 3 | Real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Done** — https://www.yourspacejbp.com |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
@@ -266,7 +288,7 @@ automatically; on another host, copy the directives into its header config.
 | 18 | Owner's photographs for Movie Space, Karaoke, Watch Party and every add-on (see `src/assets/booking/README.md`) | Client | High |
 | 19 | Upgrade Astro 5 → 7 to clear the remaining `npm audit` advisories (build-time only; none reach the static site) | Dev | Medium |
 | 7 | Room specs: projector, sound, AC (seating is set: 5 recliners + 2 bean bags, `SEATING` in `src/data/booking.ts`, and each seat is picked individually) | Client | High |
-| 20 | WhatsApp number | Client | **Done** — +91 79996 56039, the same line as calls |
+| 20 | WhatsApp number | Client | **Done** — +91 88201 03948, the same line as calls |
 | 21 | New Aesthetic decoration photographs from Tanishk — steps at the top of `src/data/decorations.ts` | Client | High |
 | 22 | Temporary bouquet and photoshoot pictures as `*.sample.jpg` in `src/assets/booking/` (badged "Sample image"), then the real ones | Both | High |
 | 23 | Payment gateway KYC — see "Payment gateway KYC" below | Client | Before any gateway |
@@ -284,7 +306,7 @@ Desktop on computers, with an editable opening message. The number and message a
 `whatsapp` and `whatsappMessage` in `src/data/site.ts`; the component is
 `src/components/WhatsApp.astro`. With no valid number set, every WhatsApp button hides.
 
-The number in use is **+91 79996 56039**, confirmed by Tanishk, and it is the only
+The number in use is **+91 88201 03948**, confirmed by Tanishk, and it is the only
 number the site publishes — calls and WhatsApp both come to it. `whatsapp` is left empty
 so it follows `phone`; set it only if WhatsApp ever moves to a different line.
 `tests/contact.spec.ts` checks every `wa.me` and `tel:` link agrees with the printed

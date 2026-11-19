@@ -14,7 +14,7 @@ export default defineConfig({
   integrations: [
     sitemap({
       // confirmation and error pages have no business in search results
-      filter: (page) => !/\/(thanks|404)\/?$/.test(page),
+      filter: (page) => !/\/(thanks|404|admin)\/?$/.test(page),
     }),
     securityHeaders(),
   ],

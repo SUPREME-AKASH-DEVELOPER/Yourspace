@@ -46,9 +46,10 @@ test.describe('"Something else", writing your own occasion', () => {
 
     await expect(page.locator('#bkTotal')).toContainText(STORY);
 
-    await page.locator('[data-date-pick]').first().click();
+    // tomorrow, so the evening slot has not already started whenever the suite runs
+    await page.locator('[data-date-pick]').nth(1).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s7"]').click();
+    await page.locator('[data-slot-pick="s6"]').click();
     await page.locator('[data-setup-pick="movie"]').click();
     await expect(page.locator('.bk-sum-row').first()).toContainText(STORY);
 

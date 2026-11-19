@@ -19,9 +19,11 @@ export const site = {
   /**
    * The one number YourSpace publishes. Calls and WhatsApp both come here.
    * (Akash/Tanishk, Nov 2026: one number everywhere, so nobody has to guess
-   * which line to use. The old +91 94296 90584 is off the site entirely.)
+   * which line to use. The old +91 94296 90584 is off the site entirely.
+   * Tanishk, 18 Nov 2026: the business number is now +91 88201 03948. Use it
+   * for everything the business does from here on.)
    */
-  phone: '+917999656039',
+  phone: '+918820103948',
 
   /** A second line, shown alongside the first. '', there is only one. */
   phoneAlt: '',

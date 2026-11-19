@@ -8,6 +8,7 @@ export const GET: APIRoute = ({ site }) => {
     '',
     '# Confirmation and error pages carry no search value',
     'Disallow: /thanks/',
+    'Disallow: /admin/',
     '',
     site ? `Sitemap: ${new URL('sitemap-index.xml', site).href}` : '',
   ].join('\n');

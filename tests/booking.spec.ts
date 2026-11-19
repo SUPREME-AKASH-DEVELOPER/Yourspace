@@ -217,19 +217,19 @@ test.describe('booking flow', () => {
     await expect(page.locator('.bk-sum')).toContainText('Paid online');
   });
 
-  test('decoration only at the decorator\'s hours: none at noon, none at 10:30 PM', async ({ page }) => {
+  test('decoration only at the decorator\'s hours: none at noon, but yes at 10:30 PM', async ({ page }) => {
     await freshFlow(page);
     await page.locator('[data-exp-pick="date"]').click();
     await pickSeats(page, 2);
     await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    // the decorated times are marked: 3:30, 5:15, 7:00 and 8:45 PM
-    for (const s of ['s3', 's4', 's5', 's6']) await expect(page.locator(`[data-slot-pick="${s}"] .slot-decor`)).toHaveCount(1);
-    for (const s of ['s1', 's2', 's7']) await expect(page.locator(`[data-slot-pick="${s}"] .slot-decor`)).toHaveCount(0);
+    // the decorated times are marked: 3:30, 5:15, 7:00, 8:45 and 10:30 PM
+    for (const s of ['s3', 's4', 's5', 's6', 's7']) await expect(page.locator(`[data-slot-pick="${s}"] .slot-decor`)).toHaveCount(1);
+    for (const s of ['s1', 's2']) await expect(page.locator(`[data-slot-pick="${s}"] .slot-decor`)).toHaveCount(0);
 
     await page.locator('[data-slot-pick="s1"]').click();
     await expect(page.locator('#bkTitle')).toContainText('Choose your setup');
-    await expect(page.locator('.bk-body')).toContainText('only set up for sessions starting between 2:30 PM and 9:30 PM');
+    await expect(page.locator('.bk-body')).toContainText('only set up for sessions starting between 2:30 PM and 10:30 PM');
     await expect(page.locator('[data-setup-pick="date"]')).toContainText('no decoration at this time');
     await page.locator('[data-setup-pick="date"]').click();
     // straight on to add-ons: no decoration to pick, and none charged
@@ -344,7 +344,7 @@ test.describe('booking flow', () => {
 
     const href = new URL((await wa.getAttribute('href'))!);
     expect(href.origin + href.pathname, 'the business WhatsApp line')
-      .toBe('https://wa.me/917999656039');
+      .toBe('https://wa.me/918820103948');
     const text = href.searchParams.get('text') ?? '';
     expect(text, 'the booking is written out for them').toContain(ref);
     expect(text).toContain('Akash Rai');

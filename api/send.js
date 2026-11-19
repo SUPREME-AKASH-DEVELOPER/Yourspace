@@ -9,6 +9,7 @@
  * back to Web3Forms so a lead still reaches the team (with no customer email).
  */
 import { canEmailCustomer, customerEmail, ownerEmail } from './_email.js';
+import { saveWebsiteBooking, storeReady } from './_store.js';
 
 export const FROM = process.env.MAIL_FROM || 'YourSpace Jabalpur <bookings@yourspacejbp.com>';
 const list = (value, fallback) => (value ?? fallback).split(',').map((s) => s.trim()).filter(Boolean);
@@ -81,9 +82,6 @@ export async function POST(request) {
     return answer(403, { success: false, message: 'Not allowed.' });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return answer(503, { success: false, message: 'Email is not set up yet.' });
-
   const ip = (request.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'unknown';
   if (overLimit(ip)) return answer(429, { success: false, message: 'Rate limit exceeded.' });
 
@@ -104,6 +102,21 @@ export async function POST(request) {
   if (!fields.Name || !fields.Phone) {
     return answer(400, { success: false, message: 'A name and a phone number are needed.' });
   }
+
+  /* A booking from the booking flow also carries `_booking`, the same booking
+     as plain data. It is saved for the dashboard (/admin/) before any email is
+     tried, so a booking is on the board even if the email service is down.
+     A database problem never stops the email going out. */
+  if (typeof body._booking === 'string' && storeReady()) {
+    try {
+      await saveWebsiteBooking(JSON.parse(body._booking.slice(0, 6_000)));
+    } catch (err) {
+      console.error('Could not save the booking to the database', err);
+    }
+  }
+
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return answer(503, { success: false, message: 'Email is not set up yet.' });
 
   const subject = oneLine(body.subject).slice(0, 180) || `Enquiry from ${oneLine(fields.Name)}`;
   const safeRef = /^YS-[A-Z0-9]{6}$/.test(fields['Booking ref'] ?? '') ? fields['Booking ref'] : '';

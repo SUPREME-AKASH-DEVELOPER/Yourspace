@@ -27,14 +27,15 @@ const SETUPS = {
 };
 
 /**
- * The slots a decoration can be set up for: sessions starting from 2:30 PM and
- * before 9:30 PM, while the one decorator is working (decorAvailable() in
- * src/data/booking.ts). Outside them Date Night is the room alone.
+ * The slots a decoration can be set up for: sessions starting from 2:30 PM up
+ * to and including 10:30 PM (decorAvailable() in src/data/booking.ts; the
+ * 10:30 PM slot was added by Tanishk, 18 Nov 2026). Outside them Date Night is
+ * the room alone.
  */
-export const DECOR_SLOTS = ['s3', 's4', 's5', 's6'];
+export const DECOR_SLOTS = ['s3', 's4', 's5', 's6', 's7'];
 
 /** When each slot starts, in minutes past midnight. Mirrors src/data/booking.ts. */
-const SLOT_STARTS = {
+export const SLOT_STARTS = {
   s1: 12 * 60, s2: 13 * 60 + 45, s3: 15 * 60 + 30, s4: 17 * 60 + 15,
   s5: 19 * 60, s6: 20 * 60 + 45, s7: 22 * 60 + 30,
 };
@@ -48,6 +49,28 @@ const SLOT_STARTS = {
  * that decides, and it reads Jabalpur's clock from the server.
  */
 export const DECOR_NOTICE_MINUTES = 3 * 60;
+
+/**
+ * How long a booking holds the room (holdMinutes() in src/data/booking.ts).
+ * Movie Space is three hours (Tanishk, 18 Nov 2026); everything else holds the
+ * whole 90-minute slot. BUFFER is the reset gap kept after every booking.
+ */
+export const SESSION_MINUTES = 90;
+export const MOVIE_MINUTES = 180;
+export const BUFFER_MINUTES = 15;
+export const CLOSE_MINUTES = 24 * 60;
+export const holdMinutes = (setup) => (setup === 'movie' ? MOVIE_MINUTES : SESSION_MINUTES);
+
+/** [start, end) of the room being held, buffer included, or null for an unknown slot. */
+export function heldSpan(slot, setup) {
+  const start = SLOT_STARTS[slot];
+  if (typeof start !== 'number') return null;
+  return [start, start + holdMinutes(setup) + BUFFER_MINUTES];
+}
+
+/** The session fits before closing. */
+export const fitsBeforeClose = (slot, setup) =>
+  typeof SLOT_STARTS[slot] === 'number' && SLOT_STARTS[slot] + holdMinutes(setup) <= CLOSE_MINUTES;
 export const VENUE_TZ = 'Asia/Kolkata';
 
 /** Now, in Jabalpur: the date there and the minutes past midnight there. */
@@ -111,6 +134,7 @@ export function priceBooking(booking = {}) {
   const g = Number(guests);
   if (!s) return { amount: null, reason: 'That setup cannot be paid for online.' };
   if (!Number.isInteger(g) || g < s.min || g > s.max) return { amount: null, reason: 'That number of guests cannot be paid for online.' };
+  if (slot && !fitsBeforeClose(slot, setup)) return { amount: null, reason: 'That session would run past closing time.' };
 
   let total;
   if (setup === 'date') total = ROOM_BASE;

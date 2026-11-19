@@ -21,6 +21,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { priceBooking } from './_prices.js';
 import { customerEmail, ownerEmail, canEmailCustomer } from './_email.js';
 import { resend, FROM, TEAM_TO, TEAM_CC, allowedOrigin, overLimit } from './send.js';
+import { markPaid } from './_store.js';
 
 const RZP = 'https://api.razorpay.com/v1';
 const answer = (status, body) => Response.json(body, { status });
@@ -123,6 +124,9 @@ async function verify(k, body, mailKey) {
   const notes = order.body.notes ?? {};
   const ref = /^YS-[A-Z0-9]{6}$/.test(notes.booking_ref ?? '') ? notes.booking_ref : order.body.receipt;
   const amount = Number(payment.body.amount) / 100;
+
+  // show it as paid on the dashboard; a database problem never blocks the receipt
+  try { await markPaid(ref, paymentId, amount); } catch (err) { console.error('Could not mark paid', err); }
 
   if (mailKey) {
     const fields = {

@@ -288,7 +288,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.locator('[data-exp-pick="date"]').click();
     await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s7"]').click();
+    await page.locator('[data-slot-pick="s6"]').click();
     await page.locator('[data-setup-pick="movie"]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9429690584');
@@ -304,7 +304,7 @@ test.describe('submissions actually go somewhere', () => {
     await page.locator('[data-exp-pick="date"]').click();
     await page.locator('[data-date-pick]').nth(2).click();
     await page.locator('[data-bk-next]').click();
-    await page.locator('[data-slot-pick="s7"]').click();
+    await page.locator('[data-slot-pick="s6"]').click();
     await page.locator('[data-setup-pick="movie"]').click();
     await page.fill('#bName', 'Akash');
     await page.fill('#bPhone', '9429690584');

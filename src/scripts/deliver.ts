@@ -77,7 +77,10 @@ export async function deliver(payload: Record<string, string>): Promise<Outcome>
   const first = await postOnce(PRIMARY, payload);
   if (first.ok || first.reason !== 'offline' || !BACKUP) return first;
   await new Promise((r) => setTimeout(r, 1500));
-  return postOnce(BACKUP, payload);
+  // the structured copy is for our own bookings database only, not the backup inbox
+  const { _booking, ...rest } = payload;
+  void _booking;
+  return postOnce(BACKUP, rest);
 }
 
 /**

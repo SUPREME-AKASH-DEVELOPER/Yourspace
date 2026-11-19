@@ -1,0 +1,520 @@
+---
+/**
+ * /admin/  The bookings dashboard for the YourSpace team.
+ *
+ * Log in with ADMIN_PASSWORD (set in Vercel). Shows every booking from the
+ * website, lets the team confirm, cancel (frees the slot on the site), move a
+ * booking to another date or time, and add phone bookings so the website can
+ * never sell the same slot twice. Everything goes through /api/admin.
+ *
+ * Not linked from anywhere, not in the sitemap, and robots are told to stay out.
+ */
+import '../styles/fonts.css';
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Bookings · YourSpace</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0C0B09" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <style is:global>
+    :root{
+      --ink:#0C0B09;--ink-2:#131110;--ink-3:#1C1917;--ink-4:#262220;
+      --paper:#EEE5D1;--grey:#8E857A;--amber:#D4A85F;--amber-2:#EDCB8A;
+      --alert:#D0603F;--ok:#6FAE7B;--rule:rgba(237,230,216,.14);--rule-2:rgba(237,230,216,.26);
+      --sans:"Archivo Variable","Archivo",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+      --mono:"DM Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--ink);color:var(--paper);font:15px/1.5 var(--sans)}
+    a{color:var(--amber-2)}
+    button,input,select,textarea{font:inherit;color:inherit}
+    .wrap{max-width:1180px;margin:0 auto;padding:20px clamp(14px,3vw,32px) 80px}
+    .mono{font-family:var(--mono);letter-spacing:.02em}
+    .muted{color:var(--grey)}
+    [hidden]{display:none!important}
+
+    .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0 18px;border-bottom:1px solid var(--rule);margin-bottom:20px;flex-wrap:wrap}
+    .top h1{font-size:20px;margin:0;font-weight:600}
+    .top h1 span{color:var(--amber)}
+    .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    .btn{border:1px solid var(--rule-2);background:var(--ink-3);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:14px;line-height:1.2}
+    .btn:hover{border-color:var(--amber)}
+    .btn-key{background:var(--amber);color:var(--ink);border-color:var(--amber);font-weight:600}
+    .btn-bad{border-color:rgba(208,96,63,.6);color:#F1A58D}
+    .btn-good{border-color:rgba(111,174,123,.6);color:#A9DDB2}
+    .btn-sm{padding:5px 10px;font-size:13px}
+    .btn:disabled{opacity:.45;cursor:not-allowed}
+
+    input,select,textarea{background:var(--ink-2);border:1px solid var(--rule-2);border-radius:8px;padding:8px 10px;min-height:38px}
+    input:focus,select:focus,textarea:focus,.btn:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+    label{display:grid;gap:4px;font-size:13px;color:var(--grey)}
+    label > input,label > select,label > textarea{color:var(--paper);font-size:15px}
+
+    .card{background:var(--ink-2);border:1px solid var(--rule);border-radius:12px;padding:16px}
+    .login{max-width:380px;margin:12vh auto 0;display:grid;gap:14px}
+    .login h1{margin:0;font-size:22px}
+    .err{color:#F1A58D;font-size:14px;min-height:1.2em;margin:0}
+    .banner{border:1px solid rgba(212,168,95,.5);background:rgba(212,168,95,.08);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:14px}
+
+    h2{font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--grey);font-weight:500;margin:28px 0 12px}
+
+    .board{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+    .slot{border:1px solid var(--rule);border-radius:10px;padding:10px 12px;min-height:118px;display:flex;flex-direction:column;gap:4px;background:var(--ink-2)}
+    .slot .t{font-family:var(--mono);font-size:13px;color:var(--amber-2)}
+    .slot.is-free{border-style:dashed}
+    .slot.is-free .who{color:var(--grey)}
+    .slot.is-held{background:var(--ink-3)}
+    .slot.is-new{border-color:rgba(212,168,95,.7)}
+    .slot.is-confirmed{border-color:rgba(111,174,123,.6)}
+    .slot.is-clash{border-color:var(--alert)}
+    .slot .who{font-weight:600;font-size:14px}
+    .slot .what{font-size:12px;color:var(--grey)}
+    .slot .grow{flex:1}
+
+    .chip{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:99px;border:1px solid var(--rule-2)}
+    .chip-new{color:var(--amber-2);border-color:rgba(212,168,95,.6)}
+    .chip-confirmed{color:#A9DDB2;border-color:rgba(111,174,123,.6)}
+    .chip-cancelled{color:var(--grey)}
+    .chip-paid{color:#A9DDB2;border-color:rgba(111,174,123,.6)}
+    .chip-clash{color:#F1A58D;border-color:rgba(208,96,63,.7)}
+
+    .tabs{display:flex;gap:6px;flex-wrap:wrap}
+    .tab{border:1px solid var(--rule-2);background:none;border-radius:99px;padding:6px 12px;cursor:pointer;font-size:13px}
+    .tab.is-on{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+
+    .list{display:grid;gap:10px;margin-top:12px}
+    .bk{display:grid;gap:10px}
+    .bk.is-cancelled{opacity:.6}
+    .bk-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+    .bk-when{font-weight:600;font-size:16px}
+    .bk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:4px 18px;font-size:14px}
+    .bk-grid div b{display:block;font-weight:400;font-size:12px;color:var(--grey)}
+    .bk-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .note{width:100%;min-height:38px;resize:vertical}
+    .move{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-items:end;border-top:1px solid var(--rule);padding-top:10px}
+    .hist{font-size:12px;color:var(--grey);margin:0;padding-left:16px}
+    details summary{cursor:pointer;color:var(--grey);font-size:13px}
+
+    dialog{background:var(--ink-2);color:var(--paper);border:1px solid var(--rule-2);border-radius:14px;padding:20px;width:min(560px,94vw);max-height:90dvh;overflow:auto}
+    dialog::backdrop{background:rgba(0,0,0,.6)}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .form .full{grid-column:1/-1}
+    @media (max-width:520px){.form{grid-template-columns:1fr}}
+    .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--paper);color:var(--ink);padding:10px 16px;border-radius:10px;font-size:14px;z-index:9;max-width:92vw}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section id="login" class="card login" hidden>
+      <h1>YourSpace bookings</h1>
+      <p class="muted" style="margin:0">Team login</p>
+      <form id="loginForm" class="row" style="display:grid;gap:10px">
+        <label>Password <input id="pw" type="password" autocomplete="current-password" required /></label>
+        <button class="btn btn-key" type="submit">Log in</button>
+        <p class="err" id="loginErr" role="alert"></p>
+      </form>
+    </section>
+
+    <section id="app" hidden>
+      <div class="top">
+        <h1>YourSpace <span>bookings</span></h1>
+        <div class="row">
+          <button class="btn" type="button" id="addBtn">+ Add booking</button>
+          <button class="btn" type="button" id="refresh">Refresh</button>
+          <button class="btn" type="button" id="logout">Log out</button>
+        </div>
+      </div>
+      <div id="setupBanner" class="banner" hidden></div>
+
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <button class="btn btn-sm" type="button" data-day="-1" aria-label="Previous day">←</button>
+          <input type="date" id="day" />
+          <button class="btn btn-sm" type="button" data-day="1" aria-label="Next day">→</button>
+          <button class="btn btn-sm" type="button" id="today">Today</button>
+        </div>
+        <p class="muted mono" id="dayLabel" style="margin:0"></p>
+      </div>
+
+      <h2>The room that day</h2>
+      <div class="board" id="board"></div>
+
+      <h2>Bookings</h2>
+      <div class="row" style="justify-content:space-between">
+        <div class="tabs" id="tabs">
+          <button class="tab is-on" type="button" data-tab="day">This day</button>
+          <button class="tab" type="button" data-tab="upcoming">Upcoming</button>
+          <button class="tab" type="button" data-tab="new">To call</button>
+          <button class="tab" type="button" data-tab="cancelled">Cancelled</button>
+          <button class="tab" type="button" data-tab="all">All</button>
+        </div>
+        <input type="search" id="q" placeholder="Search name, phone or YS-…" style="min-width:220px" />
+      </div>
+      <div class="list" id="list"></div>
+    </section>
+  </div>
+
+  <dialog id="addDlg">
+    <form id="addForm" method="dialog">
+      <h3 style="margin:0 0 12px">Add a booking</h3>
+      <p class="muted" style="margin:-6px 0 14px;font-size:13px">For bookings taken by phone or walk-in. It blocks the slot on the website.</p>
+      <div class="form">
+        <label>Name <input name="name" required /></label>
+        <label>Phone <input name="phone" type="tel" inputmode="tel" required placeholder="10-digit mobile" /></label>
+        <label>Date <input name="date" type="date" required /></label>
+        <label>Time <select name="slot" required></select></label>
+        <label>Setup <select name="setup" required></select></label>
+        <label>Guests <input name="guests" type="number" min="1" max="7" value="2" /></label>
+        <label class="full">Occasion <input name="occasion" placeholder="Birthday, date night, movie…" /></label>
+        <label>Decoration <input name="decor" placeholder="Optional" /></label>
+        <label>Total <input name="total" placeholder="₹" /></label>
+        <label class="full">Notes <textarea name="notes" rows="2"></textarea></label>
+      </div>
+      <p class="err" id="addErr" role="alert"></p>
+      <div class="row" style="justify-content:flex-end;margin-top:6px">
+        <button class="btn" type="button" id="addCancel">Close</button>
+        <button class="btn" type="button" id="addForce" hidden>Add anyway</button>
+        <button class="btn btn-key" type="submit">Add booking</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { slots, setups, holdMinutes, durationLabel, BUFFER_MINUTES, clockToMinutes } from '../data/booking';
+
+    type Booking = {
+      ref: string; source: string; status: 'new' | 'confirmed' | 'cancelled';
+      date: string; slot: string; setup: string; guests: number; seats: number[];
+      name: string; phone: string; email: string; occasion: string; decor: string;
+      addons: string[]; total: string; pay: string;
+      paid: null | { paymentId: string; amount: number; at: string };
+      notes: string; adminNote: string; createdAt: string; clash?: boolean;
+      history?: { at: string; what: string }[];
+    };
+
+    const API = '/api/admin';
+    const $ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector(s) as T;
+    const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+    const setupName = (id: string) => setups.find((s) => s.id === id)?.name ?? id;
+    const slotOf = (id: string) => slots.find((s) => s.id === id);
+    const fmtClock = (mins: number) => {
+      const t = ((mins % 1440) + 1440) % 1440, h = Math.floor(t / 60), m = t % 60;
+      return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+    };
+    const timeRange = (b: Pick<Booking, 'slot' | 'setup'>) => {
+      const s = slotOf(b.slot);
+      if (!s) return b.slot;
+      const start = clockToMinutes(s.start);
+      return `${s.start} – ${fmtClock(start + holdMinutes(b.setup))}`;
+    };
+    const todayIst = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+    const dayName = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    const shiftDay = (iso: string, n: number) => {
+      const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n);
+      return d.toISOString().slice(0, 10);
+    };
+    const digits = (p: string) => p.replace(/\D/g, '').slice(-10);
+
+    let all: Booking[] = [];
+    let day = todayIst();
+    let tab = 'day';
+    let query = '';
+    const moving = new Set<string>();
+
+    function toast(msg: string) {
+      const t = document.createElement('div');
+      t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
+      document.body.append(t);
+      setTimeout(() => t.remove(), 3200);
+    }
+
+    async function api(method: 'GET' | 'POST', body?: unknown) {
+      const res = await fetch(API, {
+        method,
+        credentials: 'same-origin',
+        headers: body ? { 'Content-Type': 'application/json' } : {},
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      return { status: res.status, data } as { status: number; data: any };
+    }
+
+    function show(which: 'login' | 'app') {
+      $('#login').hidden = which !== 'login';
+      $('#app').hidden = which !== 'app';
+      if (which === 'login') $<HTMLInputElement>('#pw').focus();
+    }
+
+    async function load() {
+      const { status, data } = await api('GET');
+      if (status === 401) return show('login');
+      show('app');
+      const banner = $('#setupBanner');
+      if (!data.success) {
+        banner.hidden = false;
+        banner.innerHTML = data.setup === 'store'
+          ? '<b>The bookings database is not connected yet.</b> In Vercel, open this project, go to Storage, add <b>Upstash for Redis</b> and connect it to the project, then redeploy. Bookings still arrive by email until then.'
+          : data.setup === 'password'
+            ? '<b>ADMIN_PASSWORD is not set in Vercel.</b>'
+            : esc(data.message || 'Could not load the bookings.');
+        all = [];
+      } else {
+        banner.hidden = true;
+        all = data.bookings as Booking[];
+      }
+      paint();
+    }
+
+    /* ---------- the day board ---------- */
+
+    function paintBoard() {
+      $<HTMLInputElement>('#day').value = day;
+      $('#dayLabel').textContent = dayName(day) + (day === todayIst() ? ' · today' : '');
+      const onDay = all.filter((b) => b.date === day && b.status !== 'cancelled');
+      $('#board').innerHTML = slots.map((s) => {
+        const start = clockToMinutes(s.start);
+        const here = onDay.filter((b) => b.slot === s.id);
+        // a 3-hour movie that started in an earlier slot is still in the room
+        const held = onDay.find((b) => {
+          const bs = slotOf(b.slot); if (!bs || b.slot === s.id) return false;
+          const a = clockToMinutes(bs.start);
+          return a < start && a + holdMinutes(b.setup) + BUFFER_MINUTES > start;
+        });
+        if (here.length) {
+          const b = here[0];
+          const clash = here.length > 1 || held || b.clash;
+          return `<div class="slot is-${b.status}${clash ? ' is-clash' : ''}">
+            <span class="t">${esc(timeRange(b))}</span>
+            <span class="who">${esc(b.name)}</span>
+            <span class="what">${esc(setupName(b.setup))} · ${b.guests} guests</span>
+            <span class="grow"></span>
+            <span class="row"><span class="chip chip-${b.status}">${b.status === 'new' ? 'to call' : b.status}</span>${b.paid ? '<span class="chip chip-paid">paid</span>' : ''}${clash ? '<span class="chip chip-clash">double booked</span>' : ''}</span>
+            <a class="btn btn-sm" href="#bk-${esc(b.ref)}" data-goto="${esc(b.ref)}">Open</a>
+          </div>`;
+        }
+        if (held) {
+          return `<div class="slot is-held">
+            <span class="t">${s.start}</span>
+            <span class="who">Held by the movie</span>
+            <span class="what">${esc(held.name)}, ${esc(timeRange(held))}</span>
+          </div>`;
+        }
+        return `<div class="slot is-free">
+          <span class="t">${s.start} – ${s.end}</span>
+          <span class="who">Free</span>
+          <span class="grow"></span>
+          <button class="btn btn-sm" type="button" data-add-slot="${s.id}">+ Book this</button>
+        </div>`;
+      }).join('');
+    }
+
+    /* ---------- the list ---------- */
+
+    function visible(): Booking[] {
+      const today = todayIst();
+      const q = query.trim().toLowerCase();
+      let list = all;
+      if (tab === 'day') list = list.filter((b) => b.date === day);
+      else if (tab === 'upcoming') list = list.filter((b) => b.date >= today && b.status !== 'cancelled');
+      else if (tab === 'new') list = list.filter((b) => b.status === 'new');
+      else if (tab === 'cancelled') list = list.filter((b) => b.status === 'cancelled');
+      if (q) list = list.filter((b) =>
+        b.name.toLowerCase().includes(q) || b.ref.toLowerCase().includes(q) ||
+        (digits(q).length >= 3 && digits(b.phone).includes(digits(q))));
+      return list;
+    }
+
+    const slotOptions = (sel: string) => slots.map((s) => `<option value="${s.id}"${s.id === sel ? ' selected' : ''}>${s.start}</option>`).join('');
+    const setupOptions = (sel: string) => setups.map((s) => `<option value="${s.id}"${s.id === sel ? ' selected' : ''}>${esc(s.name)}${s.id === 'movie' ? ` (${durationLabel(holdMinutes('movie'))})` : ''}</option>`).join('');
+
+    function card(b: Booking) {
+      const wa = `https://wa.me/91${digits(b.phone)}`;
+      const payment = b.paid
+        ? `<span class="chip chip-paid">paid ₹${b.paid.amount.toLocaleString('en-IN')}</span> <span class="mono muted" style="font-size:12px">${esc(b.paid.paymentId)}</span>`
+        : b.pay === 'online' ? 'Chose to pay online, not paid yet' : 'Pay after the call';
+      return `<article class="card bk${b.status === 'cancelled' ? ' is-cancelled' : ''}" id="bk-${esc(b.ref)}">
+        <div class="bk-head">
+          <span class="bk-when">${esc(dayName(b.date))} · ${esc(timeRange(b))}</span>
+          <span class="row">
+            ${b.clash && b.status !== 'cancelled' ? '<span class="chip chip-clash">double booked</span>' : ''}
+            <span class="chip chip-${b.status}">${b.status === 'new' ? 'to call' : b.status}</span>
+            <span class="mono muted">${esc(b.ref)}</span>
+          </span>
+        </div>
+        <div class="bk-grid">
+          <div><b>Customer</b>${esc(b.name)}</div>
+          <div><b>Phone</b><a href="tel:+91${digits(b.phone)}">${esc(b.phone)}</a> · <a href="${wa}" target="_blank" rel="noopener">WhatsApp</a></div>
+          <div><b>Setup</b>${esc(setupName(b.setup))} · ${b.guests} guests</div>
+          ${b.occasion ? `<div><b>Occasion</b>${esc(b.occasion)}</div>` : ''}
+          ${b.decor ? `<div><b>Decoration</b>${esc(b.decor)}</div>` : ''}
+          ${b.addons?.length ? `<div><b>Add-ons</b>${esc(b.addons.join(', '))}</div>` : ''}
+          ${b.total ? `<div><b>Total</b>${esc(b.total)}</div>` : ''}
+          <div><b>Payment</b>${payment}</div>
+          ${b.email ? `<div><b>Email</b>${esc(b.email)}</div>` : ''}
+          <div><b>From</b>${b.source === 'admin' ? 'Added by the team' : 'Website'}</div>
+        </div>
+        ${b.notes ? `<p style="margin:0;font-size:14px"><span class="muted">Customer's note:</span> ${esc(b.notes)}</p>` : ''}
+        <textarea class="note" data-note="${esc(b.ref)}" rows="1" placeholder="Team note (only you see this)">${esc(b.adminNote)}</textarea>
+        <div class="bk-actions">
+          ${b.status !== 'confirmed' && b.status !== 'cancelled' ? `<button class="btn btn-sm btn-good" type="button" data-status="confirmed" data-ref="${esc(b.ref)}">Confirm</button>` : ''}
+          ${b.status !== 'cancelled' ? `<button class="btn btn-sm btn-bad" type="button" data-status="cancelled" data-ref="${esc(b.ref)}">Cancel &amp; free the slot</button>` : `<button class="btn btn-sm" type="button" data-status="new" data-ref="${esc(b.ref)}">Restore</button>`}
+          <button class="btn btn-sm" type="button" data-move="${esc(b.ref)}">Move / change</button>
+          <button class="btn btn-sm" type="button" data-save-note="${esc(b.ref)}">Save note</button>
+        </div>
+        ${moving.has(b.ref) ? `<div class="move" data-move-form="${esc(b.ref)}">
+          <label>Date <input type="date" name="date" value="${esc(b.date)}" /></label>
+          <label>Time <select name="slot">${slotOptions(b.slot)}</select></label>
+          <label>Setup <select name="setup">${setupOptions(b.setup)}</select></label>
+          <div class="row"><button class="btn btn-sm btn-key" type="button" data-move-save="${esc(b.ref)}">Save</button>
+          <button class="btn btn-sm" type="button" data-move="${esc(b.ref)}">Close</button></div>
+          <p class="err full" data-move-err="${esc(b.ref)}" style="grid-column:1/-1"></p>
+        </div>` : ''}
+        ${b.history?.length ? `<details><summary>History</summary><ul class="hist">${b.history.map((h) =>
+          `<li>${esc(new Date(h.at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' }))}: ${esc(h.what)}</li>`).join('')}</ul></details>` : ''}
+      </article>`;
+    }
+
+    function paintList() {
+      const list = visible();
+      $('#list').innerHTML = list.length ? list.map(card).join('')
+        : `<p class="muted">${tab === 'day' ? 'No bookings on this day.' : 'Nothing here.'}</p>`;
+    }
+
+    function paint() { paintBoard(); paintList(); }
+
+    function replace(b: Booking) {
+      const i = all.findIndex((x) => x.ref === b.ref);
+      if (i >= 0) all[i] = b; else all.push(b);
+      all.sort((a, z) => a.date.localeCompare(z.date) || clockToMinutes(slotOf(a.slot)?.start ?? '') - clockToMinutes(slotOf(z.slot)?.start ?? ''));
+    }
+
+    async function update(ref: string, patch: Record<string, unknown>, force = false): Promise<{ ok: boolean; message?: string; clash?: boolean }> {
+      const { status, data } = await api('POST', { action: 'update', ref, patch, force });
+      if (status === 401) { show('login'); return { ok: false, message: 'Please log in again.' }; }
+      if (!data.success) return { ok: false, message: data.message || 'Could not save.', clash: status === 409 };
+      replace(data.booking);
+      return { ok: true };
+    }
+
+    /* ---------- events ---------- */
+
+    $('#loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const err = $('#loginErr'); err.textContent = '';
+      const { data } = await api('POST', { action: 'login', password: $<HTMLInputElement>('#pw').value });
+      if (!data.success) { err.textContent = data.message || 'Could not log in.'; return; }
+      $<HTMLInputElement>('#pw').value = '';
+      load();
+    });
+    $('#logout').addEventListener('click', async () => { await api('POST', { action: 'logout' }); all = []; show('login'); });
+    $('#refresh').addEventListener('click', () => load().then(() => toast('Up to date')));
+    $('#today').addEventListener('click', () => { day = todayIst(); paint(); });
+    $<HTMLInputElement>('#day').addEventListener('change', (e) => {
+      const v = (e.target as HTMLInputElement).value; if (v) { day = v; paint(); }
+    });
+    document.querySelectorAll<HTMLElement>('[data-day]').forEach((b) =>
+      b.addEventListener('click', () => { day = shiftDay(day, Number(b.dataset.day)); paint(); }));
+    $('#tabs').addEventListener('click', (e) => {
+      const t = (e.target as HTMLElement).closest<HTMLElement>('[data-tab]'); if (!t) return;
+      tab = t.dataset.tab!;
+      document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('is-on', x === t));
+      paintList();
+    });
+    $<HTMLInputElement>('#q').addEventListener('input', (e) => { query = (e.target as HTMLInputElement).value; paintList(); });
+
+    document.addEventListener('click', async (e) => {
+      const t = e.target as HTMLElement;
+      let el: HTMLElement | null;
+
+      if ((el = t.closest('[data-goto]'))) {
+        e.preventDefault();
+        tab = 'day';
+        document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('is-on', (x as HTMLElement).dataset.tab === 'day'));
+        paintList();
+        document.getElementById(`bk-${el.dataset.goto}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if ((el = t.closest('[data-status]'))) {
+        const ref = el.dataset.ref!, next = el.dataset.status!;
+        if (next === 'cancelled' && !confirm('Cancel this booking? The slot becomes free on the website straight away.')) return;
+        const r = await update(ref, { status: next });
+        if (!r.ok && r.clash && confirm(`${r.message}\n\nRestore it anyway (double booking)?`)) await update(ref, { status: next }, true);
+        else if (!r.ok) return toast(r.message!);
+        paint();
+        toast(next === 'cancelled' ? 'Cancelled. The slot is free again.' : next === 'confirmed' ? 'Confirmed' : 'Restored');
+        return;
+      }
+      if ((el = t.closest('[data-move]'))) {
+        const ref = el.dataset.move!;
+        moving.has(ref) ? moving.delete(ref) : moving.add(ref);
+        return paintList();
+      }
+      if ((el = t.closest('[data-move-save]'))) {
+        const ref = el.dataset.moveSave!;
+        const box = document.querySelector<HTMLElement>(`[data-move-form="${ref}"]`)!;
+        const patch = {
+          date: box.querySelector<HTMLInputElement>('[name=date]')!.value,
+          slot: box.querySelector<HTMLSelectElement>('[name=slot]')!.value,
+          setup: box.querySelector<HTMLSelectElement>('[name=setup]')!.value,
+        };
+        let r = await update(ref, patch);
+        if (!r.ok && r.clash && confirm(`${r.message}\n\nSave anyway (double booking)?`)) r = await update(ref, patch, true);
+        if (!r.ok) { box.querySelector('[data-move-err]')!.textContent = r.message ?? ''; return; }
+        moving.delete(ref);
+        paint();
+        return toast('Saved');
+      }
+      if ((el = t.closest('[data-save-note]'))) {
+        const ref = el.dataset.saveNote!;
+        const note = document.querySelector<HTMLTextAreaElement>(`[data-note="${ref}"]`)!.value;
+        const r = await update(ref, { adminNote: note });
+        return toast(r.ok ? 'Note saved' : r.message!);
+      }
+      if ((el = t.closest('[data-add-slot]'))) return openAdd(day, el.dataset.addSlot!);
+    });
+
+    /* ---------- add a booking ---------- */
+
+    const dlg = $<HTMLDialogElement>('#addDlg');
+    const form = $<HTMLFormElement>('#addForm');
+    (form.elements.namedItem('slot') as HTMLSelectElement).innerHTML = slotOptions('');
+    (form.elements.namedItem('setup') as HTMLSelectElement).innerHTML = setupOptions('date');
+
+    function openAdd(date = day, slot = '') {
+      form.reset();
+      $('#addErr').textContent = '';
+      $('#addForce').hidden = true;
+      (form.elements.namedItem('date') as HTMLInputElement).value = date;
+      (form.elements.namedItem('slot') as HTMLSelectElement).value = slot || slots[0].id;
+      dlg.showModal();
+    }
+    $('#addBtn').addEventListener('click', () => openAdd());
+    $('#addCancel').addEventListener('click', () => dlg.close());
+
+    async function add(force: boolean) {
+      const f = Object.fromEntries(new FormData(form)) as Record<string, string>;
+      const { status, data } = await api('POST', { action: 'create', force, booking: { ...f, guests: Number(f.guests) || 1 } });
+      if (status === 401) { dlg.close(); return show('login'); }
+      if (!data.success) {
+        $('#addErr').textContent = data.message || 'Could not add it.';
+        $('#addForce').hidden = status !== 409 || !data.clash;
+        return;
+      }
+      replace(data.booking);
+      dlg.close();
+      day = data.booking.date;
+      paint();
+      toast(`Added ${data.booking.ref}`);
+    }
+    form.addEventListener('submit', (e) => { e.preventDefault(); add(false); });
+    $('#addForce').addEventListener('click', () => add(true));
+
+    load();
+  </script>
+</body>
+</html>
