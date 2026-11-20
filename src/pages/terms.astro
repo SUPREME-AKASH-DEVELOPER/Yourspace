@@ -1,9 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
-import Notice from '../components/Notice.astro';
 import { MAX_GUESTS } from '../data/booking';
-const updated = '7 October 2026';
+import { site, prettyPhone } from '../data/site';
+/* Interim terms (20 Nov 2026), written to match how the site and the business
+   work today. TODO(owner): have them reviewed by someone qualified in Indian
+   consumer and contract law, and add the registered business name if one is set up. */
+const updated = '20 November 2026';
 ---
 <Base title="Terms of Booking · YourSpace Jabalpur"
       description="The terms that apply when you book a session at YourSpace Jabalpur.">
@@ -14,59 +17,70 @@ const updated = '7 October 2026';
 
   <section class="band">
     <div class="shell narrow prose">
-      <Notice label="Draft">
-        This is a working draft prepared alongside the website. Before launch it needs the registered business details filled in and a review by someone qualified in Indian consumer and contract law. Do not publish it as final until that's done.
-      </Notice>
+      <p class="fine" style="margin-top:0">Last updated: {updated}</p>
 
-      <p class="fine" style="margin-top:0">Last updated: {updated} · Operated by YourSpace, Jabalpur, Madhya Pradesh</p>
+      <h2>1. Who we are</h2>
+      <p>YourSpace is a private screening room at {site.address}. You can reach us on <a href={`tel:${site.phone}`}>{prettyPhone}</a> or at <a href={`mailto:${site.email}`}>{site.email}</a>. In these terms "we" and "us" means YourSpace, and "you" means the person making the booking.</p>
 
-      <h2>1. What these terms cover</h2>
-      <p>These terms apply when you book, or pre-book, a session at YourSpace in Jabalpur. By making a booking you agree to them. If you don't agree with something here, tell us before you book and we'll sort it out or decline the booking.</p>
+      <h2>2. What these terms cover</h2>
+      <p>These terms apply when you book, or pre-book, a session at YourSpace. By making a booking you agree to them. If you don't agree with something here, tell us before you book and we'll sort it out or decline the booking.</p>
 
-      <h2>2. Pre-booking is not a confirmed booking</h2>
-      <p>A booking made through this website is a <strong>request</strong> until we have confirmed the date, time and group size with you. You can choose to pay online when you book, by UPI, card or netbanking through Razorpay; we never see or store your card details. If you pay and we cannot give you the slot, we offer you another or refund you in full. A booking counts as paid once Razorpay has confirmed the payment, and we email you a receipt.</p>
+      <h2>3. How a booking is made</h2>
+      <p>When you book through this website you can pay online straight away, by UPI, card or netbanking through Razorpay, or choose to pay after we call you. We never see or store your card or bank details.</p>
+      <ul>
+        <li><strong>If you pay online,</strong> your booking counts as paid once Razorpay confirms the payment, and we email you a receipt. We still call you to confirm the details.</li>
+        <li><strong>If you choose to pay later,</strong> your booking is a request until we have confirmed the date, time and group size with you and you have paid.</li>
+        <li><strong>If we can't give you the slot</strong> you paid for, we offer you another or refund you in full.</li>
+      </ul>
+      <p>Prices are in Indian rupees and are the ones shown on the <a href="/tickets/">tickets page</a> and in the booking when you make it.</p>
 
-      <h2>3. Your session</h2>
+      <h2>4. How the service is provided</h2>
+      <p>Everything we sell is provided in person, in our room, at the date and time of your booking. Nothing is shipped or delivered to you. Your booking confirmation, receipt and any updates are sent to the email address and phone number you give us.</p>
+
+      <h2>5. Your session</h2>
       <ul>
         <li>A standard session is <strong>90 minutes</strong> from the start time of your slot. A Movie Space session is <strong>3 hours</strong>. A karaoke session is <strong>30 minutes</strong>.</li>
-        <li>Up to <strong>{MAX_GUESTS} guests</strong> can be booked online. The price for your group size is shown on the <a href="/tickets/">tickets page</a> and in the booking.</li>
+        <li>Up to <strong>{MAX_GUESTS} guests</strong> can be booked online.</li>
         <li>The room is reserved for your group alone for the length of your session.</li>
         <li>Please arrive on time. Your slot has a fixed end time because of the booking after yours, and arriving late doesn't extend it.</li>
       </ul>
 
-      <h2>4. Guests and conduct</h2>
+      <h2>6. Decorations and add-ons</h2>
+      <p>Decorations, cakes, bouquets and the celebration video are prepared for your booking. The photographs on this site show what we provide, but flowers, cakes and decorations are made by hand and can vary slightly with what is available on the day. If we can't provide something you paid for, we'll offer you an alternative or refund that item.</p>
+
+      <h2>7. Guests and conduct</h2>
       <p>You're responsible for the people you bring. We may end a session without refund if guests damage the room or equipment, behave in a way that is unsafe or abusive to our staff or other guests, or bring more people than the booking allows after being asked not to.</p>
       <p>Smoking inside the room is not permitted. Anything involving open flame must be agreed with us beforehand.</p>
 
-      <h2>5. What you bring</h2>
+      <h2>8. What you bring</h2>
       <p>You're welcome to bring your own content to play, your own cake, and in most cases your own decor, but check with us first. You are responsible for having the right to play any film, show, music or other content you bring. We don't provide content and we don't licence it to you.</p>
 
-      <h2>6. Damage</h2>
+      <h2>9. Damage</h2>
       <p>If the room, furniture or equipment is damaged during your session beyond normal use, we may charge you the reasonable cost of repair or replacement. We'll tell you the amount and why.</p>
 
-      <h2>7. Changes and cancellation</h2>
+      <h2>10. Changes and cancellation</h2>
       <p>Rescheduling, cancellation and refunds are covered on our <a href="/refunds/">cancellations and refunds page</a>, which forms part of these terms.</p>
 
-      <h2>8. If we have to cancel</h2>
+      <h2>11. If we have to cancel</h2>
       <p>Occasionally we may need to cancel or move a session: equipment failure, power loss, something unsafe, or circumstances outside our control. If that happens we'll offer you the next available slot or a full refund of anything you've paid. We're not liable beyond that.</p>
 
-      <h2>9. Our liability</h2>
+      <h2>12. Our liability</h2>
       <p>We take reasonable care of the space and the equipment in it. We aren't responsible for personal belongings left behind, or for losses that we could not reasonably have foreseen. Nothing in these terms limits liability that cannot be limited by law, including liability for death or personal injury caused by negligence.</p>
 
-      <h2>10. Photographs</h2>
-      <p>You're free to photograph and film your own group. We will not photograph your session or use images of you for marketing without asking you first and getting your agreement.</p>
+      <h2>13. Photographs and video</h2>
+      <p>You're free to photograph and film your own group. We don't photograph or film your session unless you book the celebration video, and then only to make your video. We give that video to you and don't use it, or any image of you, for anything else without asking you first and getting your agreement.</p>
 
-      <h2>11. Privacy</h2>
+      <h2>14. Privacy</h2>
       <p>What we collect and why is set out on our <a href="/privacy/">privacy page</a>.</p>
 
-      <h2>12. Changes to these terms</h2>
-      <p>We may update these terms. The version that applies to your booking is the one published when you made it. Material changes will be dated at the top of this page.</p>
+      <h2>15. Changes to these terms</h2>
+      <p>We may update these terms. The version that applies to your booking is the one published when you made it. Changes will be dated at the top of this page.</p>
 
-      <h2>13. Law</h2>
+      <h2>16. Law</h2>
       <p>These terms are governed by the laws of India, and the courts at Jabalpur, Madhya Pradesh have jurisdiction.</p>
 
-      <h2>14. Contact</h2>
-      <p>Questions about these terms: <a href="/contact/">contact us</a>.</p>
+      <h2>17. Contact</h2>
+      <p>Questions about these terms: call <a href={`tel:${site.phone}`}>{prettyPhone}</a>, email <a href={`mailto:${site.email}`}>{site.email}</a>, or use our <a href="/contact/">contact page</a>.</p>
     </div>
   </section>
 </Base>

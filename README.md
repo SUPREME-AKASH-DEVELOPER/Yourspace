@@ -274,7 +274,7 @@ Code: `api/_store.js`, `api/slots.js`, `api/admin.js`, `src/pages/admin.astro`.
 | 2 | Full address, map link and opening hours (`site.ts`) | Client | **Done**, but confirm the hours (Tanishk wrote "12am to 12pm"; the site says 12 PM to 12 AM) and the spelling of Olympus Cafe |
 | 3 | Real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Done** — https://www.yourspacejbp.com |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
-| 5 | Legal review of `/terms`, `/privacy`, `/refunds` | Client | **Blocking** — drafts, with the refund windows as placeholders |
+| 5 | Legal review of `/terms`, `/privacy`, `/refunds` | Client | **Interim versions live** (20 Nov 2026), matching how the site works today. Still needed: Tanishk to confirm the 48/24-hour windows, the 50% refund and the 2-working-day refund start, plus a review by someone qualified |
 | 6 | Confirm the decoration photographs are ours to publish, and add pictures of the empty room | Client | **Blocking** — see note below |
 | 9 | Set the Royal decoration price in `src/data/decorations.ts` (it shows "Price on request" until then) | Client | High |
 | 10 | Confirm the decoration prices, and that they are added on top of the ₹1,500 Date Night session | Client | High |

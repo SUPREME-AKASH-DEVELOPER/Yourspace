@@ -1,58 +1,66 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
-import Notice from '../components/Notice.astro';
-const updated = '7 October 2026';
+import { site, prettyPhone } from '../data/site';
+/* Interim privacy policy (20 Nov 2026), written to match what the site does
+   today: Razorpay, Resend, Web3Forms as a backup, Upstash for the bookings
+   dashboard, Vercel hosting. TODO(owner): a review against India's Digital
+   Personal Data Protection Act, 2023. Update this page if any of those change. */
+const updated = '20 November 2026';
 ---
 <Base title="Privacy · YourSpace Jabalpur"
-      description="What we collect when you pre-book, why we collect it, and what we do with it.">
+      description="What we collect when you book, why we collect it, and what we do with it.">
   <PageHead crumb="Privacy" beam={false}>
     <h1 class="headline">What we <em>keep</em>, and why.</h1>
-    <p class="standfirst">Short version: your name, your number, and what you asked us to set up. We use it to call you back. That's it.</p>
+    <p class="standfirst">Short version: your name, your number, your email, and what you asked us to set up. We use it to run your booking. That's it.</p>
   </PageHead>
 
   <section class="band">
     <div class="shell narrow prose">
-      <Notice label="Draft">
-        A working draft prepared alongside the website. Before launch it needs the registered business details and a review against India's Digital Personal Data Protection Act, 2023.
-      </Notice>
-
       <p class="fine" style="margin-top:0">Last updated: {updated}</p>
 
-      <h2>1. What we collect</h2>
-      <p>When you pre-book or send us a message through this site, we collect what you type into the form:</p>
+      <h2>1. Who we are</h2>
+      <p>This site is run by YourSpace, {site.address}. For anything about your personal data, call <a href={`tel:${site.phone}`}>{prettyPhone}</a> or email <a href={`mailto:${site.email}`}>{site.email}</a>.</p>
+
+      <h2>2. What we collect</h2>
+      <p>When you book, pre-book or send us a message through this site, we collect what you type into the form:</p>
       <ul>
         <li>Your name</li>
-        <li>Your phone number, and your email address if you give one</li>
-        <li>What you'd like to book: the occasion, date, group size and any extras</li>
+        <li>Your phone number and email address</li>
+        <li>What you'd like to book: the occasion, date, time, group size, seats and any extras</li>
         <li>Anything you write in the notes or message box</li>
       </ul>
-      <p>We don't ask for card or bank details on this website. If you pay online, the payment is taken by Razorpay, our payment provider, in its own secure checkout: your card, UPI or bank details go to Razorpay and never to us. We pass Razorpay your name, phone number, email, booking reference and the amount, so it can take the payment and send you a receipt, and Razorpay tells us whether the payment went through. Razorpay handles that information under its own privacy policy.</p>
-
-      <h2>2. Where it goes right now</h2>
-      <p>When you submit a form, the details are <strong>emailed to us</strong> and nowhere else. They pass through <a href="https://resend.com/legal/privacy-policy">Resend</a>, the service that delivers that email and sends your confirmation, or <a href="https://web3forms.com/privacy">Web3Forms</a> if Resend is unavailable, under their privacy policies. A copy is also kept in your own browser so nothing is lost if the send fails.</p>
-      <p>Anything saved in your browser stays on your device. Clearing your browser data removes it.</p>
+      <p>We don't ask for card or bank details on this website. If you pay online, the payment is taken by Razorpay, our payment provider, in its own secure checkout: your card, UPI or bank details go to Razorpay and never to us. We pass Razorpay your name, phone number, email, booking reference and the amount, so it can take the payment and send you a receipt, and Razorpay tells us whether the payment went through.</p>
 
       <h2>3. Why we use it</h2>
-      <p>To call you back, confirm your booking, and set the room up the way you asked. Nothing else. We don't sell it, we don't rent it, and we don't add you to a marketing list you didn't ask for.</p>
+      <p>To confirm and run your booking: to call or email you about it, take payment, set the room up the way you asked, and keep a record of it. We don't sell your details, we don't rent them out, and we don't add you to a marketing list you didn't ask for.</p>
 
-      <h2>4. How long we keep it</h2>
-      <p>For as long as we need it to handle your booking and our records of it. If you ask us to delete your details and we're not required to keep them, we will.</p>
+      <h2>4. Where it is kept</h2>
+      <ul>
+        <li><strong>Our bookings record.</strong> Every booking is saved in a hosted database (Upstash), so our team can confirm, move or cancel it in a password-protected dashboard and the website doesn't sell the same time twice.</li>
+        <li><strong>Email.</strong> Your booking is emailed to our team, and a confirmation is emailed to you, through <a href="https://resend.com/legal/privacy-policy">Resend</a>. If Resend is unavailable, the booking reaches our team through <a href="https://web3forms.com/privacy">Web3Forms</a> instead.</li>
+        <li><strong>Payments.</strong> Handled by <a href="https://razorpay.com/privacy/">Razorpay</a>, as described above.</li>
+        <li><strong>Hosting.</strong> The site runs on <a href="https://vercel.com/legal/privacy-policy">Vercel</a>, which, like any web host, handles technical details such as your IP address in order to show you the pages.</li>
+        <li><strong>Your own browser.</strong> A copy of an unfinished booking is kept in your browser so you don't lose it if you close the tab. It stays on your device, and clearing your browser data removes it.</li>
+      </ul>
+      <p>Each of these services handles your details for us under its own privacy policy, linked above. Some of them may store data outside India.</p>
 
       <h2>5. Who else sees it</h2>
-      <p>Our own team, and the messaging service you used to reach us. We don't share your details with anyone else unless the law requires it.</p>
+      <p>Our own team, and the services listed above, only for the purposes described. We don't share your details with anyone else unless the law requires it.</p>
 
-      <h2>6. Cookies and tracking</h2>
-      <p>This site sets <strong>no cookies</strong> and runs no analytics or advertising trackers. It stores your unfinished booking in your browser's local storage so you don't lose it if you close the tab. That never leaves your device and we can't read it.</p>
-      <p>Fonts are served from this site itself, so loading a page makes <strong>no request to any third party</strong>. Nothing about your visit reaches another company.</p>
+      <h2>6. How long we keep it</h2>
+      <p>For as long as we need it to handle your booking, and afterwards for as long as we need it for our accounts and tax records or as the law requires. If you ask us to delete your details and we're not required to keep them, we will.</p>
 
-      <h2>7. Your rights</h2>
-      <p>You can ask us what we hold about you, ask us to correct it, or ask us to delete it. <a href="/contact/">Contact us</a> and we'll deal with it.</p>
+      <h2>7. Cookies and tracking</h2>
+      <p>Our pages set <strong>no cookies</strong> and run no analytics or advertising trackers. Fonts are served from this site itself. The only time another company's code runs on the page is if you choose to pay online: Razorpay's checkout then opens from Razorpay and may use its own cookies to process the payment safely.</p>
 
-      <h2>8. Children</h2>
+      <h2>8. Your rights</h2>
+      <p>You can ask us what we hold about you, ask us to correct it, or ask us to delete it, and you can withdraw your consent to us using it. Call <a href={`tel:${site.phone}`}>{prettyPhone}</a> or email <a href={`mailto:${site.email}`}>{site.email}</a> and we'll deal with it. If you have a complaint about how we've handled your data, contact us the same way and we'll reply as soon as we can.</p>
+
+      <h2>9. Children</h2>
       <p>This site isn't aimed at children, and we don't knowingly collect their details. Bookings should be made by an adult.</p>
 
-      <h2>9. Changes</h2>
+      <h2>10. Changes</h2>
       <p>If this policy changes we'll update the date at the top of the page.</p>
     </div>
   </section>
