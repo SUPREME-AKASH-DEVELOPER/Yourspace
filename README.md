@@ -56,7 +56,7 @@ switches UPI off for that booking, because we cannot ask for an amount we don't 
 | 2 | Date and seats | Pick the seats themselves — 5 recliners, 2 bean bags |
 | 3 | Time | Eight 90-minute slots, 12 PM to 12 AM; slots already started today are disabled |
 | 4 | Setup | Photo cards with the price for *this* group size. Date Night opens the three decorations underneath |
-| 5 | Add-ons | Bouquet, cake, photoshoot, one of each. Date Night only; the step is skipped otherwise |
+| 5 | Add-ons | Bouquet, cake, celebration video, one of each. Date Night only; the step is skipped otherwise |
 | 6 | Details and payment | Pay now by UPI, or after we call |
 
 | Setup | Length | Price | Guests |
@@ -280,7 +280,7 @@ Code: `api/_store.js`, `api/slots.js`, `api/admin.js`, `src/pages/admin.astro`.
 | 10 | Confirm the decoration prices, and that they are added on top of the ₹1,500 Date Night session | Client | High |
 | 11 | Karaoke price for 6–7 guests (₹150 a head, or the "₹500" mentioned?) — shows "price on call" until then | Client | High |
 | 12 | Movie Space for 6–7: confirm ₹1,700 | Client | High |
-| 13 | Bouquet and cake options: names, photographs, prices. Photoshoot: ₹400 or ₹500 | Client | High |
+| 13 | Bouquets and cakes | Client | **Done** (20 Nov 2026): three rose bouquets and five ½ kg cakes with Tanishk's photos and prices. Names still needed for the heart-shaped and white cakes. Video: ₹400 or ₹500 |
 | 14 | Watch Party: length, price, guest limit — it is closed to online booking until set | Client | High |
 | 15 | Are all eight slots open for every setup? When in the slot does a 30-minute karaoke run? | Client | Medium |
 | 16 | Payments go to a personal UPI ID; consider a business one (pay links to personal IDs are sometimes blocked, and daily limits are lower) | Client | Medium |
@@ -290,7 +290,7 @@ Code: `api/_store.js`, `api/slots.js`, `api/admin.js`, `src/pages/admin.astro`.
 | 7 | Room specs: projector, sound, AC (seating is set: 5 recliners + 2 bean bags, `SEATING` in `src/data/booking.ts`, and each seat is picked individually) | Client | High |
 | 20 | WhatsApp number | Client | **Done** — +91 88201 03948, the same line as calls |
 | 21 | New Aesthetic decoration photographs from Tanishk — steps at the top of `src/data/decorations.ts` | Client | High |
-| 22 | Temporary bouquet and photoshoot pictures as `*.sample.jpg` in `src/assets/booking/` (badged "Sample image"), then the real ones | Both | High |
+| 22 | Real add-on photographs | Both | **Done** for bouquets and cakes; the video still has no picture |
 | 23 | Payment gateway KYC — see "Payment gateway KYC" below | Client | Before any gateway |
 | 24 | Domain: see "Connecting the domain" below | Both | Blocking |
 | 8 | Where bookings land | Dev | **Done** — emailed through `/api/send`, see below |

@@ -10,7 +10,8 @@
  *   save the picture in src/assets/booking/ under its key, and rebuild.
  *     setup-movie.jpg     setup-karaoke.jpg     setup-watch.jpg
  *     addon-bouquet-s.jpg addon-bouquet-m.jpg   addon-bouquet-l.jpg
- *     addon-cake-strawberry.jpg  addon-cake-chocolate.jpg
+ *     addon-cake-heart.jpg  addon-cake-butterscotch.jpg  addon-cake-chocolate.jpg
+ *     addon-cake-white.jpg  addon-cake-pineapple.jpg
  *     addon-photo-15.jpg   (the celebration video)
  *   (any of .jpg .jpeg .png .webp). The key is "setup-" or "addon-" plus the id
  *   in src/data/booking.ts, so a new cake added there gets its own key too.
@@ -60,8 +61,8 @@ const media: { key: string; src: ImageMetadata; alt: string; sample?: boolean }[
   {media.map((m) => (
     <Image src={m.src} alt={m.alt} data-media={m.key} data-sample={m.sample ? '' : undefined}
            {...(m.key.startsWith('addon-')
-             // add-on cards are small portrait tiles: two across on a phone, 190px wide at most
-             ? { widths: [200, 400], sizes: '(max-width: 640px) 46vw, 190px', quality: 72 }
+             // add-on cards are portrait tiles: a swipe row on phones, five across on a desktop
+             ? { widths: [240, 480], sizes: '(max-width: 640px) 44vw, (max-width: 900px) 30vw, 220px', quality: 72 }
              : { widths: [360, 720], sizes: '(max-width: 640px) 92vw, 340px' })}
            loading="lazy" decoding="async" />
   ))}

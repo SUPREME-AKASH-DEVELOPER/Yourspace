@@ -75,7 +75,7 @@ test.describe('rules from the call', () => {
 
   test('Date Night: ₹1,500 plus the decoration chosen, plus add-ons', () => {
     const q = quote({ setup: 'date', guests: 2, decor: { name: 'Aesthetic', price: 1000 }, addons: ['bouquet-m'] });
-    expect(q.total).toBe(2750);
+    expect(q.total).toBe(2950);
     expect(q.unpriced).toEqual([]);
   });
 
@@ -102,13 +102,20 @@ test.describe('rules from the call', () => {
 
   test('add-ons are bouquet, cake and the celebration video, and nothing the owner ruled out', () => {
     expect(addonGroups.map((g) => g.id)).toEqual(['bouquet', 'cake', 'photo']);
-    expect(addonGroups[0].options.map((o) => o.price)).toEqual([200, 250, 300]);
+    // Tanishk's three bouquets and five ½ kg cakes, 20 Nov 2026
+    expect(addonGroups[0].options.map((o) => [o.name, o.price])).toEqual([
+      ['Small red rose bouquet', 300], ['Pink rose bouquet', 450], ['Big red rose bouquet', 650]]);
+    expect(addonGroups[1].options.map((o) => o.price)).toEqual([380, 380, 380, 400, 310]);
     expect(addonGroups[2].options[0]).toMatchObject({ price: null, priceNote: '₹400–₹500' });
     expect(addonGroups[2].callFor).toMatch(/phone/);
     // what can be picked, by name, descriptions may mention candles on a cake
     const offered = addonGroups.flatMap((g) => [g.name, ...g.options.map((o) => `${o.id} ${o.name}`)]).join(' ').toLowerCase();
-    for (const gone of ['bubble', 'snack', 'platter', 'led', 'petal', 'rose', 'fog', 'candle']) {
+    for (const gone of ['bubble', 'snack', 'platter', 'led', 'petal', 'fog', 'candle']) {
       expect(offered, gone).not.toContain(gone);
+    }
+    // a single rose was ruled out; roses only come as a bouquet
+    for (const o of addonGroups.flatMap((g) => g.options)) {
+      if (/rose/i.test(o.name)) expect(o.name, o.id).toMatch(/bouquet/i);
     }
     expect(priceList.map((p) => p.name.toLowerCase()).join(' ')).not.toMatch(/bubble|snack|led|petal|fog|candle/);
   });

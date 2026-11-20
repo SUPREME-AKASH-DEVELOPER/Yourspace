@@ -78,12 +78,12 @@ test.describe('booking flow', () => {
     }
 
     await page.locator('[data-addon-pick="bouquet-m"]').click();
-    // ₹1,500 session + ₹1,000 Aesthetic + ₹250 bouquet
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,750');
+    // ₹1,500 session + ₹1,000 Aesthetic + ₹450 pink rose bouquet
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,950');
 
     // one bouquet at a time: another replaces it, the same one removes it
     await page.locator('[data-addon-pick="bouquet-l"]').click();
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,800');
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹3,150');
     await page.locator('[data-addon-pick="bouquet-l"]').click();
     await expect(page.locator('#bkTotal strong')).toHaveText('₹2,500');
 

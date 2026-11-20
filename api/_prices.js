@@ -105,11 +105,14 @@ export function decorStatus(slot, dateIso, now = venueNow()) {
 export const DECOR_PRICES = { aesthetic: 1000, elite: 2000, royal: 5000 };
 
 export const ADDON_PRICES = {
-  'bouquet-s': 200,
-  'bouquet-m': 250,
-  'bouquet-l': 300,
-  'cake-strawberry': null,
-  'cake-chocolate': null,
+  'bouquet-s': 300,
+  'bouquet-m': 450,
+  'bouquet-l': 650,
+  'cake-heart': 380,
+  'cake-butterscotch': 380,
+  'cake-chocolate': 380,
+  'cake-white': 400,
+  'cake-pineapple': 310,
   'photo-15': null,
 };
 

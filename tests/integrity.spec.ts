@@ -37,7 +37,7 @@ test.describe('site integrity', () => {
 
   test('prices on the tickets page match what the flow charges', async ({ page }) => {
     await page.goto('/tickets/');
-    const listed = await page.locator('.leaders li', { hasText: 'small bouquet' }).locator('b').innerText();
+    const listed = await page.locator('.leaders li', { hasText: 'small red rose bouquet' }).locator('b').innerText();
     const movie = await page.locator('.pkg', { hasText: 'Movie Space' }).locator('.pkg-price').innerText();
 
     await page.goto('/book/');

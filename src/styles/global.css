@@ -1292,12 +1292,24 @@ h3{
 .ad-group{margin-bottom:28px}
 .ad-group>h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0 0 12px;font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
 .ad-group>h3 span{font-weight:400;font-size:.86rem;color:var(--grey)}
-.ad-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),190px));gap:10px;margin-bottom:8px}
-/* portrait cards: two across on a phone, so nobody scrolls past three posters */
-@media (max-width:640px){ .ad-grid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* One even column grid for every add-on group, so bouquets, cakes and the video
+   line up under each other. Five columns, because the largest group (the cakes)
+   has five, so that row runs edge to edge and the others sit under it. */
+.ad-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:8px}
+/* On a phone or tablet each group is one swipeable row, edge to edge, with the next card
+   peeking in. A two-column grid left the third bouquet and the fifth cake alone
+   on a row of their own. */
+@media (max-width:900px){
+  .ad-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:30%;
+    overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;scrollbar-width:none;
+    --bleed:clamp(18px,2.6vw,30px);margin-inline:calc(-1 * var(--bleed));padding:4px var(--bleed) 12px;scroll-padding-inline:var(--bleed)}
+  .ad-grid::-webkit-scrollbar{display:none}
+  .ad-grid .ad{scroll-snap-align:start}
+}
+@media (max-width:640px){ .ad-grid{grid-auto-columns:44%} }
 .ad-body{padding:10px 12px 12px;gap:3px}
 .ad-body strong{font-size:.92rem;font-weight:600}
-.ad-price{font-family:var(--mono);font-size:.72rem;color:var(--amber)}
+.ad-price{font-family:var(--mono);font-size:.72rem;color:var(--amber);margin-top:auto;padding-top:4px}
 
 /* step 6: how to pay */
 .paypick{border:0;padding:0;margin:22px 0 6px;display:grid;gap:10px}
@@ -1344,6 +1356,10 @@ h3{
   border:1px solid rgba(212,168,95,.55);box-shadow:none;
 }
 .btn.is-waiting:hover{background:rgba(212,168,95,.1);border-color:var(--amber)}
+/* The booking button swaps between solid and outline as the rules are ticked.
+   Faded, the two pass through a moment where the text is the colour of its own
+   background, so this one button changes at once. */
+.btn[data-bk-next]{transition:transform .22s var(--ease)}
 @media (max-width:640px){ .rule{padding:12px 11px;font-size:.9rem} }
 
 .bk-ref{margin:-4px 0 10px;font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;color:var(--grey)}

@@ -494,26 +494,34 @@ export interface AddonGroup {
  * LED balloons, snack platter. Fog entry and candlelight are already in every
  * decoration package, so they are not sold again.
  *
- * TODO(owner): real names, photographs and prices for every option below.
- * To add a photograph: drop it in src/assets/addons/, register it in
- * src/components/BookingMedia.astro, and set `photo` to its key here.
+ * To add a photograph: save it in src/assets/booking/ as addon-<id>.jpg and
+ * rebuild (see that folder's README). Prices are repeated in api/_prices.js,
+ * which is what Razorpay charges; tests/payments.spec.ts fails if they differ.
  */
 export const addonGroups: AddonGroup[] = [
   {
     id: 'bouquet', name: 'Flower bouquet', art: 'heart',
     blurb: 'Waiting on the table when you walk in.',
+    /* Tanishk, 20 Nov 2026: these three, with his photographs and prices. The
+       ids stay s/m/l so bookings already saved in someone's browser still match. */
     options: [
-      { id: 'bouquet-s', name: 'Small bouquet',  price: 200 },
-      { id: 'bouquet-m', name: 'Medium bouquet', price: 250 },
-      { id: 'bouquet-l', name: 'Large bouquet',  price: 300 },
+      { id: 'bouquet-s', name: 'Small red rose bouquet', price: 300 },
+      { id: 'bouquet-m', name: 'Pink rose bouquet',      price: 450 },
+      { id: 'bouquet-l', name: 'Big red rose bouquet',   price: 650 },
     ],
   },
   {
     id: 'cake', name: 'Cake', art: 'flame',
-    blurb: 'Ready on the table, with a knife and candles.',
+    blurb: 'Half a kilo, ready on the table with a knife and candles.',
+    /* Tanishk, 20 Nov 2026: every cake is ½ kg. He has not named the heart-shaped
+       one or the white one yet ("name inke baad mai add kr lenge"), so they are
+       called by how they look until he does. TODO(owner): their real names. */
     options: [
-      { id: 'cake-strawberry', name: 'Strawberry', price: null },
-      { id: 'cake-chocolate',  name: 'Chocolate',  price: null },
+      { id: 'cake-heart',        name: 'Heart-shaped cake',  price: 380 },
+      { id: 'cake-butterscotch', name: 'Butterscotch',       price: 380 },
+      { id: 'cake-chocolate',    name: 'Chocolate waffle',   price: 380 },
+      { id: 'cake-white',        name: 'White cake',         price: 400 },
+      { id: 'cake-pineapple',    name: 'Pineapple',          price: 310 },
     ],
   },
   {
