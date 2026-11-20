@@ -77,18 +77,21 @@ export const decorations: Decoration[] = [
     price: 1000,
     tagline: 'Soft, light and uncluttered',
     blurb:
-      'Balloons in soft blues, creams and gold, a draped backdrop and a neon sign, with the floor filled so the whole room feels part of it.',
+      'Balloons in soft pastels and gold, an arched or draped backdrop and a neon sign, with the floor filled so the whole room feels part of it.',
     includes: [
       ...DECOR_INCLUDED,
       'Balloon arch in soft tones',
-      'Draped backdrop',
+      'Arched or draped backdrop',
       'Neon sign',
       'Floor balloons',
       'Pedestals for the cake',
     ],
     photos: [
-      { src: aesthetic1, alt: 'A draped white backdrop lit warm, with a Happy Birthday neon sign, an arch of blue, cream and gold balloons, and cake pedestals standing in a floor of balloons.' },
-      { src: aesthetic2, alt: 'A lilac arch backdrop with a Happy Birthday neon sign, a balloon garland in lilac, cream and gold, low fog, and a cake on a fluted pedestal.' },
+      /* Tanishk, 20 Nov 2026: this photograph first. It is a sharper, wider shot
+         of the lilac setup that used to be second, so that copy was dropped and
+         the blue and white setup moved to second. */
+      { src: aesthetic1, alt: 'A lilac arch backdrop with a Happy Birthday neon sign, a balloon garland in lilac, cream and gold, low fog, and a cake on a fluted pedestal in a floor of balloons.' },
+      { src: aesthetic2, alt: 'A draped white backdrop lit warm, with a Happy Birthday neon sign, an arch of blue, cream and gold balloons, and cake pedestals standing in a floor of balloons.' },
       { src: aesthetic3, alt: 'The projection screen showing guest names and photos above a candlelit table, with balloons filling the floor of the dark room.' },
     ],
   },

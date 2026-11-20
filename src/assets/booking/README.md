@@ -31,10 +31,10 @@ roses ₹300, pink roses ₹450, big red roses ₹650) and the five ½ kg cakes
 pineapple ₹310). The heart-shaped and white cakes are still waiting for their
 real names. No sample images are left in this folder.
 
-**Deliberately without a picture:** the celebration video (`addon-photo-15`). The
-old sample showed a vintage camera and printed photographs, which was right for
-the photoshoot this used to be and wrong for a video, so it was taken out rather
-than left to promise the wrong thing. The card falls back to the drawn gold art.
-A still from a real celebration film is what belongs here.
+**Celebration video (`addon-photo-15.sample.jpg`):** an AI-generated picture of a
+camera on a gimbal filming a birthday setup in a dark private cinema, added at
+Tanishk's request (20 Nov 2026). It shows with the **Sample image** badge. When a
+still from a real YourSpace celebration film arrives, save it as
+`addon-photo-15.jpg` and delete the sample.
 
-**Still to come from the owner:** a still for the celebration video, the setup photographs, and names for the heart-shaped and white cakes.
+**Still to come from the owner:** a real still for the celebration video, the setup photographs, and names for the heart-shaped and white cakes.
