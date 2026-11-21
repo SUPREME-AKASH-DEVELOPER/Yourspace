@@ -375,3 +375,35 @@ test.describe('booking flow', () => {
     await ctx.close();
   });
 });
+
+test.describe('Movie Space shows its three hours', () => {
+  // Tanishk, 21 Nov 2026: a movie slot read "to 8:30 PM", as if it were 90 minutes.
+  test('the time step and the setup card say when a movie really ends', async ({ page }) => {
+    await page.goto('/book/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.locator('[data-exp-pick="standup"]').click();   // suggests Movie Space
+    await page.locator('[data-date-pick]').nth(2).click();
+    await page.locator('[data-bk-next]').click();
+
+    await expect(page.locator('.bk-sub')).toContainText('3 hours');
+    await expect(page.locator('[data-slot-pick="s5"]')).toContainText('to 10:00 PM');
+    await expect(page.locator('[data-slot-pick="s6"]')).toContainText('to 11:45 PM');
+    await expect(page.locator('[data-slot-pick="s7"]')).toContainText('Too late for 3 hours');
+
+    await page.locator('[data-slot-pick="s5"]').click();
+    await expect(page.locator('[data-setup-pick="movie"] .sc-when')).toHaveText('7:00 PM – 10:00 PM');
+    await expect(page.locator('[data-setup-pick="date"] .sc-when')).toHaveText('7:00 PM – 8:30 PM');
+  });
+
+  test('other occasions still show 90-minute slots', async ({ page }) => {
+    await page.goto('/book/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.locator('[data-exp-pick="date"]').click();
+    await page.locator('[data-date-pick]').nth(2).click();
+    await page.locator('[data-bk-next]').click();
+    await expect(page.locator('[data-slot-pick="s5"]')).toContainText('to 8:30 PM');
+    await expect(page.locator('[data-slot-pick="s7"]')).toContainText('to 12:00 AM');
+  });
+});

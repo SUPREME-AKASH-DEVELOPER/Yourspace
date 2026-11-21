@@ -7,7 +7,7 @@ import {
   BUFFER_MINUTES, MAX_GUESTS, SEATING, SEAT_IDS, seatKind, cleanSeats, defaultSeats, seatsLabel,
   setupOf, setupPrice, addonOf, quote, addMinutes, DECOR_FROM, DECOR_UNTIL,
   decorStatus, DECOR_NOTICE_MINUTES, HOUSE_RULES, HOUSE_RULES_VERSION, requiredRules, rulesAccepted,
-  clashes, slotFree, fitsBeforeClose, durationLabel, holdMinutes, MOVIE_MINUTES,
+  clashes, slotFree, fitsBeforeClose, durationLabel, holdMinutes, MOVIE_MINUTES, SESSION_MINUTES,
   type DecorStatus, type Busy,
   type Setup, type Quote,
 } from '../data/booking';
@@ -662,10 +662,31 @@ function step1() {
     `<p class="fine">More than ${MAX_GUESTS} of you, or looking further ahead? Call us on ${callLink()}.</p>`;
 }
 
+/* The setup this booking is heading for, before step 4 settles it: the one
+   already picked if they came back, otherwise the one their occasion suggests.
+   Tanishk, 21 Nov 2026: a movie slot read "to 8:30 PM" here, as if it were 90
+   minutes, so the times now say when this session really ends. */
+const plannedSetup = (): string => S.setup || expOf()?.suggests || '';
+
+/** What a slot on the time step says under its start time. */
+function slotEnds(slotId: string, start: string, end: string): string {
+  const planned = plannedSetup();
+  if (planned === 'movie') {
+    if (!fitsBeforeClose(slotId, 'movie')) return `Too late for ${durationLabel(MOVIE_MINUTES)}`;
+    if (clashes(takenNow(), slotId, 'movie')) return `Not free for ${durationLabel(MOVIE_MINUTES)}`;
+    return `to ${addMinutes(start, MOVIE_MINUTES)}`;
+  }
+  const mins = setupOf(planned)?.minutes;
+  return `to ${mins && mins < 90 ? addMinutes(start, mins) : end}`;
+}
+
 function step2() {
   loadTaken(S.date);
+  const movie = plannedSetup() === 'movie';
   return head(3, 'Choose your time',
-    `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · sessions are 90 minutes. Movie Space runs ${durationLabel(MOVIE_MINUTES)}, and karaoke 30 minutes, from the start of the slot.`) +
+    `${dateLabel(S.date)} · ${S.guests} ${S.guests === 1 ? 'guest' : 'guests'} · ` + (movie
+      ? `Movie Space runs ${durationLabel(MOVIE_MINUTES)} from the start of the slot, so each time below shows when your movie ends.`
+      : `sessions are 90 minutes. Movie Space runs ${durationLabel(MOVIE_MINUTES)}, and karaoke 30 minutes, from the start of the slot.`)) +
     noticeBlock() +
     `<p class="fine" style="margin:-14px 0 18px">We leave ${BUFFER_MINUTES} minutes between bookings to reset the room, so the start times are not on the hour. The space is yours for the whole slot, with nobody waiting at the door.</p>` +
     (expOf()?.suggests === 'date' ? `<p class="fine" style="margin:-8px 0 18px">Want your room decorated? One decorator sets the room up for sessions starting between ${DECOR_FROM} and ${DECOR_UNTIL}, and needs ${NOTICE_HOURS} hours' notice to do it, so each time below says what it can have today.</p>` : '') +
@@ -683,7 +704,7 @@ function step2() {
         : '';
       return `
       <button class="slot ${S.slot === s.id ? 'is-sel' : ''}" type="button" data-slot-pick="${s.id}"${gone ? ' disabled' : ''}>
-        <strong>${s.start}</strong><span>${passed ? 'Already started' : booked ? 'Booked' : `to ${s.end}`}</span>${tag}
+        <strong>${s.start}</strong><span>${passed ? 'Already started' : booked ? 'Booked' : slotEnds(s.id, s.start, s.end)}</span>${tag}
       </button>`;
     }).join('')}</div>` +
     `<div class="bk-note" style="margin-top:22px"><i>Note</i><span>We check the slot is free as soon as your booking reaches us, and call you if it is not. You are never charged for a slot we cannot give you.</span></div>`;
@@ -706,6 +727,10 @@ function setupCard(s: Setup) {
   const sel = S.setup === s.id;
   const suggested = expOf()?.suggests === s.id;
   const dur = s.minutes ? durationLabel(s.minutes) : 'Duration on call';
+  // the real start and end for the time already chosen: Movie Space at 7:00 PM reads 7:00 PM – 10:00 PM
+  const sl = slotOf();
+  const when = sl && s.minutes && !p.blocked
+    ? `${sl.start} – ${s.minutes === SESSION_MINUTES ? sl.end : addMinutes(sl.start, s.minutes)}` : '';
   const price = p.amount !== null
     ? `<span class="sc-price num">${rupee(p.amount)}</span>`
     : `<span class="sc-price sc-price-ask">${p.blocked ? 'Call to book' : 'Price on call'}</span>`;
@@ -718,6 +743,7 @@ function setupCard(s: Setup) {
       </span>
       <span class="sc-body">
         <strong class="sc-name">${s.name}</strong>
+        ${when ? `<span class="sc-when num">${when}</span>` : ''}
         <span class="sc-tag">${s.tagline}</span>
         <span class="sc-pricing">${price}${p.note ? `<span class="sc-per">${esc(p.note)}</span>` : ''}</span>
         <span class="sc-list">${includes.map((i) => `<span>${esc(i)}</span>`).join('')}</span>
