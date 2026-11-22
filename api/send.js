@@ -22,9 +22,13 @@ const ALLOWED_ORIGINS = new Set([
   'https://yourspace-sand.vercel.app',
 ]);
 
-/** Our own pages, and Vercel's preview deployments of this project. */
+/**
+ * Our own pages, and Vercel's preview deployments of this project. Previews are
+ * named yourspace-<hash or git-branch>-akashs-projects-d49d3e08.vercel.app; the
+ * team suffix matters, because anyone can name their own project yourspace-x.
+ */
 export const allowedOrigin = (origin) =>
-  ALLOWED_ORIGINS.has(origin) || /^https:\/\/yourspace-[\w-]+\.vercel\.app$/.test(origin);
+  ALLOWED_ORIGINS.has(origin) || /^https:\/\/yourspace-[a-z0-9-]+-akashs-projects-d49d3e08\.vercel\.app$/.test(origin);
 
 const MAX_BODY = 16_000;
 const MAX_FIELDS = 30;

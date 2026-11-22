@@ -161,3 +161,18 @@ test.describe('the email function', () => {
     expect(canEmailCustomer(booking)).toBe(true);
   });
 });
+
+test.describe('who may call the email function', () => {
+  test.skip(({ browserName, isMobile }) => browserName !== 'chromium' || isMobile, 'no browser involved');
+  test('only our own site and our own previews', async () => {
+    const { allowedOrigin } = await import('../api/send.js');
+    for (const ok of ['https://www.yourspacejbp.com', 'https://yourspacejbp.com', 'https://yourspace-sand.vercel.app',
+      'https://yourspace-git-main-akashs-projects-d49d3e08.vercel.app', 'https://yourspace-abc123-akashs-projects-d49d3e08.vercel.app']) {
+      expect(allowedOrigin(ok), ok).toBe(true);
+    }
+    for (const bad of ['https://yourspace-evil.vercel.app', 'https://evil.example', '', 'null',
+      'https://yourspace-x-akashs-projects-d49d3e08.vercel.app.evil.example', 'http://www.yourspacejbp.com']) {
+      expect(allowedOrigin(bad), bad).toBe(false);
+    }
+  });
+});

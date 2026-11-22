@@ -20,6 +20,9 @@ const ogImage = new URL('/og.png', Astro.site).href;
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- charset first: the security policy is placed straight after it at build
+       time, so it has to come before every script, this one included -->
+  <meta charset="utf-8" />
   <script is:inline>
     // Set before first paint: the house warms and cools with the hour, and
     // the day is used for the suggestion in the hero.
@@ -32,7 +35,6 @@ const ogImage = new URL('/og.png', Astro.site).href;
       el.setAttribute('data-day', String(d.getDay()));
     })();
   </script>
-  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>{title}</title>
   <meta name="description" content={description} />

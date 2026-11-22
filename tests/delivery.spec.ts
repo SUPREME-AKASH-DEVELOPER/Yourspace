@@ -192,9 +192,9 @@ test.describe('submissions actually go somewhere', () => {
   });
 
   test('only the intended addresses are ever used', async ({ page }) => {
-    // the endpoint is built from notifyPrimary, so check them in one place.
     // yourspacejbp@gmail.com is the address we publish for customers to write
-    // to; the other two are where submissions are delivered.
+    // to. Where leads are delivered is decided on the server, so the team's
+    // personal addresses must never be in the browser's code (QA, 22 Nov 2026).
     await page.goto('/');
     const bundle = await page.evaluate(async () => {
       const src = [...document.querySelectorAll('script[src]')]
@@ -203,9 +203,7 @@ test.describe('submissions actually go somewhere', () => {
     });
     const addresses = [...new Set(bundle.match(/[\w.+-]+@[\w.-]+\.\w+/g) ?? [])]
       .filter((a) => !a.endsWith('example.com'));
-    expect(addresses.sort()).toEqual([
-      'badalakki11@gmail.com', 'tanishkofficial27@gmail.com', 'yourspacejbp@gmail.com',
-    ]);
+    expect(addresses.sort()).toEqual(['yourspacejbp@gmail.com']);
   });
 
   test('replies reach the visitor, and the browser names no one to copy', async ({ page }) => {

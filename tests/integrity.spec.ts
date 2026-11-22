@@ -69,7 +69,7 @@ test.describe('site integrity', () => {
     expect(body).toContain('Referrer-Policy: strict-origin-when-cross-origin');
     // inline scripts are allowed by hash, never by blanket unsafe-inline
     expect(body).not.toContain("script-src 'self' 'unsafe-inline'");
-    expect(body).toMatch(/script-src 'self' https:\/\/checkout\.razorpay\.com 'sha256-/);
+    expect(body).toMatch(/script-src 'self' https:\/\/checkout\.razorpay\.com https:\/\/\*\.razorpay\.com 'sha256-/);
     // Razorpay's checkout window, and the popups banks open from it
     expect(body).toContain('frame-src https://api.razorpay.com https://checkout.razorpay.com');
     expect(body).toContain('Cross-Origin-Opener-Policy: same-origin-allow-popups');
@@ -92,5 +92,22 @@ test.describe('site integrity', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     expect(external).toEqual([]);
+  });
+});
+
+test.describe('the security policy reaches the live host', () => {
+  // Vercel ignores _headers, so every page carries the policy itself (QA, 22 Nov 2026).
+  test('every page carries a Content-Security-Policy before any script', async ({ page }) => {
+    for (const path of ['/', '/book/', '/tickets/', '/contact/', '/admin/']) {
+      const html = await (await page.request.get(path)).text();
+      const at = html.indexOf('http-equiv="Content-Security-Policy"');
+      expect(at, `${path} has a policy`).toBeGreaterThan(-1);
+      const firstScript = html.search(/<script\b/i);
+      if (firstScript > -1) expect(at, `${path} policy comes before the first script`).toBeLessThan(firstScript);
+      const policy = html.slice(at, html.indexOf('>', at));
+      expect(policy).toContain("object-src 'none'");
+      expect(policy).toContain('checkout.razorpay.com');
+      expect(policy).not.toContain('frame-ancestors');
+    }
   });
 });

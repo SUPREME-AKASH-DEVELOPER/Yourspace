@@ -1,14 +1,14 @@
-import { site, formEndpoint } from '../data/site';
+import { site } from '../data/site';
 
 /**
  * First choice: our own /api/send, which emails the team and the visitor
  * through Resend. If that is unreachable or broken, the backup keeps the lead
- * coming in: Web3Forms when a key is set, FormSubmit otherwise. The backup only
- * reaches the team, so the visitor gets no email from it.
+ * coming in: Web3Forms, which delivers to the inbox its key was made for. The
+ * backup only reaches the team, so the visitor gets no email from it.
  */
 const PRIMARY = '/api/send';
 const useWeb3Forms = Boolean(site.web3formsKey);
-const BACKUP = useWeb3Forms ? 'https://api.web3forms.com/submit' : formEndpoint;
+const BACKUP = useWeb3Forms ? 'https://api.web3forms.com/submit' : '';
 
 /**
  * Every submission on this site leaves by one route: email.
@@ -99,16 +99,8 @@ export function envelope(subject: string, replyTo?: string): Record<string, stri
       ...(replyTo ? { replyto: replyTo } : {}),
     };
   }
-  return {
-    _subject: subject,
-    _template: 'table',
-    _captcha: 'false',
-    ...(site.notifyCc ? { _cc: site.notifyCc } : {}),
-    ...(replyTo ? { _replyto: replyTo } : {}),
-  };
+  return { subject, ...(replyTo ? { replyto: replyTo } : {}) };
 }
 
 /** Which service is carrying the mail, for the CSP and for tests. */
-export const mailOrigin = useWeb3Forms
-  ? 'https://api.web3forms.com'
-  : (formEndpoint ? new URL(formEndpoint).origin : '');
+export const mailOrigin = useWeb3Forms ? 'https://api.web3forms.com' : '';

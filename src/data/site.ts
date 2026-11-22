@@ -57,24 +57,11 @@ export const site = {
   /** Optional: a Google Form to send enquiries to instead of WhatsApp. */
   googleForm: '',
 
-  /**
-   * WHO GETS THE FORMS
-   *
-   * notifyPrimary is the inbox FormSubmit needs confirmed. The very first
-   * submission sends that address a one-time link, and nothing is delivered
-   * to anyone until it is clicked, so whoever owns this address has to click
-   * it once. (A Web3Forms key below skips that step entirely.)
-   *
-   * notifyCc rides along on every submission and needs no confirmation of
-   * its own.
+  /*
+   * WHO GETS THE LEADS is decided on the server, in api/send.js (NOTIFY_TO and
+   * NOTIFY_CC in Vercel). The team's personal addresses used to live here, which
+   * put them in every page's JavaScript for anyone to harvest (QA, 22 Nov 2026).
    */
-  notifyPrimary: 'tanishkofficial27@gmail.com',
-
-  /** Copied in on every submission. Comma-separated for more than one. */
-  notifyCc: 'badalakki11@gmail.com',
-
-  /** Offered to visitors if a submission could not be delivered at all. */
-  notifyEmail: 'tanishkofficial27@gmail.com',
 
   /**
    * HOW THE EMAIL IS SENT
@@ -140,20 +127,9 @@ export const phoneNumbers = [
 
 
 /**
- * The FormSubmit endpoint, used only when no Web3Forms key is set.
- * Built from notifyPrimary so the address and the endpoint cannot disagree.
+ * The one origin the backup route posts to, so the CSP can allow exactly that.
  */
-export const formEndpoint = site.notifyPrimary
-  ? `https://formsubmit.co/ajax/${site.notifyPrimary}`
-  : '';
-
-/**
- * The one origin submissions are posted to, so the CSP can allow exactly
- * that and nothing else. Follows whichever service is in use.
- */
-export const formOrigin = site.web3formsKey
-  ? 'https://api.web3forms.com'
-  : (formEndpoint ? new URL(formEndpoint).origin : '');
+export const formOrigin = site.web3formsKey ? 'https://api.web3forms.com' : '';
 
 /** Opens turn-by-turn directions to the room in Google Maps (the app on a phone). */
 export const directionsUrl =
