@@ -4,6 +4,7 @@ import { deliver, envelope } from './deliver';
 import { mountBooking, openBooking, prefillBooking, prefillDecor } from './booking';
 import { experiences, OTHER } from '../data/booking';
 import { decorations } from '../data/decorations';
+import { watchFilms } from './films';
 
 /* ---------- contact links ---------- */
 function wireContact() {
@@ -123,6 +124,19 @@ function wireOtherFields() {
    The pointer tilts each card and drags a band of light across it; clicking
    turns it over. All of it is decoration on top of a plain button, so the
    keyboard path is just "focus, press, it flips".                          */
+/* ---------- find us: copy the address ---------- */
+function wireFindUs() {
+  $$<HTMLButtonElement>('[data-copy-address]').forEach((b) => {
+    b.addEventListener('click', async () => {
+      const state = b.closest('[data-findus]')?.querySelector<HTMLElement>('[data-copy-state]');
+      const text = b.dataset.copyAddress ?? '';
+      let ok = false;
+      try { await navigator.clipboard.writeText(text); ok = true; } catch { /* no clipboard: show it instead */ }
+      if (state) state.textContent = ok ? 'Address copied. Paste it into any maps app.' : text;
+    });
+  });
+}
+
 function wireDeck() {
   const cards = $$<HTMLButtonElement>('[data-card]');
   if (!cards.length) return;
@@ -529,6 +543,8 @@ function boot() {
   wireChrome();
   wireMenu();
   wireDeck();
+  watchFilms();
+  wireFindUs();
   wireReel();
   wireLightbox();
   wireOtherFields();

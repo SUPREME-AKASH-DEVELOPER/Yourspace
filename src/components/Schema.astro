@@ -42,5 +42,6 @@ if (phoneNumbers.length === 1) schema.telephone = phoneNumbers[0].raw;
 else if (phoneNumbers.length > 1) schema.telephone = phoneNumbers.map((p) => p.raw);
 if (site.email) schema.email = site.email;
 if (site.mapsUrl) schema.hasMap = site.mapsUrl;
+schema.geo = { '@type': 'GeoCoordinates', latitude: site.geo.lat, longitude: site.geo.lng };
 ---
 <script type="application/ld+json" is:inline set:html={JSON.stringify(schema)} />

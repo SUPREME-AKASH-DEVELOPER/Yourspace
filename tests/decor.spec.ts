@@ -185,13 +185,13 @@ test.describe('photographs in general', () => {
     await expect(frame, 'focus returns to the frame').toBeFocused();
   });
 
-  test('the screenshot caption was cropped off the source', async () => {
-    // royal-2 arrived with "Bare minimum?" burned across the top. It was cropped,
-    // so the file must be shorter than the 1600px it came in at.
-    const { default: sharp } = await import('sharp');
-    const meta = await sharp('src/assets/decor/royal-2.jpeg').metadata();
-    expect(meta.height, 'top band should be gone').toBeLessThan(1500);
-    expect(meta.width).toBe(1098);
+  test("every decoration photograph is our own room, none borrowed", async () => {
+    // Tanishk, 22 Nov 2026: our own photos for all three setups. The borrowed
+    // pictures, and the two showing a past customer's face and letter, are gone.
+    const { readdirSync } = await import('node:fs');
+    const files = readdirSync('src/assets/decor').sort();
+    expect(files).toEqual(['aesthetic-1.jpeg', 'aesthetic-2.jpeg', 'aesthetic-3.jpeg',
+      'elite-1.jpeg', 'elite-2.jpeg', 'royal-1.jpeg', 'royal-2.jpeg', 'royal-3.jpeg']);
   });
 
   test('the room page no longer claims there are no pictures', async ({ page }) => {

@@ -8,10 +8,11 @@ import Faq from '../components/Faq.astro';
 import PrebookForm from '../components/PrebookForm.astro';
 import Marquee from '../components/Marquee.astro';
 import Reel from '../components/Reel.astro';
+import FindUs from '../components/FindUs.astro';
 import { experiences, OTHER, ROOM_BASE, RUNTIME, MAX_GUESTS, SEATING } from '../data/booking';
 import { homeFaq } from '../data/faq';
 import { Image } from 'astro:assets';
-import roomShot from '../assets/decor/trendy-2.jpeg';
+import roomShot from '../assets/decor/royal-3.jpeg';
 ---
 <Base
   title="YourSpace Jabalpur · A Private Screening Room for Your People"
@@ -44,7 +45,7 @@ import roomShot from '../assets/decor/trendy-2.jpeg';
     <!-- the right-hand side: the room itself, with the ticket laid over its foot -->
     <div class="hero-side">
     <figure class="hero-shot">
-      <Image src={roomShot} alt="The room from the doorway: the projection screen on one side, a decorated backdrop and fog over a floor of balloons on the other."
+      <Image src={roomShot} alt="Our room dressed for a birthday: a wall of pink roses and a velvet curtain around a handwritten Happy Birthday board, with a candlelit cake table in front."
              widths={[480, 720, 1080]} sizes="(max-width: 860px) 92vw, 46vw" loading="eager" fetchpriority="high" />
       <figcaption class="hero-shot-tag">The room, dressed for a birthday</figcaption>
     </figure>
@@ -175,10 +176,16 @@ import roomShot from '../assets/decor/trendy-2.jpeg';
   </div>
 </section>
 
+<section class="band" id="find-us">
+  <div class="shell">
+    <FindUs label="Reel 06" />
+  </div>
+</section>
+
 <section class="band band-book" id="prebook">
   <div class="shell book-grid">
     <div class="reveal">
-      <p class="rule-label"><i>Reel 06</i><span>Pre-book</span></p>
+      <p class="rule-label"><i>Reel 07</i><span>Pre-book</span></p>
       <h2 class="title">Get in <em>before</em> we open.</h2>
       <p class="standfirst">We're opening soon in Jabalpur. Tell us what you'd book and when, and we'll call you to lock your slot before we open to everyone.</p>
       <ul class="stub-list">

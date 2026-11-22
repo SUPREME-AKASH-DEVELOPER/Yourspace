@@ -2,7 +2,7 @@
 import Logo from './Logo.astro';
 import WhatsApp from './WhatsApp.astro';
 import { experiences } from '../data/booking';
-import { site } from '../data/site';
+import { directionsUrl, site } from '../data/site';
 const year = new Date().getFullYear();
 ---
 <footer class="colophon">
@@ -31,6 +31,7 @@ const year = new Date().getFullYear();
         <WhatsApp variant="link" />
         <a href="/contact/">Contact</a>
         <p class="fine">{site.city}, {site.region}<br />{site.address || site.hours}</p>
+        <a href={directionsUrl} target="_blank" rel="noopener">Get directions</a>
       </div>
     </div>
   </div>

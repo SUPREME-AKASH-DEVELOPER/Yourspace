@@ -1,0 +1,197 @@
+---
+/**
+ * Find us: a drawn route to the room and the last few turns, in words.
+ *
+ * The map is our own drawing, not a Google embed, so loading the page still
+ * makes no request to anyone else (the privacy page promises that). It is a
+ * sketch of the streets around the room, not to scale, laid out from the
+ * "Your space" place on Google Maps: Garha Road, Labour Chowk, Jai Nagar Road
+ * and Jai Nagar Park. "Get directions" hands over to Google Maps for the real
+ * route from wherever the visitor is.
+ */
+import { site, prettyPhone, directionsUrl } from '../data/site';
+
+interface Props { label?: string; heading?: 'h2' | 'h3' }
+const { label = 'Find us', heading = 'h2' } = Astro.props;
+const H = heading;
+const [street] = site.address.split(', Labour Chowk');
+const area = site.address.slice(street.length + 2);
+---
+<div class="findus" data-findus>
+  <figure class="fu-map reveal">
+    <svg viewBox="0 0 520 560" role="img"
+         aria-labelledby="fu-map-title fu-map-desc" class="fu-svg">
+      <title id="fu-map-title">Sketch map of the way to YourSpace, not to scale</title>
+      <desc id="fu-map-desc">From Garha Road, turn at Labour Chowk onto Jai Nagar Road and head north. YourSpace is a short way up Jai Nagar Road, beside Jai Nagar Park, on the second floor above Olympus Cafe.</desc>
+      <defs>
+        <pattern id="fu-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M40 0H0V40" fill="none" stroke="rgba(237,230,216,.05)" stroke-width="1" />
+        </pattern>
+        <radialGradient id="fu-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0" stop-color="#D4A85F" stop-opacity=".45" />
+          <stop offset="1" stop-color="#D4A85F" stop-opacity="0" />
+        </radialGradient>
+        <linearGradient id="fu-route" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stop-color="#A57A3E" />
+          <stop offset="1" stop-color="#F2D7A0" />
+        </linearGradient>
+      </defs>
+
+      <rect width="520" height="560" fill="#0F0D0A" />
+      <rect width="520" height="560" fill="url(#fu-grid)" />
+
+      <!-- blocks -->
+      <g fill="rgba(237,230,216,.035)" stroke="rgba(237,230,216,.07)">
+        <rect x="128" y="60" width="96" height="120" rx="3" />
+        <rect x="128" y="200" width="96" height="140" rx="3" />
+        <rect x="300" y="40" width="160" height="96" rx="3" />
+        <rect x="300" y="250" width="70" height="70" rx="3" />
+        <rect x="400" y="230" width="100" height="44" rx="3" />
+        <rect x="140" y="470" width="130" height="70" rx="3" />
+        <rect x="330" y="410" width="150" height="120" rx="3" />
+      </g>
+
+      <!-- Jai Nagar Park -->
+      <rect x="300" y="150" width="120" height="84" rx="10" fill="rgba(150,170,110,.10)" stroke="rgba(170,190,120,.28)" stroke-dasharray="3 4" />
+      <text x="360" y="196" class="fu-place" text-anchor="middle">Jai Nagar Park</text>
+
+      <!-- roads -->
+      <g class="fu-roads" fill="none" stroke-linecap="round">
+        <path d="M104 0 L112 560" />
+        <path d="M0 478 L520 300" />
+        <path d="M300 371 L250 0" />
+      </g>
+      <g class="fu-road-names">
+        <text transform="translate(97 250) rotate(89)">MR-4 ROAD</text>
+        <text transform="translate(392 352) rotate(-18.9)">GARHA ROAD</text>
+        <text transform="translate(262 118) rotate(-82.3)">JAI NAGAR ROAD</text>
+      </g>
+
+      <!-- the way in -->
+      <path class="fu-route-base" d="M24 470 L300 371 L274 194" fill="none" />
+      <path class="fu-route" d="M24 470 L300 371 L274 194" fill="none" pathLength="100" />
+
+      <!-- Labour Chowk -->
+      <g class="fu-chowk">
+        <circle cx="300" cy="371" r="11" />
+        <circle cx="300" cy="371" r="4" class="fu-chowk-dot" />
+        <text x="318" y="398" class="fu-place">Labour Chowk</text>
+      </g>
+
+      <!-- the room: the eclipse from our logo, glowing -->
+      <g class="fu-pin" transform="translate(274 194)">
+        <circle r="46" fill="url(#fu-glow)" class="fu-halo" />
+        <circle r="20" class="fu-ring" />
+        <circle r="11" fill="#D4A85F" />
+        <circle r="10" cx="4" cy="-3" fill="#0F0D0A" />
+      </g>
+      <g class="fu-callout">
+        <path d="M252 186 L214 160" />
+        <rect x="34" y="110" width="184" height="50" rx="4" />
+        <text x="50" y="132" class="fu-call-name">YourSpace</text>
+        <text x="50" y="149" class="fu-call-sub">2nd floor, above Olympus Cafe</text>
+      </g>
+
+      <!-- north, and a note on scale -->
+      <g class="fu-north" transform="translate(478 52)">
+        <circle r="18" />
+        <path d="M0 -11 L5 5 L0 2 L-5 5 Z" />
+        <text y="32" text-anchor="middle">N</text>
+      </g>
+      <text x="504" y="546" class="fu-scale" text-anchor="end">NOT TO SCALE</text>
+    </svg>
+    <figcaption class="fu-cap">A sketch of the last few turns. For the full route, tap Get directions.</figcaption>
+  </figure>
+
+  <div class="fu-copy reveal">
+    <p class="rule-label"><i>{label}</i><span>Jabalpur</span></p>
+    <H class="title">The last turn is the <em>easy</em> part.</H>
+    <address class="fu-address">
+      <span class="fu-line">{street}</span>
+      <span class="fu-line fu-muted">{area}</span>
+    </address>
+
+    <ol class="fu-steps">
+      <li><span class="num">01</span><span>Head for <b>Labour Chowk</b> on Garha Road.</span></li>
+      <li><span class="num">02</span><span>Turn onto <b>Jai Nagar Road</b>, towards Jai Nagar Park.</span></li>
+      <li><span class="num">03</span><span>Look for <b>Indore Sweet</b> and <b>Olympus Cafe</b> at street level.</span></li>
+      <li><span class="num">04</span><span>We're upstairs, on the <b>2nd floor</b>. Walk in, the room is yours.</span></li>
+    </ol>
+
+    <div class="fu-actions">
+      <a class="btn btn-key" href={directionsUrl} target="_blank" rel="noopener" data-directions>
+        Get directions<span aria-hidden="true">→</span>
+      </a>
+      <a class="btn btn-line" href={site.mapsUrl} target="_blank" rel="noopener">Open in Google Maps</a>
+    </div>
+    <p class="fu-small">
+      <button class="linkish" type="button" data-copy-address={site.address}>Copy the address</button>
+      <span aria-hidden="true">·</span>
+      <span>Lost? Call <a href={`tel:${site.phone}`}>{prettyPhone}</a></span>
+      <span aria-hidden="true">·</span>
+      <span>{site.hours}</span>
+    </p>
+    <p class="fu-small" role="status" data-copy-state></p>
+  </div>
+</div>
+
+<style>
+  .findus{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(28px,5vw,72px);align-items:center}
+  @media (max-width:860px){ .findus{grid-template-columns:1fr} }
+
+  .fu-map{margin:0;position:relative;border:1px solid var(--rule);border-radius:6px;overflow:hidden;
+    background:#0F0D0A;box-shadow:0 40px 80px -50px rgba(0,0,0,.9),0 0 0 1px rgba(212,168,95,.08) inset}
+  .fu-svg{display:block;width:100%;height:auto}
+  .fu-cap{position:absolute;left:14px;bottom:12px;right:120px;font-family:var(--mono);font-size:.62rem;
+    letter-spacing:.08em;color:var(--grey)}
+
+  .fu-roads path{stroke:rgba(237,230,216,.13);stroke-width:16}
+  .fu-road-names text{font-family:var(--mono);font-size:9px;letter-spacing:.32em;fill:rgba(237,230,216,.38)}
+  .fu-place{font-family:var(--mono);font-size:10px;letter-spacing:.12em;fill:rgba(237,230,216,.62)}
+  .fu-chowk circle{fill:#0F0D0A;stroke:rgba(237,230,216,.5);stroke-width:1.5}
+  .fu-chowk .fu-chowk-dot{fill:rgba(237,230,216,.7);stroke:none}
+
+  .fu-route-base{stroke:rgba(212,168,95,.22);stroke-width:3;stroke-dasharray:2 7;stroke-linecap:round}
+  .fu-route{stroke:url(#fu-route);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:100;stroke-dashoffset:100;filter:drop-shadow(0 0 6px rgba(212,168,95,.55))}
+  .fu-map.is-in .fu-route{animation:fu-draw 2.4s .3s cubic-bezier(.65,0,.35,1) forwards}
+  @keyframes fu-draw{to{stroke-dashoffset:0}}
+
+  .fu-ring{fill:none;stroke:rgba(212,168,95,.7);stroke-width:1.2}
+  .fu-halo{transform-origin:0 0;animation:fu-pulse 3.2s ease-out infinite}
+  @keyframes fu-pulse{0%{transform:scale(.55);opacity:1}100%{transform:scale(1.5);opacity:0}}
+  .fu-pin{opacity:0;transition:opacity .8s 2.4s var(--ease)}
+  .fu-callout{opacity:0;transition:opacity .8s 2.7s var(--ease)}
+  .fu-map.is-in .fu-pin,.fu-map.is-in .fu-callout{opacity:1}
+  .fu-callout path{fill:none;stroke:rgba(212,168,95,.6);stroke-width:1}
+  .fu-callout rect{fill:rgba(15,13,10,.92);stroke:rgba(212,168,95,.55)}
+  .fu-call-name{font-family:var(--sans,inherit);font-size:14px;font-weight:700;fill:#EEE5D1}
+  .fu-call-sub{font-family:var(--mono);font-size:9px;letter-spacing:.06em;fill:#D4A85F}
+
+  .fu-north circle{fill:none;stroke:rgba(237,230,216,.2)}
+  .fu-north path{fill:#D4A85F}
+  .fu-north text,.fu-scale{font-family:var(--mono);font-size:9px;letter-spacing:.2em;fill:rgba(237,230,216,.45)}
+
+  .fu-address{font-style:normal;display:flex;flex-direction:column;gap:4px;margin:6px 0 26px}
+  .fu-line{font-size:1.05rem;line-height:1.45}
+  .fu-muted{color:var(--grey);font-size:.92rem}
+
+  .fu-steps{list-style:none;margin:0 0 28px;padding:0;display:grid;gap:0;border-top:1px solid var(--rule)}
+  .fu-steps li{display:grid;grid-template-columns:44px 1fr;align-items:baseline;padding:13px 0;border-bottom:1px solid var(--rule);line-height:1.5}
+  .fu-steps .num{font-family:var(--mono);font-size:.72rem;color:var(--amber);letter-spacing:.1em}
+  .fu-steps b{color:var(--paper);font-weight:600}
+
+  .fu-actions{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+  @media (max-width:520px){ .fu-actions .btn{flex:1 1 100%} }
+  .fu-small{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0;font-size:.86rem;color:var(--grey)}
+  .fu-small:empty{display:none}
+  .fu-small a{color:inherit}
+  /* comfortable to tap on a phone (WCAG 2.5.8) */
+  .fu-small .linkish,.fu-small a{display:inline-flex;align-items:center;min-height:32px}
+
+  @media (prefers-reduced-motion: reduce){
+    .fu-route{stroke-dashoffset:0;animation:none!important}
+    .fu-halo{animation:none;opacity:.6}
+    .fu-pin,.fu-callout{opacity:1;transition:none}
+  }
+</style>

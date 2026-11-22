@@ -1,51 +1,35 @@
 /**
  * The three decoration setups, with the photographs of each.
  *
- * The three packages are Elite, Royal and Aesthetic (owner's walkthrough, Nov).
+ * The three packages are Aesthetic, Elite and Royal (owner's walkthrough, Nov).
  * Every one includes fog entry and candlelight, see DECOR_INCLUDED.
  *
- * Prices are Tanishk's (WhatsApp): Aesthetic ₹1,000 and Trendy ₹2,000 on
- * 11 Oct, Royal ₹5,000 on 11 Nov. Each is the price of the decoration, added
- * on top of the ₹1,500 Date Night session, so Royal comes to ₹6,500.
+ * Prices are Tanishk's (WhatsApp): Aesthetic ₹1,000 and Elite (then called
+ * Trendy) ₹2,000 on 11 Oct, Royal ₹5,000 on 11 Nov. Each is the price of the
+ * decoration, added on top of the ₹1,500 Date Night session, so Royal comes to
+ * ₹6,500.
  *
- * ASSUMPTION, TODO(owner): "Elite" is the package that was called "Trendy" on
- * 11 Oct, so it keeps Trendy's photographs and ₹2,000. If that is wrong, swap
- * the photos and price below. In the booking flow a decoration's price is
- * added on top of the ₹1,500 Date Night session, also to confirm.
- *
- * TODO (Akash/Tanishk):
- *   0. Confirm these photographs are ours to publish, our own room and our own
- *      work, or licensed from whoever shot them. If any are a supplier's or a
- *      reference picture, they must come down before launch: a customer who
- *      books from them will expect exactly what they saw.
- *   0b. CONSENT: royal-2 and royal-3 show a real customer's private things , 
- *      recognisable faces, a first name, and a personal letter written to them.
- *      Publishing those without that person's written permission is not ours to
- *      do. Get consent, or swap both for a setup shot taken with no guests and
- *      no personal messages in frame.
- *   1. Royal is ₹5,000 (11 Nov), the decoration on top of the ₹1,500 session
- *      like the other two, so a Royal Date Night is ₹6,500. Confirmed 11 Nov.
- *   2. These prices sit alongside the package prices in booking.ts, which were
- *      placeholders. Decide which is the real offer and reconcile the two.
+ * PHOTOGRAPHS AND FILM (Tanishk, 22 Nov 2026): every picture and clip here is
+ * YourSpace's own room and its own work, shot by Tanishk ("we don't need to use
+ * someone's photos now"). The borrowed pictures that were here before are gone,
+ * and with them the two that showed a past customer's face and letter.
+ *   - Which package each setup belongs to is our reading of the photos: the
+ *     lilac arch is Aesthetic, the crescent moon is Elite, the pink rose wall
+ *     with the open-book board is Royal. TODO(owner): confirm.
+ *   - Shots that showed films or music videos on the projector were cropped so
+ *     the screen is out of frame, or left out. Someone else's film and a real
+ *     singer's face do not belong in our advertising.
+ *   - The clips in public/media are a few seconds each, silent, played forward
+ *     then back so the loop has no jump. They play only on screen, and never
+ *     for anyone who has asked their device for reduced motion.
  */
 import type { ImageMetadata } from 'astro';
 
-/*
- * REPLACING THE AESTHETIC PHOTOGRAPHS (Tanishk is sending new ones, Nov)
- *   1. Overwrite src/assets/decor/aesthetic-1.jpeg, -2 and -3 with the new
- *      pictures, keeping those names (any count: add aesthetic-4.jpeg and an
- *      import + entry below for more, or drop an entry for fewer).
- *      aesthetic-1 is the one the booking flow shows on the Aesthetic card.
- *   2. Rewrite each `alt` under Aesthetic to describe the new picture.
- *   3. If the new setup looks different, update its `blurb` and `includes`.
- *   Price and booking logic do not change. Use only photographs of our own
- *   room and our own work, never an AI or stock picture presented as ours.
- */
 import aesthetic1 from '../assets/decor/aesthetic-1.jpeg';
 import aesthetic2 from '../assets/decor/aesthetic-2.jpeg';
 import aesthetic3 from '../assets/decor/aesthetic-3.jpeg';
-import trendy1 from '../assets/decor/trendy-1.jpeg';
-import trendy2 from '../assets/decor/trendy-2.jpeg';
+import elite1 from '../assets/decor/elite-1.jpeg';
+import elite2 from '../assets/decor/elite-2.jpeg';
 import royal1 from '../assets/decor/royal-1.jpeg';
 import royal2 from '../assets/decor/royal-2.jpeg';
 import royal3 from '../assets/decor/royal-3.jpeg';
@@ -54,6 +38,12 @@ export interface Photo {
   src: ImageMetadata;
   /** Describes the picture for anyone who cannot see it. */
   alt: string;
+}
+
+/** A short silent loop of the real setup, from public/media. */
+export interface Film {
+  src: string;
+  poster: string;
 }
 
 /** In every package, and said so on every card. */
@@ -68,6 +58,8 @@ export interface Decoration {
   blurb: string;
   includes: string[];
   photos: Photo[];
+  /** Real footage of this setup, shown in place of the first photograph where there is room. */
+  film?: Film;
 }
 
 export const decorations: Decoration[] = [
@@ -75,64 +67,64 @@ export const decorations: Decoration[] = [
     id: 'aesthetic',
     name: 'Aesthetic',
     price: 1000,
-    tagline: 'Soft, light and uncluttered',
+    tagline: 'Soft lilac, gold and candlelight',
     blurb:
-      'Balloons in soft pastels and gold, an arched or draped backdrop and a neon sign, with the floor filled so the whole room feels part of it.',
+      'A double arch in lilac and white with a glowing Happy Birthday sign, a garland of lilac, blush and gold balloons, and a satin table of candles for the cake, with the floor filled in balloons.',
     includes: [
       ...DECOR_INCLUDED,
-      'Balloon arch in soft tones',
-      'Arched or draped backdrop',
-      'Neon sign',
+      'Double arch backdrop',
+      'Happy Birthday neon',
+      'Balloon garland',
+      'Satin cake table',
       'Floor balloons',
-      'Pedestals for the cake',
     ],
     photos: [
-      /* Tanishk, 20 Nov 2026: this photograph first. It is a sharper, wider shot
-         of the lilac setup that used to be second, so that copy was dropped and
-         the blue and white setup moved to second. */
-      { src: aesthetic1, alt: 'A lilac arch backdrop with a Happy Birthday neon sign, a balloon garland in lilac, cream and gold, low fog, and a cake on a fluted pedestal in a floor of balloons.' },
-      { src: aesthetic2, alt: 'A draped white backdrop lit warm, with a Happy Birthday neon sign, an arch of blue, cream and gold balloons, and cake pedestals standing in a floor of balloons.' },
-      { src: aesthetic3, alt: 'The projection screen showing guest names and photos above a candlelit table, with balloons filling the floor of the dark room.' },
+      { src: aesthetic1, alt: 'A lilac and white double arch with a glowing Happy Birthday sign, a garland of lilac, blush and gold balloons, and a cake under a glass dome on a satin table ringed with candles.' },
+      { src: aesthetic2, alt: 'The lilac arch with its Happy Birthday sign behind a cake on a fluted pedestal, with low fog rolling over a floor of balloons.' },
+      { src: aesthetic3, alt: 'The arch and balloon garland beside the candlelit cake table, seen from the side, with lilac and white balloons across the floor.' },
     ],
   },
   {
     id: 'elite',
     name: 'Elite',
     price: 2000,
-    tagline: 'A crescent moon and low cloud',
+    tagline: 'A glowing moon over a sea of cloud',
     blurb:
-      'A tall crescent moon, brass lanterns and pillar stands, with low fog rolling across a floor of pearl and gold balloons.',
+      'A tall crescent moon lit from behind, a vase of pampas grass, and a floor of blush, white and gold balloons with low fog rolling across it, so you walk in through cloud.',
     includes: [
       ...DECOR_INCLUDED,
-      'Crescent moon backdrop',
-      'Brass lanterns and props',
-      'Pearl and gold balloons',
-      'Fluted pedestals',
+      'Glowing crescent moon',
+      'Blush, white and gold balloon floor',
+      'Pampas grass vase',
+      'Low-lying fog',
     ],
     photos: [
-      { src: trendy1, alt: 'A tall crescent moon backdrop with brass bird lanterns on fluted pedestals, half-covered by low fog.' },
-      { src: trendy2, alt: 'The room from the doorway: the projection screen on the left, the crescent moon and a Happy Birthday neon on the right, and fog over a floor of gold and pearl balloons.' },
+      { src: elite1, alt: 'A tall white crescent moon glowing against a dark wall, with pampas grass in a white vase and fog drifting over a floor of blush, white and gold balloons.' },
+      { src: elite2, alt: 'The crescent moon and pampas grass seen across the room, with gold balloons in the foreground half hidden in fog.' },
     ],
+    film: { src: '/media/elite-moon.mp4', poster: '/media/elite-moon-poster.jpg' },
   },
   {
     id: 'royal',
     name: 'Royal',
     price: 5000,                     // Tanishk, 11 Nov 2026
-    tagline: 'With your own message and photographs',
+    tagline: 'Roses, velvet and your own words',
     blurb:
-      'Deep red roses, velvet drapes and candlelight, plus a written message and printed photographs of the two of you, the most personal of the three.',
+      'A wall of pink roses and a velvet curtain framing an open-book board with your message written by hand, tall gold candlesticks and a music-box violin on a satin table, the most personal of the three.',
     includes: [
       ...DECOR_INCLUDED,
-      'Rose and velvet backdrop',
-      'Your message, printed large',
-      'Photo panels of your own pictures',
-      'Floor balloons in red and white',
+      'Pink rose wall',
+      'Velvet curtain',
+      'Your message, handwritten',
+      'Gold candlesticks',
+      'Floor balloons',
     ],
     photos: [
-      { src: royal1, alt: 'A backdrop of deep red roses and velvet curtains beside an open-book panel, with tall candles on a draped table and red and white balloons across the floor.' },
-      { src: royal2, alt: 'Four tall printed panels strung with fairy lights, showing photographs and written messages, beside a framed birthday portrait on an easel, with fog at the base.' },
-      { src: royal3, alt: 'A long printed message in handwriting script hung between white drapes, lit by candles, with balloons at its foot.' },
+      { src: royal1, alt: 'A wall of pink roses and a pink velvet curtain framing a white board with Happy Birthday written by hand, a cake and tall gold candlesticks on a satin table, and blush and white balloons on the floor.' },
+      { src: royal2, alt: 'The Royal table up close: a white cake on a gold stand between tall candles, a glass of wine and a little music-box violin, under the handwritten Happy Birthday.' },
+      { src: royal3, alt: 'The rose wall, the handwritten Happy Birthday board and the pink velvet curtain, with the candlelit cake table in front.' },
     ],
+    film: { src: '/media/royal-roses.mp4', poster: '/media/royal-roses-poster.jpg' },
   },
 ];
 

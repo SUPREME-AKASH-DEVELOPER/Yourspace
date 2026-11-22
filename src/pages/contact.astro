@@ -4,6 +4,7 @@ import PageHead from '../components/PageHead.astro';
 import Notice from '../components/Notice.astro';
 import WhatsApp from '../components/WhatsApp.astro';
 import { site } from '../data/site';
+import FindUs from '../components/FindUs.astro';
 ---
 <Base title="Contact · YourSpace Jabalpur"
       description="Call, message or write to YourSpace Jabalpur. We answer questions before you book.">
@@ -38,7 +39,7 @@ import { site } from '../data/site';
 
         <div style="margin-top:30px">
           <Notice label="Note">
-            We're not open yet, so there's nothing to visit at the moment. Everything on this page reaches us now, and we answer as quickly as we can.
+            The room is private, so please book before you come over: we can only let you in for your own session. Everything on this page reaches us, and we answer as quickly as we can.
           </Notice>
         </div>
 
@@ -87,6 +88,12 @@ import { site } from '../data/site';
           <p class="fine">We reply on the number you give us. We don't add you to any list.</p>
         </form>
       </div>
+    </div>
+  </section>
+
+  <section class="band" id="find-us">
+    <div class="shell">
+      <FindUs />
     </div>
   </section>
 

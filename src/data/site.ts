@@ -12,7 +12,10 @@ export const site = {
   /** Full address, from Tanishk (Nov 2026). */
   address: '325, Jai Nagar Rd, near Indore Sweet, above Olympus Cafe, 2nd Floor, Labour Chowk, Yadav Colony, Jabalpur, Madhya Pradesh 482002',
   postalCode: '482002',
-  mapsUrl: 'https://maps.app.goo.gl/hzK3Ksn7iNr3ubXH8',
+  /** The "Your space" place on Google Maps (Akash, 22 Nov 2026), not a dropped pin. */
+  mapsUrl: 'https://maps.app.goo.gl/7cWP8xYM7fXmnco36',
+  /** Where that place sits, for the directions button and the structured data. */
+  geo: { lat: 23.1691299, lng: 79.9120691 },
   /** TODO(Tanishk): he wrote "12am to 12pm"; this assumes he meant the slots we sell. */
   hours: '12 PM to 12 AM, all 7 days',
 
@@ -151,3 +154,7 @@ export const formEndpoint = site.notifyPrimary
 export const formOrigin = site.web3formsKey
   ? 'https://api.web3forms.com'
   : (formEndpoint ? new URL(formEndpoint).origin : '');
+
+/** Opens turn-by-turn directions to the room in Google Maps (the app on a phone). */
+export const directionsUrl =
+  `https://www.google.com/maps/dir/?api=1&destination=${site.geo.lat},${site.geo.lng}`;

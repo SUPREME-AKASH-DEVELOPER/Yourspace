@@ -200,15 +200,12 @@ hidden face of a card is marked `inert` so it stays out of the tab order.
 
 `src/data/decorations.ts` holds the three decoration packages — Aesthetic ₹1,000, Elite
 ₹2,000 and Royal — with their photographs and descriptions. Every one includes fog entry
-and candlelight. **Elite is assumed to be the package previously called Trendy**, so it
-carries Trendy's photos and price; correct that file if not. They appear on the home page, the room
-page and the tickets page, and any one can be opened full size.
-
-Two things need your attention before launch. **The Royal price was never quoted**, so the
-site says "Price on request" rather than inventing a number. And **the provenance of the
-photographs needs confirming**: if any of them are a supplier's pictures rather than your
-own room and your own work, they have to come down, because someone who books from them
-will turn up expecting exactly what they saw.
+and candlelight. Since 22 Nov 2026 **every photograph and clip is Tanishk's own**, shot in our
+room: the lilac arch is Aesthetic, the crescent moon is Elite, the pink rose wall is Royal.
+Elite and Royal also have a few seconds of silent real footage (`public/media/`) that loops
+on their cards on the tickets page and in the booking flow, only while on screen and never
+for anyone who asks their device for reduced motion. Shots showing a film or music video on
+the projector were cropped or left out, so nobody else's film or face is in our advertising.
 
 ### The logo, and the gold
 
@@ -275,7 +272,7 @@ Code: `api/_store.js`, `api/slots.js`, `api/admin.js`, `src/pages/admin.astro`.
 | 3 | Real domain as `SITE_URL` in `astro.config.mjs` | Dev | **Done** — https://www.yourspacejbp.com |
 | 4 | Confirm every price in `src/data/booking.ts` | Client | **Blocking** |
 | 5 | Legal review of `/terms`, `/privacy`, `/refunds` | Client | **Interim versions live** (20 Nov 2026), matching how the site works today. Still needed: Tanishk to confirm the 48/24-hour windows, the 50% refund and the 2-working-day refund start, plus a review by someone qualified |
-| 6 | Confirm the decoration photographs are ours to publish, and add pictures of the empty room | Client | **Blocking** — see note below |
+| 6 | Decoration photographs | Client | **Done** (22 Nov 2026): all Tanishk's own. Still wanted: a picture of the empty room |
 | 9 | Set the Royal decoration price in `src/data/decorations.ts` (it shows "Price on request" until then) | Client | High |
 | 10 | Confirm the decoration prices, and that they are added on top of the ₹1,500 Date Night session | Client | High |
 | 11 | Karaoke price for 6–7 guests (₹150 a head, or the "₹500" mentioned?) — shows "price on call" until then | Client | High |
@@ -289,7 +286,7 @@ Code: `api/_store.js`, `api/slots.js`, `api/admin.js`, `src/pages/admin.astro`.
 | 19 | Upgrade Astro 5 → 7 to clear the remaining `npm audit` advisories (build-time only; none reach the static site) | Dev | Medium |
 | 7 | Room specs: projector, sound, AC (seating is set: 5 recliners + 2 bean bags, `SEATING` in `src/data/booking.ts`, and each seat is picked individually) | Client | High |
 | 20 | WhatsApp number | Client | **Done** — +91 88201 03948, the same line as calls |
-| 21 | New Aesthetic decoration photographs from Tanishk — steps at the top of `src/data/decorations.ts` | Client | High |
+| 21 | Aesthetic, Elite and Royal photographs | Client | **Done** (22 Nov 2026), plus real footage for Elite and Royal |
 | 22 | Real add-on photographs | Both | **Done** for bouquets and cakes; the video still has no picture |
 | 23 | Payment gateway KYC — see "Payment gateway KYC" below | Client | Before any gateway |
 | 24 | Domain: see "Connecting the domain" below | Both | Blocking |
