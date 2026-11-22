@@ -13,6 +13,8 @@ import { experiences, OTHER, ROOM_BASE, RUNTIME, MAX_GUESTS, SEATING } from '../
 import { homeFaq } from '../data/faq';
 import { Image } from 'astro:assets';
 import roomShot from '../assets/decor/royal-3.jpeg';
+import { backdrop, backdropStyle } from '../lib/backdrop';
+const roomBg = await backdrop(roomShot);
 ---
 <Base
   title="YourSpace Jabalpur · A Private Screening Room for Your People"
@@ -30,7 +32,7 @@ import roomShot from '../assets/decor/royal-3.jpeg';
       <h1 class="headline">The whole room,<br /><em>just</em> your people.</h1>
       <p class="lede">A private space in Jabalpur you book by the session, for watch parties, karaoke nights, date nights, proposals, candlelight dinners and stand-up evenings. Nobody else walks in.</p>
       <div class="hero-actions">
-        <button class="btn btn-key btn-lg" data-book>Pre-book a slot<span aria-hidden="true">→</span></button>
+        <button class="btn btn-key btn-lg" data-book>Book a slot<span aria-hidden="true">→</span></button>
         <a class="btn btn-line btn-lg" href="/programme/">See the programme</a>
       </div>
       <dl class="hero-spec">
@@ -45,6 +47,7 @@ import roomShot from '../assets/decor/royal-3.jpeg';
     <!-- the right-hand side: the room itself, with the ticket laid over its foot -->
     <div class="hero-side">
     <figure class="hero-shot">
+      <span class="fit-bg" aria-hidden="true" style={backdropStyle(roomBg)}></span>
       <Image src={roomShot} alt="Our room dressed for a birthday: a wall of pink roses and a velvet curtain around a handwritten Happy Birthday board, with a candlelit cake table in front."
              widths={[480, 720, 1080]} sizes="(max-width: 860px) 92vw, 46vw" loading="eager" fetchpriority="high" />
       <figcaption class="hero-shot-tag">The room, dressed for a birthday</figcaption>
@@ -185,7 +188,7 @@ import roomShot from '../assets/decor/royal-3.jpeg';
 <section class="band band-book" id="prebook">
   <div class="shell book-grid">
     <div class="reveal">
-      <p class="rule-label"><i>Reel 07</i><span>Pre-book</span></p>
+      <p class="rule-label"><i>Reel 07</i><span>By phone</span></p>
       <h2 class="title">Rather <em>talk</em> it through?</h2>
       <p class="standfirst">Tell us what you'd like and when, and we'll call you to confirm the slot. You can pay once it's confirmed.</p>
       <ul class="stub-list">

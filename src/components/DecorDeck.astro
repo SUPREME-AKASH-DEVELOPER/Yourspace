@@ -6,6 +6,8 @@
  */
 import { Image } from 'astro:assets';
 import { decorations } from '../data/decorations';
+import { backdrop, backdropStyle } from '../lib/backdrop';
+const bgs = await Promise.all(decorations.map((d) => backdrop(d.photos[0].src)));
 ---
 <div class="deck" data-deck>
   {decorations.map((decor, i) => {
@@ -19,12 +21,13 @@ import { decorations } from '../data/decorations';
           <span class="card-inner">
 
             <span class="card-face card-front">
+              <span class="fit-bg" aria-hidden="true" style={backdropStyle(bgs[i])}></span>
               <Image src={lead.src} alt={lead.alt} widths={[380, 760]}
                      sizes="(max-width: 860px) 86vw, 30vw"
                      loading={i === 0 ? 'eager' : 'lazy'} />
               {decor.film && (
                 <>
-                  <video class="film" data-film muted loop playsinline preload="none" aria-hidden="true" tabindex="-1"
+                  <video class="film" data-film muted loop autoplay playsinline disablepictureinpicture disableremoteplayback preload="none" aria-hidden="true" tabindex="-1"
                          poster={decor.film.poster} src={decor.film.src}></video>
                   <span class="film-tag" aria-hidden="true"><i></i>Filmed in our room</span>
                 </>

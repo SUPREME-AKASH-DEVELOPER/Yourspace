@@ -7,7 +7,10 @@ test.describe('site integrity', () => {
     const errors: string[] = [];
     const failed: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));
-    page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+    // WebKit's own media controls log this for an autoplaying video; it comes from
+    // the browser's internals, not from the page, and visitors never see it
+    const browserNoise = /^Button failed to load, iconName = [a-z-]+-placard/;
+    page.on('console', (m) => { if (m.type() === 'error' && !browserNoise.test(m.text())) errors.push(m.text()); });
     page.on('requestfailed', (r) => failed.push(r.url()));
 
     for (const path of PAGES) {

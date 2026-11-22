@@ -12,7 +12,7 @@ const priceOf = (id: string) => {
 <div class="pkgs">
   {setups.map((s) => (
     <div class="pkg reveal">
-      {s.closed && <span class="pkg-tag">Coming soon</span>}
+      {s.closed && <span class="pkg-tag">Book by phone</span>}
       <span class="pkg-top">
         <strong>{s.name}</strong><span class="pkg-price num">{priceOf(s.id)}</span>
       </span>

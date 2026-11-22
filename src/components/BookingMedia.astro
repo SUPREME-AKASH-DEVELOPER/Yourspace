@@ -29,6 +29,7 @@ import type { ImageMetadata } from 'astro';
 import { decorations } from '../data/decorations';
 import { setups, addonGroups } from '../data/booking';
 import room from '../assets/decor/royal-3.jpeg';
+import { backdrop } from '../lib/backdrop';
 
 const names: Record<string, string> = {
   ...Object.fromEntries(setups.map((s) => [`setup-${s.id}`, `${s.name}: ${s.tagline}`])),
@@ -56,10 +57,11 @@ const media: { key: string; src: ImageMetadata; alt: string; sample?: boolean }[
   // a photograph dropped in src/assets/booking/ wins over anything above with the same key
   ...dropped,
 ].filter((m, i, all) => all.findLastIndex((x) => x.key === m.key) === i);
+const bgs = await Promise.all(media.map((m) => backdrop(m.src)));
 ---
 <template id="bkMedia">
-  {media.map((m) => (
-    <Image src={m.src} alt={m.alt} data-media={m.key} data-sample={m.sample ? '' : undefined}
+  {media.map((m, i) => (
+    <Image src={m.src} alt={m.alt} data-media={m.key} data-sample={m.sample ? '' : undefined} data-bg={bgs[i]}
            {...(m.key.startsWith('addon-')
              // add-on cards are portrait tiles: a swipe row on phones, five across on a desktop
              ? { widths: [240, 480], sizes: '(max-width: 640px) 44vw, (max-width: 900px) 30vw, 220px', quality: 72 }

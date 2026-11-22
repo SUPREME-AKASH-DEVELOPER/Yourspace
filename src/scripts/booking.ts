@@ -552,9 +552,12 @@ function photo(key?: string): string {
   if (!img) return '';
   // a stand-in picture (AI-generated or stock) is labelled as one, so nobody books
   // expecting exactly what they saw
-  return img.hasAttribute('data-sample')
+  // shown whole, over a blurred copy of itself (src/lib/backdrop.ts)
+  const bg = img.getAttribute('data-bg');
+  const back = bg ? `<span class="fit-bg" aria-hidden="true" style="background-image:url(${bg})"></span>` : '';
+  return back + (img.hasAttribute('data-sample')
     ? img.outerHTML + '<span class="vis-sample">Sample image</span>'
-    : img.outerHTML;
+    : img.outerHTML);
 }
 
 /** The picture at the top of a card: a photograph when we have one, drawn otherwise. */

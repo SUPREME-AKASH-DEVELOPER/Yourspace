@@ -5,6 +5,7 @@
  */
 import { Image } from 'astro:assets';
 import { decorations } from '../data/decorations';
+import { backdrop, backdropStyle } from '../lib/backdrop';
 
 interface Props { label?: string }
 const { label = 'Photographs of the decoration setups' } = Astro.props;
@@ -18,6 +19,8 @@ const frames = decorations.flatMap((d) =>
     /** A short line for the subtitle bar, the long alt text is for readers. */
     caption: p.alt.split(/[,.]/)[0].trim(),
   })));
+
+const bgs = await Promise.all(frames.map((f) => backdrop(f.src)));
 
 /** Run the strip twice so the loop has somewhere to go without a jump. */
 const looped = [...frames, ...frames];
@@ -35,6 +38,7 @@ const looped = [...frames, ...frames];
                   data-lightbox={f.src.src} data-caption={f.alt}
                   tabindex={copy ? -1 : undefined}
                   aria-label={`See a larger view: ${f.alt}`}>
+            <span class="fit-bg" aria-hidden="true" style={backdropStyle(bgs[n])}></span>
             <Image src={f.src} alt={copy ? '' : f.alt} widths={[320, 640]}
                    sizes="(max-width: 860px) 60vw, 23vw"
                    loading={i < 3 ? 'eager' : 'lazy'} />

@@ -397,9 +397,9 @@ h3{
 
 /* the right-hand side: a photograph of the room with the ticket laid over its foot */
 .hero-side{display:flex;flex-direction:column}
-.hero-shot{position:relative;margin:0;aspect-ratio:16/10;overflow:hidden;border-radius:4px;
+.hero-shot{position:relative;margin:0;aspect-ratio:4/3;background:#0A0908;overflow:hidden;border-radius:4px;
   border:1px solid rgba(212,168,95,.35);box-shadow:0 30px 70px -40px rgba(0,0,0,.9)}
-.hero-shot img{width:100%;height:100%;object-fit:cover;display:block}
+.hero-shot img{position:relative;width:100%;height:100%;object-fit:contain;display:block}
 .hero-shot::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(10,9,8,0) 45%,rgba(10,9,8,.55) 100%)}
 .hero-shot-tag{position:absolute;left:14px;top:14px;z-index:1;padding:5px 10px;border-radius:999px;
@@ -1241,12 +1241,18 @@ h3{
 
 .sc-media,.dc-media,.ad-media{position:relative;display:block;aspect-ratio:16/10;overflow:hidden;background:var(--ink)}
 .ad-media{aspect-ratio:3/4}
+/* decoration photographs are portrait: a taller frame, so they fill more of it */
+.dc-media{aspect-ratio:4/5}
+/* Every photograph is shown whole, never cropped (src/lib/backdrop.ts). The
+   room it does not cover is filled with a blurred, darkened copy of itself. */
+.fit-bg{position:absolute;inset:0;background-position:center;background-size:cover;
+  filter:blur(28px) brightness(.38) saturate(1.1);pointer-events:none}
 .vis-sample{
   position:absolute;left:8px;bottom:8px;padding:3px 7px;border-radius:2px;
   font-family:var(--mono);font-size:.56rem;text-transform:uppercase;letter-spacing:.12em;
   background:rgba(12,11,9,.78);color:var(--paper);pointer-events:none;
 }
-.sc-media img,.dc-media img,.ad-media img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .5s var(--ease)}
+.sc-media img,.dc-media img,.ad-media img{position:relative;width:100%;height:100%;object-fit:contain;display:block;transition:transform .5s var(--ease)}
 .sc:hover img,.dc:hover img,.ad:hover img{transform:scale(1.04)}
 
 /* drawn cards, for anything still waiting on a photograph */
@@ -1781,7 +1787,7 @@ h3{
   aspect-ratio:3/4;border:0;border-radius:2px;background:#000;
 }
 .reel-shot img{
-  display:block;width:100%;height:100%;object-fit:cover;
+  position:relative;display:block;width:100%;height:100%;object-fit:contain;
   /* the strip reads cooler and flatter until you look at a frame */
   filter:saturate(.72) contrast(1.04) brightness(.86);
   transition:filter .5s var(--ease),transform 1.2s var(--ease);
@@ -1878,13 +1884,13 @@ h3{
 /* ---- front ---- */
 .card-front{background:#0A0908;display:block}
 .card-front img{
-  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
   transition:transform 1.4s var(--ease),filter .5s var(--ease);
 }
 .card:hover .card-front img{transform:scale(1.05)}
 /* Real footage over a setup's photograph (src/scripts/films.ts). It fades in
    once it is actually playing, so the photograph is never replaced by a blank. */
-.film{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .9s var(--ease);pointer-events:none}
+.film{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transition:opacity .9s var(--ease);pointer-events:none}
 .film.is-playing{opacity:1}
 .film-tag{position:absolute;top:12px;left:12px;z-index:3;display:inline-flex;align-items:center;gap:7px;
   padding:5px 10px 5px 8px;border-radius:999px;background:rgba(10,9,8,.62);backdrop-filter:blur(6px);
