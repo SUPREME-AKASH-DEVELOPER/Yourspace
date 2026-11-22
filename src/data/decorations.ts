@@ -4,8 +4,8 @@
  * The three packages are Aesthetic, Elite and Royal (owner's walkthrough, Nov).
  * Every one includes fog entry and candlelight, see DECOR_INCLUDED.
  *
- * Prices are Tanishk's (WhatsApp): Aesthetic ₹1,000 and Elite (then called
- * Trendy) ₹2,000 on 11 Oct, Royal ₹5,000 on 11 Nov. Each is the price of the
+ * Prices are Tanishk's (WhatsApp): Aesthetic ₹1,500 and Elite ₹3,000 (raised on
+ * 22 Nov 2026 from ₹1,000 and ₹2,000), Royal ₹5,000 (11 Nov). Each is the price of the
  * decoration, added on top of the ₹1,500 Date Night session, so Royal comes to
  * ₹6,500.
  *
@@ -66,7 +66,7 @@ export const decorations: Decoration[] = [
   {
     id: 'aesthetic',
     name: 'Aesthetic',
-    price: 1000,
+    price: 1500,                     // Tanishk, 22 Nov 2026 (was ₹1,000)
     tagline: 'Soft lilac, gold and candlelight',
     blurb:
       'A double arch in lilac and white with a glowing Happy Birthday sign, a garland of lilac, blush and gold balloons, and a satin table of candles for the cake, with the floor filled in balloons.',
@@ -87,7 +87,7 @@ export const decorations: Decoration[] = [
   {
     id: 'elite',
     name: 'Elite',
-    price: 2000,
+    price: 3000,                     // Tanishk, 22 Nov 2026 (was ₹2,000)
     tagline: 'A glowing moon over a sea of cloud',
     blurb:
       'A tall crescent moon lit from behind, a vase of pampas grass, and a floor of blush, white and gold balloons with low fog rolling across it, so you walk in through cloud.',

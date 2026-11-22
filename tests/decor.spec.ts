@@ -11,8 +11,8 @@ test.describe('the deck of setups', () => {
 
   test('prices match what Tanishk quoted, and the unknown one is not invented', async ({ page }) => {
     await page.goto('/tickets/');
-    await expect(page.locator('#aesthetic .card-price-chip')).toHaveText('₹1,000');
-    await expect(page.locator('#elite .card-price-chip')).toHaveText('₹2,000');
+    await expect(page.locator('#aesthetic .card-price-chip')).toHaveText('₹1,500');
+    await expect(page.locator('#elite .card-price-chip')).toHaveText('₹3,000');
     // Royal was quoted on 11 Nov; before that the card said "On request"
     await expect(page.locator('#royal .card-price-chip')).toHaveText('₹5,000');
   });

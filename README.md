@@ -198,8 +198,8 @@ hidden face of a card is marked `inert` so it stays out of the tab order.
 
 ### The decoration photographs
 
-`src/data/decorations.ts` holds the three decoration packages — Aesthetic ₹1,000, Elite
-₹2,000 and Royal — with their photographs and descriptions. Every one includes fog entry
+`src/data/decorations.ts` holds the three decoration packages — Aesthetic ₹1,500, Elite
+₹3,000 and Royal ₹5,000 — with their photographs and descriptions. Every one includes fog entry
 and candlelight. Since 22 Nov 2026 **every photograph and clip is Tanishk's own**, shot in our
 room: the lilac arch is Aesthetic, the crescent moon is Elite, the pink rose wall is Royal.
 Elite and Royal also have a few seconds of silent real footage (`public/media/`) that loops

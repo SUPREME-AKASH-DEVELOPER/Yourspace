@@ -114,7 +114,7 @@ test.describe('the server refuses what the page will not sell', () => {
   });
 
   test('a decoration with enough notice is priced', () => {
-    expect(booking()).toEqual({ amount: 1500 + 1000 });
+    expect(booking()).toEqual({ amount: 1500 + 1500 });
   });
 
   test('a decoration at short notice is refused, with the phone as the way out', () => {
@@ -154,14 +154,14 @@ test.describe('the server refuses what the page will not sell', () => {
     expect(booking({ agreed: agreed.slice(0, -1) }).amount, 'one left').toBeNull();
     expect(booking({ agreed: undefined }).amount, 'not sent at all').toBeNull();
     expect(booking({ agreed: 'all of them' }).amount, 'not even a list').toBeNull();
-    expect(booking({ agreed }).amount, 'all ticked').toBe(2500);
+    expect(booking({ agreed }).amount, 'all ticked').toBe(1500 + 1500);
   });
 
   test('the two lists of rules match', () => {
     expect(rulesAccepted(requiredRules())).toBe(true);
     expect(rulesAccepted(requiredRules().slice(1))).toBe(false);
     // the server keeps its own copy; it must name the same rules
-    expect(booking({ agreed: HOUSE_RULES.map((r) => r.id) }).amount).toBe(2500);
+    expect(booking({ agreed: HOUSE_RULES.map((r) => r.id) }).amount).toBe(1500 + 1500);
   });
 });
 

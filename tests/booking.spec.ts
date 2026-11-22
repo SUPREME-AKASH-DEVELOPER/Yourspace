@@ -78,18 +78,18 @@ test.describe('booking flow', () => {
     }
 
     await page.locator('[data-addon-pick="bouquet-m"]').click();
-    // ₹1,500 session + ₹1,000 Aesthetic + ₹450 pink rose bouquet
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,950');
+    // ₹1,500 session + ₹1,500 Aesthetic + ₹450 pink rose bouquet
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹3,450');
 
     // one bouquet at a time: another replaces it, the same one removes it
     await page.locator('[data-addon-pick="bouquet-l"]').click();
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹3,150');
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹3,650');
     await page.locator('[data-addon-pick="bouquet-l"]').click();
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,500');
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹3,000');
 
     // an add-on without a confirmed price is not added as a guess
     await page.locator('[data-addon-pick="photo-15"]').click();
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,500 + on call');
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹3,000 + on call');
   });
 
   test('Movie Space: ₹1,500 up to five, ₹1,700 for six or seven, and no add-ons', async ({ page }) => {

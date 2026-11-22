@@ -102,7 +102,7 @@ export function decorStatus(slot, dateIso, now = venueNow()) {
 
 /** null = priced on the call, so the booking cannot be paid online. */
 /** @type {Record<string, number|null>} */
-export const DECOR_PRICES = { aesthetic: 1000, elite: 2000, royal: 5000 };
+export const DECOR_PRICES = { aesthetic: 1500, elite: 3000, royal: 5000 };
 
 export const ADDON_PRICES = {
   'bouquet-s': 300,
