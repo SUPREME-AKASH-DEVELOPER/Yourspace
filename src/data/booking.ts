@@ -426,7 +426,7 @@ export const setups: Setup[] = [
     art: 'stage', minutes: null, minGuests: 1, maxGuests: MAX_GUESTS,
     hasDecor: false, hasAddons: false,
     includes: ['Big screen + full sound', 'Bring the whole group'],
-    closed: 'Opening for online booking soon. Call us and we will set it up.',
+    closed: 'Booked by phone for now. Call us and we will set it up.',
   },
 ];
 

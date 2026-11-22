@@ -31,6 +31,13 @@ roses ₹300, pink roses ₹450, big red roses ₹650) and the five ½ kg cakes
 pineapple ₹310). The heart-shaped and white cakes are still waiting for their
 real names. No sample images are left in this folder.
 
+**Setups (`setup-movie`, `setup-karaoke`, `setup-watch` `.sample.jpg`):** AI-generated
+pictures, added at Tanishk's request (22 Nov 2026): a private cinema with five
+recliners for Movie Space, a gold microphone in a purple lounge for Karaoke, and
+friends cheering at a big screen for Watch Party. Badged **Sample image** on the
+booking flow and on the tickets page. Save a real photograph as `setup-<id>.jpg`
+and it takes over in both places; then delete the sample.
+
 **Celebration video (`addon-photo-15.sample.jpg`):** an AI-generated picture of a
 camera on a gimbal filming a birthday setup in a dark private cinema, added at
 Tanishk's request (20 Nov 2026). It shows with the **Sample image** badge. When a

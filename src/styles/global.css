@@ -1065,6 +1065,14 @@ h3{
   background:var(--amber);color:var(--ink);border-radius:0 2px 0 2px;
 }
 .pkg-fine{margin:4px 0 0;font-family:var(--mono);font-size:.66rem;color:var(--grey);letter-spacing:.04em}
+.pkg-body{display:grid;gap:9px;align-content:start}
+/* on the setup cards the duration sits bottom-left, so the sample badge goes top-left */
+.sc-media .vis-sample{top:10px;bottom:auto;left:10px}
+.pkg-media{position:relative;display:block;aspect-ratio:16/10;overflow:hidden;border-radius:2px;background:#0A0908}
+.pkg-media img{position:relative;display:block;width:100%;height:100%;object-fit:contain}
+@media (min-width:720px){
+  .pkg.has-media{grid-template-columns:minmax(0,300px) minmax(0,1fr);align-items:center;column-gap:24px}
+}
 
 
 /* =============================================================
