@@ -46,9 +46,8 @@ test.describe('rules from the call', () => {
     for (const s of setups) expect(setupPrice(s.id, 8).blocked, s.id).toBeTruthy();
   });
 
-  test('Movie Space: ₹2,500 for 1–5, ₹2,700 for 6–7', () => {
-    for (let g = 1; g <= 5; g++) expect(setupPrice('movie', g).amount, `${g}`).toBe(2500);
-    for (const g of [6, 7]) expect(setupPrice('movie', g).amount, `${g}`).toBe(2700);
+  test('Movie Space: ₹2,500 for any group of 1–7', () => {
+    for (let g = 1; g <= 7; g++) expect(setupPrice('movie', g).amount, `${g}`).toBe(2500);
   });
 
   test('Karaoke: fewer than three cannot book, with the owner\'s wording', () => {

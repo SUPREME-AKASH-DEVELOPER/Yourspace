@@ -92,7 +92,7 @@ test.describe('booking flow', () => {
     await expect(page.locator('#bkTotal strong')).toHaveText('₹3,000 + on call');
   });
 
-  test('Movie Space: ₹2,500 up to five, ₹2,700 for six or seven, and no add-ons', async ({ page }) => {
+  test('Movie Space: ₹2,500 for any group up to seven, and no add-ons', async ({ page }) => {
     await freshFlow(page);
     await toSetup(page, 5, 'standup');
     await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹2,500');
@@ -101,12 +101,12 @@ test.describe('booking flow', () => {
     await pickSeats(page, 6);
     await page.locator('[data-bk-next]').click();
     await page.locator('[data-slot-pick="s6"]').click();
-    await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹2,700');
+    await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹2,500');
 
     // straight past the add-ons step, which is Date Night only
     await page.locator('[data-setup-pick="movie"]').click();
     await expect(page.locator('#bkTitle')).toContainText('Your details');
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,700');
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,500');
     await page.locator('[data-bk-back]').click();
     await expect(page.locator('#bkTitle')).toContainText('Choose your setup');
   });

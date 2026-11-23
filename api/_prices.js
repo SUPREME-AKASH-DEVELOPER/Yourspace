@@ -14,9 +14,7 @@
 
 const MAX_GUESTS = 7;
 const ROOM_BASE = 1500;
-const MOVIE_SMALL_MAX = 5;
-const MOVIE_SMALL_PRICE = 2500;   // Tanishk, 23 Nov 2026
-const MOVIE_LARGE_PRICE = 2700;
+const MOVIE_PRICE = 2500;   // any group up to 7 (Tanishk, 23 Nov 2026)
 const KARAOKE_RATE = 150;
 const KARAOKE_PRICED_MAX = 5;
 
@@ -142,7 +140,7 @@ export function priceBooking(booking = {}) {
 
   let total;
   if (setup === 'date') total = ROOM_BASE;
-  else if (setup === 'movie') total = g <= MOVIE_SMALL_MAX ? MOVIE_SMALL_PRICE : MOVIE_LARGE_PRICE;
+  else if (setup === 'movie') total = MOVIE_PRICE;
   else {
     if (g > KARAOKE_PRICED_MAX) return { amount: null, reason: 'Karaoke for this many is priced on the call.' };
     total = KARAOKE_RATE * g;
