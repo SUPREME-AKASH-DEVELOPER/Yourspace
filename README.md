@@ -62,7 +62,7 @@ switches UPI off for that booking, because we cannot ask for an amount we don't 
 | Setup | Length | Price | Guests |
 |---|---|---|---|
 | Celebration & Date Night | 90 min | ₹1,500 + decoration | Set up for 2, up to 7 |
-| Movie Space | 90 min | ₹1,500 up to 5, ₹1,700 for 6–7 | 1–7 |
+| Movie Space | 3 hours | ₹2,500 up to 5, ₹2,700 for 6–7 | 1–7 |
 | Karaoke | 30 min | ₹150 per person (3–5); 6–7 on call | 3–7, fewer must call |
 | Watch Party | — | — | Listed, closed to online booking |
 
@@ -276,7 +276,7 @@ Code: `api/_store.js`, `api/slots.js`, `api/admin.js`, `src/pages/admin.astro`.
 | 9 | Set the Royal decoration price in `src/data/decorations.ts` (it shows "Price on request" until then) | Client | High |
 | 10 | Confirm the decoration prices, and that they are added on top of the ₹1,500 Date Night session | Client | High |
 | 11 | Karaoke price for 6–7 guests (₹150 a head, or the "₹500" mentioned?) — shows "price on call" until then | Client | High |
-| 12 | Movie Space for 6–7: confirm ₹1,700 | Client | High |
+| 12 | Movie Space price | Client | **Done** (23 Nov 2026): ₹2,500 up to 5, ₹2,700 for 6–7 |
 | 13 | Bouquets and cakes | Client | **Done** (20 Nov 2026): three rose bouquets and five ½ kg cakes with Tanishk's photos and prices. Names still needed for the heart-shaped and white cakes. Video: ₹400 or ₹500 |
 | 14 | Watch Party: length, price, guest limit — it is closed to online booking until set | Client | High |
 | 15 | Are all eight slots open for every setup? When in the slot does a 30-minute karaoke run? | Client | Medium |

@@ -385,12 +385,11 @@ export interface Setup {
 /** Shown when someone cannot book a setup online. Wording from the owner. */
 export const CALL_US = 'This service is not available for online booking. Please contact us directly at the provided phone number.';
 
-/**
- * Movie Space with a larger group.
- * TODO(owner): the walkthrough said "approximately ₹1,700" for 6–7. Confirm.
- */
+/** Movie Space: one price up to 5 guests, another for 6–7. */
 const MOVIE_SMALL_MAX = 5;
-const MOVIE_LARGE_PRICE = 1700;
+/** Tanishk, 23 Nov 2026: the 3-hour Movie Space is ₹2,500 up to 5, ₹2,700 for 6–7. */
+const MOVIE_SMALL_PRICE = 2500;
+const MOVIE_LARGE_PRICE = 2700;
 
 /**
  * Karaoke at ₹150 a head is confirmed for 3–5 people.
@@ -451,7 +450,7 @@ export function setupPrice(id: string, guests: number): {
       return { amount: ROOM_BASE, note: 'plus your decoration' };
     case 'movie':
       return guests <= MOVIE_SMALL_MAX
-        ? { amount: ROOM_BASE, note: `up to ${MOVIE_SMALL_MAX} guests` }
+        ? { amount: MOVIE_SMALL_PRICE, note: `up to ${MOVIE_SMALL_MAX} guests` }
         : { amount: MOVIE_LARGE_PRICE, note: `${MOVIE_SMALL_MAX + 1}–${s.maxGuests} guests` };
     case 'karaoke':
       return guests <= KARAOKE_PRICED_MAX

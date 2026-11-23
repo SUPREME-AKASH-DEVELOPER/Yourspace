@@ -143,7 +143,7 @@ test.describe('the server refuses what the page will not sell', () => {
         .toBe(1500);
       // Movie Space is three hours, so it cannot start at 10:30 PM and finish by midnight
       expect(booking({ setup: 'movie', slot: s.id, decor: '', now: at('11:00 PM') }).amount, `movie at ${s.start}`)
-        .toBe(s.start === '10:30 PM' ? null : 1500);
+        .toBe(s.start === '10:30 PM' ? null : 2500);
       expect(booking({ setup: 'karaoke', guests: 3, slot: s.id, decor: '', now: at('11:00 PM') }).amount,
         `karaoke at ${s.start}`).toBe(450);
     }

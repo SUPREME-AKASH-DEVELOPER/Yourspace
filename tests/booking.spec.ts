@@ -92,21 +92,21 @@ test.describe('booking flow', () => {
     await expect(page.locator('#bkTotal strong')).toHaveText('₹3,000 + on call');
   });
 
-  test('Movie Space: ₹1,500 up to five, ₹1,700 for six or seven, and no add-ons', async ({ page }) => {
+  test('Movie Space: ₹2,500 up to five, ₹2,700 for six or seven, and no add-ons', async ({ page }) => {
     await freshFlow(page);
     await toSetup(page, 5, 'standup');
-    await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹1,500');
+    await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹2,500');
     await page.locator('[data-bk-back]').click();
     await page.locator('[data-bk-back]').click();
     await pickSeats(page, 6);
     await page.locator('[data-bk-next]').click();
     await page.locator('[data-slot-pick="s6"]').click();
-    await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹1,700');
+    await expect(page.locator('[data-setup-pick="movie"] .sc-price')).toHaveText('₹2,700');
 
     // straight past the add-ons step, which is Date Night only
     await page.locator('[data-setup-pick="movie"]').click();
     await expect(page.locator('#bkTitle')).toContainText('Your details');
-    await expect(page.locator('#bkTotal strong')).toHaveText('₹1,700');
+    await expect(page.locator('#bkTotal strong')).toHaveText('₹2,700');
     await page.locator('[data-bk-back]').click();
     await expect(page.locator('#bkTitle')).toContainText('Choose your setup');
   });
@@ -197,7 +197,7 @@ test.describe('booking flow', () => {
     await toSetup(page, 2);
     await page.locator('[data-setup-pick="movie"]').click();
     await details(page, 'online');
-    await expect(page.locator('[data-bk-next]')).toContainText('₹1,500');
+    await expect(page.locator('[data-bk-next]')).toContainText('₹2,500');
     await page.locator('[data-bk-next]').click();
 
     // the booking is emailed first, marked as not paid yet
@@ -209,10 +209,10 @@ test.describe('booking flow', () => {
     await expect(page.locator('.paybox-done')).toContainText('pay_TEST12345678');
     await expect(page.locator('#bkTitle')).toContainText('paid and on the list');
     const ref = (await page.locator('.bk-ref b').innerText()).trim();
-    expect(calls[0]).toMatchObject({ step: 'order', ref, setup: 'movie', guests: 2, expected: 1500 });
+    expect(calls[0]).toMatchObject({ step: 'order', ref, setup: 'movie', guests: 2, expected: 2500 });
     expect(calls[1]).toMatchObject({ step: 'verify', order_id: 'order_TEST123', payment_id: 'pay_TEST12345678' });
     const opts = await page.evaluate(() => (window as any).__rzpOptions);
-    expect(opts).toMatchObject({ order_id: 'order_TEST123', amount: 150000, currency: 'INR' });
+    expect(opts).toMatchObject({ order_id: 'order_TEST123', amount: 250000, currency: 'INR' });
     expect(opts.prefill).toMatchObject({ contact: '+919876543210', email: 'a@example.com' });
     await expect(page.locator('.bk-sum')).toContainText('Paid online');
   });
