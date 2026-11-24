@@ -854,6 +854,47 @@ h3{
   margin:0;padding:20px 0 calc(24px + env(safe-area-inset-bottom));
   font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;color:var(--grey);
 }
+/* the legal line and the studio credit share one row; the credit drops below on narrow screens */
+.legal-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;column-gap:24px;
+  padding-block:16px calc(20px + env(safe-area-inset-bottom))}
+.legal-row .legal{flex:1 1 auto;padding:0}
+/* a raised pill: lit from above, a hairline highlight on its top edge, a soft drop below */
+.made-by{
+  position:relative;display:inline-flex;align-items:center;gap:10px;flex:0 0 auto;
+  padding:7px 16px 7px 12px;border-radius:999px;
+  border:1px solid rgba(237,230,216,.12);
+  background:linear-gradient(180deg,#22211e 0%,#141412 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.09),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    0 1px 0 rgba(0,0,0,.6),
+    0 10px 24px -10px rgba(0,0,0,.9);
+  color:var(--grey);text-decoration:none;
+  transition:border-color .3s,box-shadow .3s,transform .3s var(--ease);
+}
+.made-by:visited{color:var(--grey)}
+.made-by-label{font-family:var(--mono);font-size:.6rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:#a39a8d}
+.made-by-icon{display:block;flex:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.55));transition:transform .4s var(--ease),filter .4s}
+.made-by-name{
+  font-weight:800;font-size:1.02rem;letter-spacing:-.02em;line-height:1;
+  background:linear-gradient(180deg,#ffffff 0%,#efe8d8 55%,#bfb6a4 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1.5px 0 rgba(0,0,0,.85)) drop-shadow(0 4px 6px rgba(0,0,0,.45));
+}
+.made-by:hover,.made-by:focus-visible{
+  border-color:rgba(205,243,95,.45);transform:translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    inset 0 -1px 0 rgba(0,0,0,.6),
+    0 0 0 4px rgba(205,243,95,.07),
+    0 16px 30px -12px rgba(0,0,0,.95),
+    0 6px 22px -8px rgba(205,243,95,.3);
+}
+.made-by:hover .made-by-icon{transform:rotate(-7deg) scale(1.1);filter:drop-shadow(0 6px 8px rgba(0,0,0,.6)) drop-shadow(0 0 10px rgba(205,243,95,.35))}
+@media (max-width:620px){
+  .legal-row{row-gap:14px}
+}
+@media (prefers-reduced-motion:reduce){ .made-by:hover,.made-by:hover .made-by-icon{transform:none} }
 
 /* =============================================================
    Sticky CTA (small screens)

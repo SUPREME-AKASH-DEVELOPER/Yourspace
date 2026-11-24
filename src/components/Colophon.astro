@@ -49,7 +49,36 @@ const year = new Date().getFullYear();
     <p class="devanagari" lang="hi">जबलपुर</p>
   </div>
 
-  <div class="shell">
+  <div class="shell legal-row">
     <p class="legal">© {year} YourSpace, {site.city} · <a href="/terms/">Terms</a> · <a href="/privacy/">Privacy</a> · <a href="/refunds/">Cancellations</a></p>
+    <!-- Studio credit: the team that built and runs the site -->
+    <a class="made-by" href="https://keytitans.com/?utm_source=yourspacejbp&amp;utm_medium=referral&amp;utm_campaign=footer_credit"
+       target="_blank" rel="noopener" aria-label="Powered by KeyTitans (opens in a new tab)">
+      <span class="made-by-label">Powered by</span>
+      <!-- the KeyTitans tile, drawn as a raised key: a dark base, a lit lime face, a gloss on top -->
+      <svg class="made-by-icon" viewBox="0 0 28 30" width="26" height="28" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="kt-face" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#e6ff8a"/><stop offset=".55" stop-color="#cdf35f"/><stop offset="1" stop-color="#a6d13a"/>
+          </linearGradient>
+          <linearGradient id="kt-side" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#6f8f1f"/><stop offset="1" stop-color="#4a6311"/>
+          </linearGradient>
+          <linearGradient id="kt-gloss" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="2" width="28" height="28" rx="7.5" fill="#0d0d0c"/>
+        <rect x="2.5" y="4.5" width="23" height="23" rx="5.5" fill="url(#kt-side)"/>
+        <rect x="2.5" y="2.5" width="23" height="22" rx="5.5" fill="url(#kt-face)"/>
+        <rect x="4" y="3.6" width="20" height="8" rx="4" fill="url(#kt-gloss)"/>
+        <g fill="#121210">
+          <rect x="7.4" y="7" width="13.2" height="3.9" rx="1.2"/>
+          <rect x="12" y="7" width="4" height="10.8" rx="1.2"/>
+          <rect x="10.4" y="19.4" width="7.2" height="1.9" rx=".95"/>
+        </g>
+      </svg>
+      <span class="made-by-name">KeyTitans</span>
+    </a>
   </div>
 </footer>
